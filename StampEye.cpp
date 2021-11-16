@@ -1,5 +1,8 @@
 #include "StampEye.h"
 
+unsigned char StampEye::spawn() {
+
+}
 
 unsigned char StampEye::stampRoundedCorners() {
 	float r_scale = m_eyeGen->getRSHex(0, m_eyeGen->getMaxLevi(0));

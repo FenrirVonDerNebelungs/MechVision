@@ -22,6 +22,11 @@ public:
 	StampEye();
 	~StampEye();
 
+	unsigned char init(
+		float numAngDiv = 12.f,
+		int smudgeNum = 10
+	);
+
 	unsigned char spawn();
 
 protected:
@@ -42,6 +47,8 @@ protected:
 	s_2pt m_UBasis1;
 	s_2pt m_UrevBasis0;/*vectors that determine the rotation of the curent pattern*/
 	s_2pt m_UrevBasis1;
+
+
 
 	unsigned char stampRoundedCorners();
 	int stampRoundedCornersAtCenter(const s_2pt& corner_center, int eye_cnt, s_eyeStamp stamp[]);
