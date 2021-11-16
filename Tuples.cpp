@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Tuples.h"
 
 Tup3::Tup3() :x(0.f), y(0.f), z(0.f) {

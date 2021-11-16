@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "HexBase.h"
 HexBase::HexBase():m_img(NULL), m_hex(NULL), m_nHex(0), m_Rhex(0.f), m_RShex(0.f), m_Shex(0.f), m_totpixHex(0.f), 
 	m_hexMask(NULL), m_hexMaskPlus(NULL)
@@ -54,6 +53,43 @@ unsigned char HexBase::Update(Img* img) {
 unsigned char HexBase::Run()
 {
 	return ECODE_ABORT;
+}
+unsigned char HexBase::genStructuredPlate(s_hexPlate& plate) {
+	plate.m_fhex = new s_fNode[m_nHex];
+	plate.m_nHex = m_nHex;
+	for (int i = 0; i < m_nHex; i++) {
+		plate.m_fhex[i].init();
+		plate.m_fhex[i].addHexData(m_hex[i]);
+		plate.m_fhex[i].shex->thisLink = i;
+		plate.m_fhex[i].thislink = i;
+		for (int j = 0; j < 6; j++) {
+			plate.m_fhex[i].shex->downLinks[j] = m_hex[i].web[j];
+			plate.m_fhex[i].shex->web[j] = m_hex[i].web[j];
+		}
+		plate.m_fhex[i].shex->centerLink = i;
+		plate.m_fhex[i].x = m_hex[i].x;
+		plate.m_fhex[i].y = m_hex[i].y;
+	}
+	plate.m_Rhex = m_Rhex;
+	plate.m_RShex = m_RShex;
+	plate.m_Shex = m_Shex;
+	for (int i = 0; i < 6; i++) {
+		plate.m_hexU[i].x0 = m_hexU[i].x0;
+		plate.m_hexU[i].x1 = m_hexU[i].x1;
+	}
+	PatStruct::hexPlateConnectWeb(plate);
+	return ECODE_OK;
+}
+void HexBase::releaseStructuredPlate(s_hexPlate& plate) {
+	PatStruct::hexPlateReleaseWeb(plate);
+	if (plate.m_fhex != NULL) {
+		for (int i = 0; i < plate.m_nHex; i++) {
+			plate.m_fhex[i].release();
+		}
+		delete[] plate.m_fhex;
+	}
+	plate.m_fhex = NULL;
+	plate.m_nHex = 0;
 }
 void HexBase::genHexU_0()
 {

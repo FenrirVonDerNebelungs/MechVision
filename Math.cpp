@@ -1,15 +1,13 @@
-#include "stdafx.h"
 #include "Math.h"
 #include "Img.h"
 
 namespace Math {
 	float StepFunc(float x) {
 		/*1/(1+exp(-x))*/
-		float expofn = expf(x);
-		if (expofn <= 0.f)/*shouldn't happen*/
-			return 0.f;
-		float invexpofn = 1.f / expofn;
-		float denom = 1.f + invexpofn;
+		float expofn = expf(-x);
+		//if (expofn <= 0.f)/*shouldn't happen*/
+		//	return 0.f;
+		float denom = 1.f + expofn;
 		return 1.f / denom;
 	}
 	int loop(int i, int n) {
@@ -62,7 +60,7 @@ namespace vecMath {
 		Tup3 v = v12(v1, v2);
 		return len(v);
 	}
-	float dot(s_2pt& v1, s_2pt& v2) {
+	float dot(const s_2pt& v1, const s_2pt& v2) {
 		return (v1.x0*v2.x0 + v1.x1*v2.x1);
 	}
 	s_2pt mul(float a, const s_2pt& vec) {
@@ -77,7 +75,20 @@ namespace vecMath {
 		s_2pt vperp = { vec.x1, -vec.x0 };
 		return vperp;
 	}
-	s_2pt convBasis(s_2pt& basisU0, s_2pt& basisU1, s_2pt& vecInBasis) {
+	void  setBasis(float angRad, s_2pt& basisU0, s_2pt& basisU1) {
+		basisU0.x0 = cosf(angRad);
+		basisU0.x1 = sinf(angRad);
+		basisU1.x0 = -sinf(angRad);
+		basisU1.x1 = cosf(angRad);
+	}
+	void revBasis(const s_2pt& basisU0, const s_2pt& basisU1, s_2pt& revBasisU0, s_2pt& revBasisU1) {
+		revBasisU0.x0 = basisU1.x1;
+		revBasisU0.x1 = -basisU0.x1;
+
+		revBasisU1.x0 = -basisU1.x0;
+		revBasisU1.x1 = basisU0.x0;
+	}
+	s_2pt convBasis(const s_2pt& basisU0, const s_2pt& basisU1, const s_2pt& vecInBasis) {
 		s_2pt v0 = mul(vecInBasis.x0, basisU0);
 		s_2pt v1 = mul(vecInBasis.x1, basisU1);
 		return add(v0, v1);
@@ -100,6 +111,22 @@ namespace imgMath {
 			b = 0.f;
 		s_rgba rgba = { (unsigned char)r, (unsigned char)g, (unsigned char)b, 0xFF };
 		return rgba;
+	}
+	s_rgb convToRGB(float r, float g, float b) {
+		if (r > 255.f)
+			r = 255.f;
+		if (r < 0.f)
+			r = 0.f;
+		if (g > 255.f)
+			g = 255.f;
+		if (g < 0.f)
+			g = 0.f;
+		if (b > 255.f)
+			b = 255.f;
+		if (b < 0.f)
+			b = 0.f;
+		s_rgb rgb = { (unsigned char)r, (unsigned char)g, (unsigned char)b };
+		return rgb;
 	}
 	s_2pt_i convToVint(const s_2pt& vec) {
 		s_2pt_i vi;
@@ -166,5 +193,25 @@ namespace imgMath {
 				y_j++;
 			}
 		}
+	}
+}
+namespace hexMath {
+	bool inHex(float hexR, float hexRS, const s_2pt hexU[], const s_2pt& center, const s_2pt& pt, float padding) {
+		float xdiff = pt.x0 - center.x0;
+		float ydiff = pt.x1 - center.x1;
+		float diff = sqrtf(xdiff * xdiff + ydiff * ydiff);
+		if (diff > hexR)
+			return false;
+		s_2pt vpt = { xdiff, ydiff };
+		float max_proj = 0.f;
+		for (int i = 0; i < 6; i++) {
+			float proj = vecMath::dot(vpt, hexU[i]);
+			if (proj > max_proj)
+				max_proj = proj;
+		}
+		bool inside = false;
+		if (max_proj <= (hexRS + padding))
+			inside = true;
+		return inside;
 	}
 }

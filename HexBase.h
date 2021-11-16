@@ -4,24 +4,14 @@
 #ifndef IMG_H
 #include "Img.h"
 #endif
+#ifndef BASE_H
+#include "Base.h"
+#endif
 
 #define HEX_MAXDOWNLINK 36
 #define HEX_THRESHOLDFRAC 0.4f
 #define HEX_CHARMAXVAL 255.f
-struct s_hex {
-	bool colSet;
-	long i;
-	long j;
-	float x;
-	float y;
 
-	int thisLink;
-	int web[6];
-	int downLinks[6];
-	int centerLink;
-
-	float rgb[3];
-};
 
 class HexBase : public Base {
 public:
@@ -50,6 +40,9 @@ public:
 	inline float getShex() { return m_Shex; }
 	inline float getRShex() { return m_RShex; }
 	inline s_2pt* getHexUs() { return m_hexU; }
+
+	unsigned char genStructuredPlate(s_hexPlate& plate);/*generates a plate from the hexes & webs currently in the system does not fill the rgb*/
+	void releaseStructuredPlate(s_hexPlate& plate);
 protected:
 	/*not owned*/
 	Img* m_img;

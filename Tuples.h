@@ -1,8 +1,12 @@
 #pragma once
 #ifndef TUPLES_H
 #define TUPLES_H
-#include "WinBase.h"
+#include <iostream>
+#include <thread>
 #include <ctgmath>
+#ifndef MECVISPI_WIN
+#include <pthread.h>
+#endif
 #define PI 3.14159265359f
 //generic 3 tuple used when saving points in 3D space
 class Tup3 {

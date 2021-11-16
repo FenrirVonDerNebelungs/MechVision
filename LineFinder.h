@@ -2,11 +2,11 @@
 #ifndef LINEFINDER_H
 #define LINEFINDER_H
 
-#ifndef PATTERNSCAN_H
-#include "PatternScan.h"
+#ifndef PATTERNLUNA_H
+#include "PatternLuna.h"
 #endif
 
-#define LINEFINDERMAXLINES 100
+#define LINEFINDERMAXLINES 500
 struct s_linePoint {
     int lunai;/*dominate maski at this point*/
     int hexi;/*index of hex this point sits on*/
@@ -19,80 +19,80 @@ struct s_linePoint {
 struct s_line {
     int n;
     s_linePoint* pts;
+    bool* f;
 };
-class LineFinder :
-    public Base
+
+class LineFinder : public Base 
 {
 public:
     LineFinder();
     ~LineFinder();
+
     unsigned char init(
-        HexStack* stack,
-        PatternScan* patScan,
-        int stackLevel = 0,
-        float minTrigf = 0.3f,
-        float minf = 0.1f,
-        int minLineSegPts = 6,
-        int dLine = 3,
-        float loopBackDist=100.f,
+        s_PlateLayer* plateLayer,
+        float minTrigo = 0.3f,//0.3f,
+        float mino = 0.1f,
+        int minLineSegPts = 8,//6,
+        int dLine = 1,//3,
+        float loopBackDist = 100.f,
         int nloopBackScan = 5
     );
     void release();
 
     unsigned char spawn();
 
-    inline int getStackLevel() { return m_stackLevel; }
     inline s_line& getLine(int i) { return m_lines[i]; }
     inline s_line* getLines() { return m_lines; }
     inline int getNLines() { return m_n; }
+
 protected:
-    int   m_stackLevel;
-    float m_minTrigf;/*min f to start a line*/
-    float m_minf;/*min f to continue a line*/
+    float m_minTrigo;/*min o to start a line*/
+    float m_mino;/*min o to continue a line*/
     int   m_minLineSegPts;/*should be set to greater than three*/
     int   m_dLine;/*spacing between hexes for actual line saved needs to be at least 1*/
     float m_loopBackDist;/*if points are closer than this distance near the end line is considered a loop back*/
     int   m_nloopBackScan; /*number of final points to scan in loop back check*/
-
-    int   m_numHex;/*total number of base hexes retrieved from the stack*/
+    long  m_numHex;/*Number of hexes on plate, maximum number of line points*/
 
     /*owned*/
-    bool* m_in_line;
-    bool* m_covered;/*mask over hexes that should not be searched again*/
+    bool* m_in_line;/*points are in line and should not be added to line during search along line*/
+    bool* m_covered;/*mask over hexes line & surrounding that should not be used to start line search again*/
     s_line       m_lines[LINEFINDERMAXLINES];
     int          m_n;
-    /*     */
+    /*owned scratch*/
+    s_linePoint* m_lineSegR;
+    int m_numLineSegR;
+    s_linePoint* m_lineSegL;
+    int m_numLineSegL;
+    s_line m_scratchLine;
+    /*             */
     /*not owned*/
-    HexStack*   m_stack;
-    s_hex* m_hexes;
-    s_luna4fs*  m_luna4s;
+    s_PlateLayer* m_plateLayer;
     /*         */
-    /*utility*/
+
+    /* utility */
     s_2pt m_lunaVecs[6];/*unit vectors pointing from low to high for each luna pattern*/
     s_2pt m_lunaVecPerp[6];/*unit vectors that would be the 'x' in a rh coord system to the lunaVecs 'y'*/
-    s_2pt m_v60U;/*vector at a 60 deg angle off of straight pointing to the right*/
-    /*       */
-    /* init   */
+    /*         */
+    /*init     */
     void setConstVectors();
-    void genConsUsides(s_2pt vecs[]);
-    /*       */
+    /*         */
 
     void reset();
     unsigned char spawnLine(int start_hexi, int& ret_hexi);
 
-    int findLineStart(int start_hexi);
+    int findLineStart(int start_hexi, int& lunaHighest);
     unsigned char addLinePoint(int lunai, int hexi, s_linePoint linePts[], int& nPts);
-    inline void blackout(s_hex& pthex) { m_in_line[pthex.thisLink] = true; }
-    unsigned char blackoutSurrounding(s_hex& pthex);
-    unsigned char scanNextLink(int webCircleStart_i, s_hex& pthex, int lunai, int& retHexi, int& retlunai);
-    unsigned char mergeSegs(s_linePoint lineR[], int nlineR, s_linePoint lineL[], int nlineL, s_line& newLine);
-    
-    unsigned char formLine(s_line& denseLine, s_line& newLine);
-    int needsSplit(s_line& newLine);
-    unsigned char splitLine(int i_corner, s_line& fullline, s_line& newLine);
-    unsigned char setVectors(s_linePoint& prePt, s_linePoint& postPt, s_linePoint& pt);/*set vectors for point using pre & post info*/
 
-    s_2pt getVectorInLunaU(int reli0, int reli1);
+    unsigned char scanNextLink(int webCircleStart_i, long  hex_i, int lunai, int& retHexi, int& retlunai);
+    inline void blackout(long hex_i) { m_in_line[hex_i] = true; }
+    unsigned char blackoutSurrounding(long hex_i);
+
+    unsigned char mergeSegs(s_linePoint lineR[], int nlineR, s_linePoint lineL[], int nlineL, s_line& newLine);
+    unsigned char formLine(s_line& denseLine, s_line& newLine);
+ 
+
+    unsigned char setVectors(s_linePoint& prePt, s_linePoint& postPt, s_linePoint& pt);/*set vectors for point using pre & post info*/
 };
 
 #endif

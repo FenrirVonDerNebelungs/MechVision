@@ -12,12 +12,15 @@ public:
 	~Hex();
 	unsigned char Init(
 		Img* img,
-		float Rhex = 3.f,
-		float sigmaVsR = 1.f, //0.75f,
+		float Rhex = 7.f,//3.f,//5.f, //3.f,  7 for debug of eye
+		float sigmaVsR = 0.75,//1.f, //0.75f,
 		float IMaskRVsR = 1.5f
 	);
 	unsigned char Update(Img* img);
 	unsigned char Run();
+#ifndef MECVISPI_WIN
+	unsigned char RunThreaded();
+#endif
 	void Release();
 	inline int getWHex() { return m_wHex; }
 	inline int getHHex() { return m_hHex; }

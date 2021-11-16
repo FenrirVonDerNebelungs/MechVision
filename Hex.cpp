@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "framework.h"
 #include "Hex.h"
 
 Hex::Hex():m_Convol(NULL), m_wHex(0), m_hHex(0)
@@ -27,7 +27,11 @@ unsigned char Hex::Init(Img* img, float Rhex, float sigmaVsR, float IMaskRvsR)
 unsigned char Hex::Update(Img* img) {
 	unsigned char err=HexBase::Update(img);
 	if (RetOk(err)) {
+#ifndef MECVISPI_WIN
+		err = RunThreaded();
+#else
 		err = Run();
+#endif
 	}
 	return err;
 }
@@ -38,6 +42,61 @@ unsigned char Hex::Run()
 	}
 	return ECODE_OK;
 }
+
+#ifndef MECVISPI_WIN
+unsigned char Hex::RunThreaded()
+{
+	s_convKernVars IOVars = {
+		m_img->getImg(),
+		m_img->getHeight(),
+		m_img->getWidth(),
+		m_img->getColorMode(),
+		m_img->getMaxIndex(),
+
+		m_Convol->getMaskF(),
+		m_Convol->getIMaskBL_offset().x0,
+		m_Convol->getIMaskBL_offset().x1,
+		m_Convol->getMaskHeight(),
+		m_Convol->getMaskWidth(),
+
+		0,
+
+		m_nHex,
+		m_hex
+	};
+	s_convKernVars IOVars1 = IOVars;
+	s_convKernVars IOVars2 = IOVars;
+	s_convKernVars IOVars3 = IOVars;
+	IOVars1.hex_index = 1;
+	IOVars2.hex_index = 2;
+	IOVars3.hex_index = 3;
+	
+	pthread_t thread0;
+	pthread_t thread1;
+	pthread_t thread2;
+	pthread_t thread3;
+
+	int thread_res=0;
+	thread_res = pthread_create(&thread0, NULL, threadedConvol::runConvThread, (void*)&IOVars);
+	thread_res = pthread_create(&thread1, NULL, threadedConvol::runConvThread, (void*)&IOVars1);
+	thread_res = pthread_create(&thread2, NULL, threadedConvol::runConvThread, (void*)&IOVars2);
+	thread_res = pthread_create(&thread3, NULL, threadedConvol::runConvThread, (void*)&IOVars3);
+	pthread_join(thread0, NULL);
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+	pthread_join(thread3, NULL);
+	
+	/*finish of any extra if the number of hexes was not divisible by 4*/
+	long num_passes = IOVars.num_Hex / THREADEDCONVOL_NUMTHREADS;
+	long num_scanned = 4 * (num_passes);
+	for (int i = num_scanned; i < m_nHex; i++) {
+		IOVars.hex_index = i;
+		threadedConvol::convCellKernel(IOVars);
+	}
+	//pthread_exit(NULL);
+	return ECODE_OK;
+}
+#endif
 
 void Hex::Release() {
 	if (m_hex != NULL)

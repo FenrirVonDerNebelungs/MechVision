@@ -4,6 +4,8 @@
 #ifndef HEXBASE_H
 #include "HexBase.h"
 #endif
+
+#define THREADEDCONVOL_NUMTHREADS 4
 class ConvolHex {
 public:
 	ConvolHex();
@@ -11,6 +13,11 @@ public:
 	unsigned char Init(Img* img, s_hex hex[], float Rhex, float sigmaVsR, float IMaskRVsR);
 	void Release();
 	unsigned char convulToHex(int col_i);
+
+	inline s_2pt_i& getIMaskBL_offset() { return m_IMaskBL_offset; }
+	inline long getMaskHeight() { return m_IMask->getHeight(); }
+	inline long getMaskWidth() { return m_IMask->getWidth(); }
+	inline float* getMaskF() { return m_IMaskF; }
 protected:
 	/*not owned*/
 	Img*   m_img;
@@ -18,6 +25,7 @@ protected:
 	/*owned*/
 	/*integration to fill hex with col, convulution*/
 	Img* m_IMask;
+	float* m_IMaskF;
 
 	float m_Rhex;
 
@@ -41,10 +49,36 @@ protected:
 	//unsigned char convulThreshtoHex(int col_i);/*  */
 	/****                     ****/
 	bool isIMaskInside(long hi, long hj);/*hi and hj represent the coords of the BL (or UL depending on y axis orientation)*/
-	s_rgba convToRGBA(float r, float g, float b);
+	inline s_rgba convToRGBA(float r, float g, float b){ return imgMath::convToRGBA(r, g, b); }
+	inline s_rgb  convToRGB(float r, float g, float b){ return imgMath::convToRGB(r, g, b); }
 	/**                                   **/
 
 	/*                                */
 };
 
+struct s_convKernVars {
+	unsigned char* img_pix;
+	long Img_height;
+	long Img_width;
+	long Img_bpp;
+	long Img_maxIndex;
+
+	float* mask_pix;/*chars divided by 255.f*/
+	long MaskBL_offsetX;
+	long MaskBL_offsetY;
+	long Mask_height;
+	long Mask_width;
+
+	long hex_index;
+
+	long num_Hex;
+	s_hex* outHex;
+};
+namespace threadedConvol {
+#ifndef MECVISPI_WIN
+	inline bool convInImg(long width, long height, long x_i, long y_i);
+	void convCellKernel(s_convKernVars IOVars);
+	void *runConvThread(void* IOVarsVoid);
+#endif
+}
 #endif
