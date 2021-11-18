@@ -1,9 +1,93 @@
 #include "StampEye.h"
+StampEye::StampEye() : m_numAngDiv(0.f), m_smudgeNum(0), m_eyeGen(NULL), m_eyes_stamped(0), m_circle_radius(0.f) {
+	clearEyeStamps();
+	m_circle_center.x0 = 0.f;
+	m_circle_center.x1 = 0.f;
+	m_line_intersect.x0 = 0.f;
+	m_line_intersect.x1 = 0.f;
+	m_Uline_perp1.x0 = 0.f;
+	m_Uline_perp1.x1 = 0.f;
+	m_Uline_perp2.x0 = 0.f;
+	m_Uline_perp2.x1 = 0.f;
+	m_UcenterIn.x0 = 0.f;
+	m_UcenterIn.x1 = 0.f;
+	m_UBasis0.x0 = 0.f;
+	m_UBasis0.x1 = 0.f;
+	m_UBasis1.x0 = 0.f;
+	m_UBasis1.x1 = 0.f;
+	m_UrevBasis0.x0 = 0.f;
+	m_UrevBasis0.x1 = 0.f;
+	m_UrevBasis1.x0 = 0.f;
+	m_UrevBasis1.x1 = 0.f;
+}
+StampEye::~StampEye() {
+	;
+}
+unsigned char StampEye::init(
+	float numAngDiv,
+	int smudgeNum,
+	float r,
+	HexBase* hexBase
 
+) {
+	m_numAngDiv = numAngDiv;
+	m_smudgeNum = smudgeNum;
+	m_eyeGen = new HexEye;
+	
+	float targr = (hexBase == NULL) ? r : hexBase->getRhex();
+	if (RetOk(m_eyeGen->init(targr, 2))) {
+		int numSmudgeArray = smudgeNum * smudgeNum;
+		int totalNumEyes = numSmudgeArray * STAMPEYENUM;
+		for (int i = 0; i < totalNumEyes; i++) {
+			m_eyeGen->spawn();
+		}
+	}
+	else return ECODE_FAIL;
+	return ECODE_OK;
+}
+void StampEye::release() {
+	if (m_eyeGen != NULL) {
+		m_eyeGen->release();
+		delete m_eyeGen;
+	}
+	m_eyeGen = NULL;
+	m_smudgeNum = 0;
+	m_numAngDiv = 0.f;
+	m_eyes_stamped = 0;
+	clearEyeStamps();
+}
 unsigned char StampEye::spawn() {
-
+	stampFullNewMoons();
+	return stampRoundedCorners();
 }
 
+void StampEye::clearEyeStamps() {
+	for (int i = 0; i < STAMPEYENUM; i++) {
+		for (int j = 0; j < STAMPEYEMAXNUM; j++)
+			m_stamps[i].eyes[j] = NULL;
+		m_stamps[i].n = 0;
+	}
+}
+unsigned char StampEye::stampFullNewMoons() {
+	stampMoonEye(m_eyeGen->getEye(m_eyes_stamped), 0.f);
+	m_stamps[m_eyes_stamped].eyes[0] = m_eyeGen->getEyePtr(m_eyes_stamped);
+	m_stamps[m_eyes_stamped].n = 1;
+	m_eyes_stamped++;
+	stampMoonEye(m_eyeGen->getEye(m_eyes_stamped), 1.f);
+	m_stamps[m_eyes_stamped].eyes[0] = m_eyeGen->getEyePtr(m_eyes_stamped);
+	m_stamps[m_eyes_stamped].n = 1;
+	m_eyes_stamped++;
+
+	return ECODE_OK;
+}
+unsigned char StampEye::stampMoonEye(s_hexEye& seye, float o) {
+	int lowestN = seye.n - 1;
+	s_hexPlate& eyeplate = seye.lev[lowestN];
+	for (int i = 0; i < eyeplate.m_nHex; i++) {
+		eyeplate.m_fhex[i].o = o;
+	}
+	return ECODE_OK;
+}
 unsigned char StampEye::stampRoundedCorners() {
 	float r_scale = m_eyeGen->getRSHex(0, m_eyeGen->getMaxLevi(0));
 	r_scale *= 2.f;
@@ -12,16 +96,18 @@ unsigned char StampEye::stampRoundedCorners() {
 	s_2pt corner_start = { -r_scale / 2.f, -r_scale / 2.f };
 	s_2pt* hexU = m_eyeGen->getUHex();
 	s_2pt center = { 0.f, 0.f };
-	int cur_eye = 0;
+	int cur_eye = m_eyes_stamped;
+	int stamp_inc_i_start = m_eyes_stamped;
 	for (int j = 0; j < m_smudgeNum; j++) {
 		for (int i = 0; i < m_smudgeNum; i++) {
 			s_2pt corner_center = { corner_start.x0 + ((float)i) * smudgeD, corner_start.x1 + ((float)j) * smudgeD };
 			if (hexMath::inHex(R, r_scale, hexU, center, corner_center)) {
 				cur_eye = stampRoundedCornersAtCenter(corner_center, cur_eye, m_stamps);
-				incStampEyeNs();
+				incStampEyeNs(stamp_inc_i_start);
 			}
 		}
 	}
+	m_eyes_stamped = cur_eye;
 	return ECODE_OK;
 }
 int StampEye::stampRoundedCornersAtCenter(const s_2pt& corner_center, int eye_cnt, s_eyeStamp stamp[]) {
@@ -141,8 +227,8 @@ bool StampEye::isInRoundedCorner(const s_2pt& pt) {
 	return isInRoundedCornerNoRot(convPt);
 }
 
-bool StampEye::incStampEyeNs() {
-	for (int i = 0; i < STAMPEYENUM; i++) {
+bool StampEye::incStampEyeNs(int start_i) {
+	for (int i = start_i; i < STAMPEYENUM; i++) {
 		if (m_stamps[i].n + 1 < STAMPEYEMAXNUM)
 			m_stamps[i].n += 1;
 		else

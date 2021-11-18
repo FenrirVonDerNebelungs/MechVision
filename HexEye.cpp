@@ -25,36 +25,32 @@ unsigned char HexEye::init(HexBase* lowHexes) {
 	m_rs = lowHexes->getRShex();
 	m_imgWidth = lowHexes->getImg()->getWidth();
 	m_imgHeight = lowHexes->getImg()->getHeight();
-
+	m_N_levels = setRfromImg();
 	return ECODE_OK;
 }
-unsigned char HexEye::init(float r) {
+
+unsigned char HexEye::init(float r, int NLevels) {
 	m_N_eyes = 0;
 	m_r = r;
 	m_rs = r * sqrt(3.f) / 2.f;
 	setHexUs();
-}
-unsigned char HexEye::init(float r, int NLevels) {
-	HexEye::init(r);
-	if (RetOk(spawn(NLevels))) {
+	if (RetOk(initWithNLevels(NLevels))) {
 		m_imgHeight = (long)ceilf(m_R * 2.f);
 		m_imgWidth = m_imgHeight;
 	}
 	else
 		return ECODE_FAIL;
 }
-unsigned char HexEye::spawn() {
-	int NLevels = setRfromImg();
-	return spawn(NLevels);
-}
-unsigned char HexEye::spawn(int NLevels) {
+unsigned char HexEye::initWithNLevels(int NLevels) {
 	m_N_levels = NLevels;
-	if (m_N_levels >= HEXEYE_MAXLEVELS || m_N_levels<1)
+	if (m_N_levels >= HEXEYE_MAXLEVELS || m_N_levels < 1)
 		return ECODE_FAIL;
 	float fac = Math::power(2.f, m_N_levels - 1);
 	m_R = fac * m_r;
 	m_Rs = fac * m_rs;
-
+	return ECODE_OK;
+}
+unsigned char HexEye::spawn() {
 	return spawnEye();
 }
 void HexEye::release() {

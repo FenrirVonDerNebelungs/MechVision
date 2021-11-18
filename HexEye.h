@@ -30,11 +30,9 @@ public:
 	~HexEye();
 
 	unsigned char init(HexBase* lowHexes);
-	unsigned char init(float r);
 	unsigned char init(float r, int NLevels);
 
 	unsigned char spawn();
-	unsigned char spawn(int NLevels);
 
 	void release();
 
@@ -67,6 +65,7 @@ protected:
 
 	unsigned char initLevels();
 	void          releaseLevels(s_hexEye& eye);
+	unsigned char initWithNLevels(int NLevels);
 	void initNode(s_fNode& h, int nd_i);
 	unsigned char genPatternsForLevels(s_hexPlate* levels);
 	int           collectNebIndexes(s_hexPlate& topLevel, int curTopIndex, s_2pt_i nebi[]);/*nebi has length of HEXEYE_MAXNEBINDXS */

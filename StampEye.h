@@ -7,7 +7,7 @@
 #endif
 
 #define STAMPEYEMINANGRAD 0.001f
-#define STAMPEYENUM 10
+#define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
 #define STAMPEYEMAXNUM 100
 
 struct s_eyeStamp {
@@ -24,8 +24,11 @@ public:
 
 	unsigned char init(
 		float numAngDiv = 12.f,
-		int smudgeNum = 10
+		int smudgeNum = 10,
+		float r=3.f,
+		HexBase* hexBase = NULL
 	);
+	void release();
 
 	unsigned char spawn();
 
@@ -35,6 +38,7 @@ protected:
 	/*owned*/
 	HexEye* m_eyeGen;
 	s_eyeStamp m_stamps[STAMPEYENUM];
+	int   m_eyes_stamped;
 
 	s_2pt m_circle_center;
 	float m_circle_radius;
@@ -48,7 +52,10 @@ protected:
 	s_2pt m_UrevBasis0;/*vectors that determine the rotation of the curent pattern*/
 	s_2pt m_UrevBasis1;
 
+	void clearEyeStamps();
 
+	unsigned char stampFullNewMoons();
+	unsigned char stampMoonEye(s_hexEye& seye, float o);
 
 	unsigned char stampRoundedCorners();
 	int stampRoundedCornersAtCenter(const s_2pt& corner_center, int eye_cnt, s_eyeStamp stamp[]);
@@ -65,7 +72,7 @@ protected:
 	bool isInRoundedCornerNoRot(const s_2pt& pt);
 	bool isInRoundedCorner(const s_2pt& pt);/*rotation right handed from x0 axis by angle rotAng in rad*/
 
-	bool incStampEyeNs();
+	bool incStampEyeNs(int start_i);
 };
 
 #endif
