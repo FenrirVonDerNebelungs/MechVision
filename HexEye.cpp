@@ -1,7 +1,7 @@
 #include "HexEye.h"
 
 HexEye::HexEye() :m_r(0.f), m_rs(0.f), m_R(0.f), m_Rs(0.f), 
-m_imgWidth(0), m_imgHeight(0), m_N_levels(0),
+m_imgWidth(0), m_imgHeight(0), m_N_levels(0), m_N_lowestNodePtrs(0),
 m_N_eyes(0)
 {
 	for (int i = 0; i < 6; i++) {
@@ -26,13 +26,15 @@ unsigned char HexEye::init(HexBase* lowHexes) {
 	m_imgWidth = lowHexes->getImg()->getWidth();
 	m_imgHeight = lowHexes->getImg()->getHeight();
 	m_N_levels = setRfromImg();
+	m_N_lowestNodePtrs = 7;
 	return ECODE_OK;
 }
 
-unsigned char HexEye::init(float r, int NLevels) {
+unsigned char HexEye::init(float r, int NLevels, int N_lowestNodePtrs) {
 	m_N_eyes = 0;
 	m_r = r;
 	m_rs = r * sqrt(3.f) / 2.f;
+	m_N_lowestNodePtrs = N_lowestNodePtrs;
 	setHexUs();
 	if (RetOk(initWithNLevels(NLevels))) {
 		m_imgHeight = (long)ceilf(m_R * 2.f);
@@ -125,6 +127,7 @@ unsigned char HexEye::initLevels() {
 	/*roughly calculated the number of hexes in a level from the total area*/
 	float radius = 0.f;
 	float cur_R = m_R;
+	int N=0;
 	for (int i = 0; i < m_N_levels; i++) {
 		m_eye[m_N_eyes].lev[i].m_Rhex = cur_R;
 		m_eye[m_N_eyes].lev[i].m_RShex = cur_R * sqrtf(3.f)/2.f;
@@ -137,7 +140,7 @@ unsigned char HexEye::initLevels() {
 		float rato = radius / cur_R;
 		float N_in_tri = rato * rato;
 		float N_min = 6.f * N_in_tri;
-		int N = (int)ceilf(N_min);
+		N = (int)ceilf(N_min);
 		m_eye[m_N_eyes].lev[i].m_fhex = new s_fNode[N];
 		for (int j = 0; j < N; j++) {
 			initNode(m_eye[m_N_eyes].lev[i].m_fhex[j], j);
@@ -145,6 +148,11 @@ unsigned char HexEye::initLevels() {
 		m_eye[m_N_eyes].lev[i].m_nHex = 0;
 
 		cur_R /= 2.f;
+	}
+	/*slightly messy way to do init, reset the down pointers for the final (most numerous 'lowest' level)*/
+	for (int i = 0; i < N; i++) {
+		m_eye[m_N_eyes].lev[m_N_levels - 1].m_fhex[i].releaseNodePtrs();
+		m_eye[m_N_eyes].lev[m_N_levels - 1].m_fhex[i].initNodePtrs(m_N_lowestNodePtrs);
 	}
 	return ECODE_OK;
 }
@@ -278,13 +286,18 @@ unsigned char HexEye::rootOn(s_hexEye& eye, s_hexPlate& lowHexes, long center_i)
 	int next_web_i = 3;
 	s_fNode* pat_nd = &(ehx[0]);
 	s_fNode* low_nd = &(fhx[center_i]);
+	bool fullRoot = true;
 	do {
 		pat_nd = runLine(pat_nd, low_nd, next_web_i);
 		if (pat_nd != NULL)
 			next_web_i = turnCorner(&pat_nd, &low_nd, 3, 0);
-		else
+		else {
+			next_web_i = -2;
 			break;
+		}
 	} while (next_web_i >= 0);
+	if (next_web_i < -1)
+		fullRoot = false;
 
 	next_web_i = 0;
 	pat_nd = &(ehx[0]);
@@ -293,10 +306,26 @@ unsigned char HexEye::rootOn(s_hexEye& eye, s_hexPlate& lowHexes, long center_i)
 		pat_nd = runLine(pat_nd, low_nd, next_web_i);
 		if (pat_nd != NULL)
 			turnCorner(&pat_nd, &low_nd, 0, 3);
-		else
+		else {
+			next_web_i = -2;
 			break;
+		}
 	} while (next_web_i >= 0);
 
+	if (next_web_i < -1 || !fullRoot)
+		return ECODE_ABORT;
+	return ECODE_OK;
+}
+unsigned char HexEye::rootOnDup(const s_hexEye& peye, s_hexEye& eye) {
+	int maxLev = peye.n - 1;
+	const s_hexPlate& oplate = peye.lev[maxLev];
+	s_hexPlate& nplate = eye.lev[maxLev];
+	for (int i = 0; i < oplate.m_nHex; i++) {
+		for (int j = 0; j < oplate.m_fhex[i].N; j++) {
+			nplate.m_fhex[i].nodes[j] = oplate.m_fhex[i].nodes[j];
+		}
+		nplate.m_fhex[i].N = oplate.m_fhex[i].N;
+	}
 	return ECODE_OK;
 }
 int HexEye::rotateCLK(s_fNode* pat_hex, int strt_i) {
@@ -321,11 +350,13 @@ int HexEye::rotateCCLK(s_fNode* pat_hex, int strt_i) {
 	s_fNode* ndPtr = NULL;
 	bool found = false;
 	/*rotate at end to swap back*/
-	for (int cnt = 0; cnt < 3; cnt++) {
-		web_i = strt_i + cnt;
+	for (int i = 0; i < 3; i++) {
+		web_i = strt_i + i;
 		/*only values for strt i will be 0 and 3 so don't need a check for >=6*/
-		ndPtr = (s_fNode*)pat_hex->thislink;
-		if (ndPtr !=NULL) {
+		if (web_i < 0)
+			web_i += 6;
+		ndPtr = (s_fNode*)pat_hex->web[web_i];
+		if (ndPtr != NULL) {
 			found = true;
 			break;
 		}
@@ -353,17 +384,17 @@ int HexEye::turnCorner(s_fNode** pat_node, s_fNode** low_hex, int fwd_web_i, int
 	if (next_web_i == fwd_web_i) {
 		next_web_i = rotateCLK(*pat_node, fwd_web_i);
 		if (next_web_i >= 0) {
-			*pat_node = (s_fNode*)(*pat_node)->nodes[next_web_i];
-			*low_hex = (s_fNode*)(*low_hex)->nodes[next_web_i];
-			next_web_i = ((*low_hex)!=NULL) ? 0 : -1;
+			*pat_node = (s_fNode*)(*pat_node)->web[next_web_i];
+			*low_hex = (s_fNode*)(*low_hex)->web[next_web_i];
+			next_web_i = ((*low_hex)!=NULL) ? 0 : -2;
 		}
 	}
 	if (next_web_i == rev_web_i) {
 		next_web_i = rotateCCLK(*pat_node, rev_web_i);
 		if (next_web_i >= 0) {
-			*pat_node = (s_fNode*)(*pat_node)->nodes[next_web_i];
-			*low_hex = (s_fNode*)(*low_hex)->nodes[next_web_i];
-			next_web_i = ((*low_hex)!=NULL) ? 3 : -1;
+			*pat_node = (s_fNode*)(*pat_node)->web[next_web_i];
+			*low_hex = (s_fNode*)(*low_hex)->web[next_web_i];
+			next_web_i = ((*low_hex)!=NULL) ? 3 : -2;
 		}
 	}
 	return next_web_i;

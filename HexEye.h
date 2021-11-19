@@ -30,11 +30,14 @@ public:
 	~HexEye();
 
 	unsigned char init(HexBase* lowHexes);
-	unsigned char init(float r, int NLevels);
+	unsigned char init(float r, int NLevels, int N_lowestNodePtrs=7);
 
 	unsigned char spawn();
 
 	void release();
+
+	unsigned char rootOn(s_hexEye& eye, s_hexPlate& lowHexes, long center_i);
+	unsigned char rootOnDup(const s_hexEye& peye, s_hexEye& eye);
 
 	inline s_fNode* getNodes(int ieye, int ilevel) { return m_eye[ieye].lev[ilevel].m_fhex; }
 	inline int getNHexes(int ieye, int ilevel) { return m_eye[ieye].lev[ilevel].m_nHex; }
@@ -52,6 +55,7 @@ protected:
 	long m_imgWidth;
 	long m_imgHeight;
 	int  m_N_levels;/*curent number of levels being used by this spawn*/
+	int  m_N_lowestNodePtrs;
 
 	s_2pt m_hexU[6];/*unit vectors down center of sides*/
 
@@ -73,7 +77,7 @@ protected:
 	unsigned char genLowerPattern(s_fNode* lhxs, float Rs, s_2pt& loc, s_2pt_i nebi[], int num_neb, int& indx);
 	unsigned char weaveRound(s_fNode& lhx);
 
-	unsigned char rootOn(s_hexEye& eye, s_hexPlate& lowHexes, long center_i);/*assumes the eye does not go off screen*/
+
 	int rotateCLK(s_fNode* pat_hex, int strt_i);
 	int rotateCCLK(s_fNode* pat_hex, int strt_i);
 	s_fNode* runLine(s_fNode* pat_hex, s_fNode* low_hex, int next_web_i);

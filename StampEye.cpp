@@ -28,7 +28,6 @@ unsigned char StampEye::init(
 	int smudgeNum,
 	float r,
 	HexBase* hexBase
-
 ) {
 	m_numAngDiv = numAngDiv;
 	m_smudgeNum = smudgeNum;
