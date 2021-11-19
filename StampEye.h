@@ -14,6 +14,7 @@ struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
 	s_hexEye* eyes[STAMPEYEMAXNUM];/*hex eyes that have been stamped*/
 	int n;/*number of eyes in stamp*/
+	float o;/*target value for NNet*/
 };
 
 /*this function generates dummy patterns that the NNet nodes at level 2 (0,1,2) will be trained on */

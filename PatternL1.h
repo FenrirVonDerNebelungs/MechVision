@@ -23,6 +23,8 @@ protected:
 	unsigned char fullyRoot(s_hexEye& e0, long i);
 	unsigned char evalAtRoot(long i_base);/*assumes that the NNet eyes have been fully rooted*/
 	float evalNet(s_hexEye& net);
+
+	float NNetFunc(float sum);
 };
 #endif
 unsigned char PatternL1::evalAtRoot(long i_base) {
@@ -35,13 +37,17 @@ unsigned char PatternL1::evalAtRoot(long i_base) {
 float PatternL1::evalNet(s_hexEye& net) {
 	/*net should have 2 levels level 0 top and level 1*/
 	s_hexPlate& l2p = net.lev[1];
+	s_hexPlate& l1p = net.lev[0];
+	float sum = 0.f;
 	for (int i = 0; i < l2p.m_nHex; i++) {
-		float sum = 0.f;
+		float sumHid = 0.f;
 		for (int j = 0; j < l2p.m_fhex[i].N; j++) {
-
-			sum += l2p.m_fhex[i].w[j] * l2p.m_fhex[i].nodes[j].o;
+			/*this goes over the lunas from the different plates connected to different nodes, for the same location*/
+			sumHid += l2p.m_fhex[i].w[j] * l2p.m_fhex[i].nodes[j]->o;
 		}
+		sum += NNetFunc(sumHid)*l1p.m_fhex[0].w[i]; /*the top level has only one node*/
 	}
+	return NNetFunc(sum);
 }
 unsigned char PatternL1::scan() {
 	s_hexPlate& p0 = m_L0Plates.p[0];
