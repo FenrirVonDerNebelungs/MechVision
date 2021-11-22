@@ -9,7 +9,7 @@
 #define LINEFINDERMAXLINES 500
 struct s_linePoint {
     int lunai;/*dominate maski at this point*/
-    int hexi;/*index of hex this point sits on*/
+    long hexi;/*index of hex this point sits on*/
     int linei;/*index of line in linefinder that this point belongs to*/
     s_2pt v;/*vector parallel to direction of line*/
     s_2pt perp;/*points from  low val to high*/
@@ -21,6 +21,11 @@ struct s_line {
     s_linePoint* pts;
     bool* f;
 };
+
+namespace n_line{
+    inline float dist(const s_linePoint& p1, const s_linePoint& p2) { return vecMath::dist(p1.loc, p2.loc); }
+    inline bool isIn(const s_linePoint& p1, const s_linePoint& p2, float d) { return d <= dist(p1, p2); }
+}
 
 class LineFinder : public Base 
 {
@@ -34,8 +39,7 @@ public:
         float mino = 0.1f,
         int minLineSegPts = 8,//6,
         int dLine = 1,//3,
-        float loopBackDist = 100.f,
-        int nloopBackScan = 5
+        long minMergeOverlap = 4
     );
     void release();
 
@@ -50,8 +54,9 @@ protected:
     float m_mino;/*min o to continue a line*/
     int   m_minLineSegPts;/*should be set to greater than three*/
     int   m_dLine;/*spacing between hexes for actual line saved needs to be at least 1*/
-    float m_loopBackDist;/*if points are closer than this distance near the end line is considered a loop back*/
-    int   m_nloopBackScan; /*number of final points to scan in loop back check*/
+
+    long  m_minMergeOverlap;/*minimum number of points a line must overlap another line before being considered for a merge*/
+
     long  m_numHex;/*Number of hexes on plate, maximum number of line points*/
 
     /*owned*/
@@ -93,6 +98,16 @@ protected:
  
 
     unsigned char setVectors(s_linePoint& prePt, s_linePoint& postPt, s_linePoint& pt);/*set vectors for point using pre & post info*/
+
+    /*merge functions for lines that may change luna*/
+    unsigned char mergeLunaLines();
+    bool doMergeLunaLines(const s_line& l, const s_line& c, int& l_i, int& c_i);
+    unsigned char mergeLunaLines(const s_line& l, const s_line& c, s_line& m);
+
+    unsigned char mergeLunaLinesForward(int l_i, int c_i, const s_line& l, const s_line& c, s_line& m);
+    unsigned char mergeLunaLineToTail(const s_line& m, const s_line& c, s_line& mm);
+
+    bool neb(const s_linePoint& p1, const s_linePoint& p2);
 };
 
 #endif

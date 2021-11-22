@@ -1,7 +1,11 @@
 #include "LineFinder.h"
 
+namespace n_line {
+
+}
+
 LineFinder::LineFinder() : m_minTrigo(0.f), m_mino(0.f), m_minLineSegPts(0), m_dLine(0),
-m_loopBackDist(0.f), m_nloopBackScan(0), m_numHex(0),
+m_minMergeOverlap(0), m_numHex(0),
 m_in_line(NULL), m_covered(NULL),
 m_n(0),
 m_lineSegR(NULL), m_numLineSegR(0), m_lineSegL(NULL), m_numLineSegL(0),
@@ -27,15 +31,14 @@ unsigned char LineFinder::init(
 	float mino,
 	int minLineSegPts,
 	int dLine,
-	float loopBackDist,
-	int nloopBackScan
+	long minMergeOverlap
 ) {
 	m_minTrigo = minTrigo;
 	m_mino = mino;
 	m_minLineSegPts = minLineSegPts;
 	m_dLine = dLine;
-	m_loopBackDist = loopBackDist;
-	m_nloopBackScan = nloopBackScan;
+	m_minMergeOverlap = minMergeOverlap;
+
 	if (plateLayer == NULL)
 		return ECODE_FAIL;
 	m_plateLayer = plateLayer;
@@ -282,4 +285,56 @@ unsigned char LineFinder::setVectors(s_linePoint& prePt, s_linePoint& postPt, s_
 	pt.perp = m_lunaVecPerp[pt.lunai];
 	pt.v = vecMath::perpUL(pt.perp);
 	return ECODE_OK;
+}
+bool LineFinder::doMergeLunaLines(const s_line& l, const s_line& c, int& cur_l_i, int& cur_c_i) {
+	int cnt_found = 0;
+	bool inc_prev = false;
+	bool cur_found=false;
+	cur_c_i = -1;
+	cur_l_i = -1;
+	bool isFound = false;
+	for (int l_i = 0; l_i < l.n; l_i++) {
+		int c_i = 0;
+		for ( ; c_i < c.n; c_i++) {
+			if (neb(l.pts[l_i], c.pts[c_i])) {
+				cur_found = true;
+				break;
+			}
+		}
+		if (cur_found) {
+			cnt_found++;
+			if (!inc_prev) {
+				cur_c_i = c_i;
+				cur_l_i = l_i;
+				inc_prev = true;
+			}
+			if (cnt_found >= m_minMergeOverlap) {
+				isFound = true;
+				break;
+			}
+		}
+		else if (inc_prev) {
+			cnt_found = 0;
+			inc_prev = false;
+		}
+		cur_found = false;
+	}
+	return isFound;
+}
+unsigned char LineFinder::mergeLunaLinesForward(int l_i, int c_i, const s_line& l, const s_line& c, s_line& m) {
+	int cur_c_i = c_i;
+	int cur_m_i = 0;
+	for (int i = l_i; i < l.n; i++) {
+
+	}
+}
+
+bool LineFinder::neb(const s_linePoint& p1, const s_linePoint& p2) {
+	long hi1 = p1.hexi;
+	long hi2 = p2.hexi;
+	/*all plate layers should have same structure as far as web*/
+	s_hexPlate& plate = m_plateLayer->p[0];
+	float Rs = plate.m_RShex;
+	float minDist = 3.f * Rs;
+	return n_line::isIn(p1, p2, minDist);
 }
