@@ -1,7 +1,21 @@
 #include "LineFinder.h"
 
 namespace n_line {
-
+	void copyPt(const s_linePoint& p1, s_linePoint& p2)
+	{
+		p2.o = p1.o;
+		p2.lunai = p1.lunai;
+		p2.hexi = p1.hexi;
+		p2.linei = p1.linei;
+		p2.v = p1.v;
+		p2.perp = p1.perp;
+		p2.loc = p1.loc;
+	}
+	void copyLines(const s_line& l1, s_line& l2) {
+		for (long i = 0; i < l1.n; i++) {
+			copyPt(l1.pts[i], l2.pts[i]);
+		}
+	}
 }
 
 LineFinder::LineFinder() : m_minTrigo(0.f), m_mino(0.f), m_minLineSegPts(0), m_dLine(0),
@@ -20,6 +34,11 @@ m_plateLayer(NULL)
 	m_scratchLine1.f = NULL;
 	m_scratchLine1.blacked = false;
 	for (int i = 0; i < LINEFINDERMAXLINES; i++) {
+		m_singLunaLines[i].n = 0;
+		m_singLunaLines[i].pts = NULL;
+		m_singLunaLines[i].f = NULL;
+		m_singLunaLines[i].blacked = false;
+
 		m_lines[i].n = 0;
 		m_lines[i].pts = NULL;
 		m_lines[i].f = NULL;
@@ -45,6 +64,7 @@ unsigned char LineFinder::init(
 	m_mino = mino;
 	m_minLineSegPts = minLineSegPts;
 	m_dLine = dLine;
+
 	m_minMergeOverlap = minMergeOverlap;
 	m_mergeOverlap = mergeOverlap;
 
@@ -52,6 +72,11 @@ unsigned char LineFinder::init(
 		return ECODE_FAIL;
 	m_plateLayer = plateLayer;
 	m_numHex = m_plateLayer->p[0].m_nHex;
+
+	/*all plate layers should have same structure as far as web*/
+	s_hexPlate& plate = m_plateLayer->p[0];
+	float Rs = plate.m_RShex;
+	m_maxNebDist = 3.f * Rs;
 
 	/*owned*/
 	m_covered = new bool[m_numHex];
@@ -62,6 +87,8 @@ unsigned char LineFinder::init(
 	}
 	m_n = 0;
 	for (int i = 0; i < LINEFINDERMAXLINES; i++) {
+		m_singLunaLines[i].n = 0;
+		m_singLunaLines[i].pts = new s_linePoint[m_numHex];
 		m_lines[i].n = 0;
 		m_lines[i].pts = new s_linePoint[m_numHex];
 	}
@@ -92,6 +119,11 @@ void LineFinder::release() {
 	m_lineSegR = NULL;
 
 	for (int i = 0; i < LINEFINDERMAXLINES; i++) {
+		if (m_singLunaLines[i].pts != NULL) {
+			delete[] m_singLunaLines[i].pts;
+		}
+		m_singLunaLines[i].pts = NULL;
+		m_singLunaLines[i].n = 0;
 		if (m_lines[i].pts != NULL) {
 			delete[] m_lines[i].pts;
 		}
@@ -112,6 +144,8 @@ void LineFinder::reset() {
 		m_in_line[i] = false;
 	}
 	for (int i = 0; i < m_n; i++) {
+		m_singLunaLines[i].n = 0;
+		m_singLunaLines[i].blacked = false;
 		m_lines[i].n = 0;
 		m_lines[i].blacked = false;
 	}
@@ -190,12 +224,17 @@ unsigned char LineFinder::spawnLine(int start_hexi, int& ret_hexi) {
 	if (m_numLineSegR + m_numLineSegL < m_minLineSegPts)
 		return ECODE_OK;/*ok line attempted was too short*/
 
+	/*
 	if (RetOk(mergeSegs(m_lineSegR, m_numLineSegR, m_lineSegL, m_numLineSegL, m_scratchLine))) {
 		retCode = formLine(m_scratchLine, m_lines[m_n]);
 		m_n++;
 	}
-	else
-		retCode = ECODE_FAIL;/*this shouldn't happen*/
+		else
+		retCode = ECODE_FAIL;this shouldn't happen
+	*/
+	if (Err(mergeSegs(m_lineSegR, m_numLineSegR, m_lineSegL, m_numLineSegL, m_singLunaLines[m_n])))
+		retCode = ECODE_FAIL;
+
 	return retCode;
 }
 int LineFinder::findLineStart(int start_hexi, int& lunaHighest, float& o) {
@@ -309,35 +348,27 @@ unsigned char LineFinder::setVectors(s_linePoint& prePt, s_linePoint& postPt, s_
 }
 unsigned char LineFinder::mergeLunaLines() {
 	for (int i = 0; i < m_n; i++) {
-		if (m_lines[i].blacked)
+		if (m_singLunaLines[i].blacked)
 			continue;
 		for (int j = i + 1; j < m_n; j++) {
-			if (m_lines[j].blacked)
+			if (m_singLunaLines[j].blacked)
 				continue;
 			long cur_l_i = 0;
 			long cur_c_i = 0;
-			if (doMergeLunaLines(m_lines[i], m_lines[j], cur_l_i, cur_c_i)) {
+			if (doMergeLunaLines(m_singLunaLines[i], m_singLunaLines[j], cur_l_i, cur_c_i)) {
 				bool selFirst = false;
-				unsigned char err = mergeLunaLinesForward(cur_l_i, cur_c_i, m_lines[i], m_lines[j], m_scratchLine, selFirst);
+				unsigned char err = mergeLunaLinesForward(cur_l_i, cur_c_i, m_singLunaLines[i], m_singLunaLines[j], m_scratchLine, selFirst);
 				if (selFirst) {
-					err = mergeLunaLineToTail(m_scratchLine, m_lines[i], cur_l_i, m_scratchLine1);
+					err = mergeLunaLineToTail(m_scratchLine, m_singLunaLines[i], cur_l_i, m_singLunaLines[i]);
 				}
 				else {
-					err = mergeLunaLineToTail(m_scratchLine, m_lines[j], cur_l_i, m_scratchLine1);
+					err = mergeLunaLineToTail(m_scratchLine, m_singLunaLines[j], cur_l_i, m_singLunaLines[i]);
 				}
-				m_lines[j].blacked = true;
-				/* 
-				...
-				copy scratchline1 into m_lines[i]
-				*/
+				m_singLunaLines[j].blacked = true;
 			}
 		}
 	}
-	/*
-	* ..
-	* need to keep running over the merged lines again, probably convert the above into merge pass function
-	
-	*/
+	return ECODE_OK;
 }
 bool LineFinder::doMergeLunaLines(const s_line& l, const s_line& c, long& cur_l_i, long& cur_c_i) {
 	int cnt_found = 0;
@@ -377,10 +408,10 @@ unsigned char LineFinder::mergeLunaLinesForward(int l_i, int c_i, const s_line& 
 		l_val_sum += l.pts[l_i].o;
 		if (neb(l.pts[i], c.pts[cur_c_i])) {
 			if (l.pts[i].o >= c.pts[cur_c_i].o) {
-				copyPt(l.pts[i], m.pts[cur_m_i]);
+				n_line::copyPt(l.pts[i], m.pts[cur_m_i]);
 			}
 			else
-				copyPt(c.pts[cur_c_i], m.pts[cur_m_i]);
+				n_line::copyPt(c.pts[cur_c_i], m.pts[cur_m_i]);
 			cur_m_i++;
 			cur_c_i++;
 			if (cur_c_i >= c.n)
@@ -402,13 +433,13 @@ unsigned char LineFinder::mergeLunaLinesForward(int l_i, int c_i, const s_line& 
 		/*for loop ends before inc*/
 		i++;
 		for (; i < l.n; i++) {
-			copyPt(l.pts[i], m.pts[cur_m_i]);
+			n_line::copyPt(l.pts[i], m.pts[cur_m_i]);
 			cur_m_i++;
 		}
 	}
 	else {
 		for (; cur_c_i < c.n; cur_c_i++) {
-			copyPt(c.pts[cur_c_i], m.pts[cur_m_i]);
+			n_line::copyPt(c.pts[cur_c_i], m.pts[cur_m_i]);
 			cur_m_i++;
 		}
 	}
@@ -418,11 +449,11 @@ unsigned char LineFinder::mergeLunaLinesForward(int l_i, int c_i, const s_line& 
 unsigned char LineFinder::mergeLunaLineToTail(const s_line& m, const s_line& c, long c_i, s_line& mm) {
 	long cur_mm_i = 0;
 	for (long i = 0; i < c_i; i++) {
-		copyPt(c.pts[i], mm.pts[cur_mm_i]);
+		n_line::copyPt(c.pts[i], mm.pts[cur_mm_i]);
 		cur_mm_i++;
 	}
 	for (long i = 0; i < m.n; i++) {
-		copyPt(m.pts[i], mm.pts[cur_mm_i]);
+		n_line::copyPt(m.pts[i], mm.pts[cur_mm_i]);
 		cur_mm_i++;
 	}
 	mm.n = cur_mm_i;
@@ -430,11 +461,9 @@ unsigned char LineFinder::mergeLunaLineToTail(const s_line& m, const s_line& c, 
 }
 
 bool LineFinder::neb(const s_linePoint& p1, const s_linePoint& p2) {
-	long hi1 = p1.hexi;
-	long hi2 = p2.hexi;
-	/*all plate layers should have same structure as far as web*/
-	s_hexPlate& plate = m_plateLayer->p[0];
-	float Rs = plate.m_RShex;
-	float minDist = 3.f * Rs;
-	return n_line::isIn(p1, p2, minDist);
+	return n_line::isIn(p1, p2, m_maxNebDist);
+}
+bool LineFinder::overlapPts(const s_linePoint& p1, const s_linePoint& p2) {
+	float Rs = m_plateLayer->p[0].m_RShex;
+	return n_line::isIn(p1, p2, Rs);
 }

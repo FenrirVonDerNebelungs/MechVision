@@ -27,6 +27,8 @@ struct s_line {
 namespace n_line{
     inline float dist(const s_linePoint& p1, const s_linePoint& p2) { return vecMath::dist(p1.loc, p2.loc); }
     inline bool isIn(const s_linePoint& p1, const s_linePoint& p2, float d) { return d <= dist(p1, p2); }
+    void copyPt(const s_linePoint& p1, s_linePoint& p2);
+    void copyLines(const s_line& l1, s_line& l2);
 }
 
 class LineFinder : public Base 
@@ -58,6 +60,7 @@ protected:
     int   m_minLineSegPts;/*should be set to greater than three*/
     int   m_dLine;/*spacing between hexes for actual line saved needs to be at least 1*/
 
+    float  m_maxNebDist;/*max distance points may be apart to be considered for merge neighbors*/
     long   m_minMergeOverlap;/*min number of points that lines must overlap to try to merge*/
     float  m_mergeOverlap;/*merge overlap needed to consider both lines the same*/
 
@@ -66,6 +69,7 @@ protected:
     /*owned*/
     bool* m_in_line;/*points are in line and should not be added to line during search along line*/
     bool* m_covered;/*mask over hexes line & surrounding that should not be used to start line search again*/
+    s_line       m_singLunaLines[LINEFINDERMAXLINES];
     s_line       m_lines[LINEFINDERMAXLINES];
     int          m_n;
     /*owned scratch*/
@@ -113,7 +117,7 @@ protected:
 
     bool neb(const s_linePoint& p1, const s_linePoint& p2);
     bool overlapPts(const s_linePoint& p1, const s_linePoint& p2);
-    void copyPt(const s_linePoint& p1, s_linePoint& p2);
+ 
 };
 
 #endif
