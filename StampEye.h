@@ -12,7 +12,7 @@
 
 struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
-	s_hexEye* eyes[STAMPEYEMAXNUM];/*hex eyes that have been stamped*/
+	s_hexEye* eyes[STAMPEYEMAXNUM];/*hex eyes that have been stamped, generally the eyes are NOT OWNED by the s_eyeStamp*/
 	int n;/*number of eyes in stamp*/
 	float o;/*target value for NNet*/
 };
@@ -33,6 +33,8 @@ public:
 
 	unsigned char spawn();
 
+	inline s_eyeStamp* getEyeStamps() { return m_stamps; }
+	inline int numEyeStamps() { return m_eyes_stamped; }
 protected:
 	float  m_numAngDiv;
 	int    m_smudgeNum;/*number of division over which the corner is smudged*/

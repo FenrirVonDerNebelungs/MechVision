@@ -8,6 +8,7 @@
 
 #define LINEFINDERMAXLINES 500
 struct s_linePoint {
+    float o;
     int lunai;/*dominate maski at this point*/
     long hexi;/*index of hex this point sits on*/
     int linei;/*index of line in linefinder that this point belongs to*/
@@ -20,6 +21,7 @@ struct s_line {
     int n;
     s_linePoint* pts;
     bool* f;
+    bool blacked;
 };
 
 namespace n_line{
@@ -39,7 +41,8 @@ public:
         float mino = 0.1f,
         int minLineSegPts = 8,//6,
         int dLine = 1,//3,
-        long minMergeOverlap = 4
+        long minMergeOverlap = 10,
+        float mergeOverlap = 0.6 /*how much merge overlap before one of the lines is removed*/
     );
     void release();
 
@@ -55,7 +58,8 @@ protected:
     int   m_minLineSegPts;/*should be set to greater than three*/
     int   m_dLine;/*spacing between hexes for actual line saved needs to be at least 1*/
 
-    long  m_minMergeOverlap;/*minimum number of points a line must overlap another line before being considered for a merge*/
+    long   m_minMergeOverlap;/*min number of points that lines must overlap to try to merge*/
+    float  m_mergeOverlap;/*merge overlap needed to consider both lines the same*/
 
     long  m_numHex;/*Number of hexes on plate, maximum number of line points*/
 
@@ -70,6 +74,7 @@ protected:
     s_linePoint* m_lineSegL;
     int m_numLineSegL;
     s_line m_scratchLine;
+    s_line m_scratchLine1;
     /*             */
     /*not owned*/
     s_PlateLayer* m_plateLayer;
@@ -86,10 +91,10 @@ protected:
     void reset();
     unsigned char spawnLine(int start_hexi, int& ret_hexi);
 
-    int findLineStart(int start_hexi, int& lunaHighest);
-    unsigned char addLinePoint(int lunai, int hexi, s_linePoint linePts[], int& nPts);
+    int findLineStart(int start_hexi, int& lunaHighest, float& o);
+    unsigned char addLinePoint(int lunai, int hexi, float o, s_linePoint linePts[], int& nPts);
 
-    unsigned char scanNextLink(int webCircleStart_i, long  hex_i, int lunai, int& retHexi, int& retlunai);
+    unsigned char scanNextLink(int webCircleStart_i, long  hex_i, int lunai, int& retHexi, int& retlunai, float& o);
     inline void blackout(long hex_i) { m_in_line[hex_i] = true; }
     unsigned char blackoutSurrounding(long hex_i);
 
@@ -100,14 +105,15 @@ protected:
     unsigned char setVectors(s_linePoint& prePt, s_linePoint& postPt, s_linePoint& pt);/*set vectors for point using pre & post info*/
 
     /*merge functions for lines that may change luna*/
-    unsigned char mergeLunaLines();
-    bool doMergeLunaLines(const s_line& l, const s_line& c, int& l_i, int& c_i);
-    unsigned char mergeLunaLines(const s_line& l, const s_line& c, s_line& m);
+    unsigned char mergeLunaLines();/*this should be run on the lines before they are spaced out*/
+    bool doMergeLunaLines(const s_line& l, const s_line& c, long& l_i, long& c_i);
 
-    unsigned char mergeLunaLinesForward(int l_i, int c_i, const s_line& l, const s_line& c, s_line& m);
-    unsigned char mergeLunaLineToTail(const s_line& m, const s_line& c, s_line& mm);
+    unsigned char mergeLunaLinesForward(int l_i, int c_i, const s_line& l, const s_line& c, s_line& m, bool& selFirst);
+    unsigned char mergeLunaLineToTail(const s_line& m, const s_line& c, long c_i, s_line& mm);
 
     bool neb(const s_linePoint& p1, const s_linePoint& p2);
+    bool overlapPts(const s_linePoint& p1, const s_linePoint& p2);
+    void copyPt(const s_linePoint& p1, s_linePoint& p2);
 };
 
 #endif

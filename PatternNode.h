@@ -58,6 +58,7 @@ public:
 	s_bNode** nodes;/*lower nodes that nodes that are pointed to are assumed not to be owned however the array is owned*/
 	float* w;/*weights of each lower node the array is owned*/
 	int N;/*number of lower nodes*/
+	float b;/*offset used by nnets*/
 };
 
 class s_tNode : public s_bNode {/*trace node*/
@@ -114,6 +115,14 @@ namespace PatStruct{
 												so that the nodes in this case point to the surroundign 6 web of 
 												s_fnodes instead of pointing downward */
 	void hexPlateReleaseWeb(s_hexPlate& plate);
+	void getLayerUp(const s_hexPlate& plate0, s_hexPlate& plate1);
+	long rotateCK2(const s_hexPlate& plate0, long i, int web_strt);
+	long rotateCCK2(const s_hexPlate& plate0, long i, int web_strt);
+	void webLinkInLine(const s_hexPlate& plate0, s_hexPlate& plate1);
+	bool findLeftNOneUp(const s_hexPlate& plate, long& i0, long& i1);
+	bool findWeaveStart(const s_hexPlate& plate0, const s_hexPlate& plate1, int weave_dir, long& i0, long& i1);
+	void weaveAdjRows(const s_hexPlate& plate0, s_hexPlate& plate1, int weave_dir, long& i0, long& i1);
+	bool weaveRows(const s_hexPlate& plate0, s_hexPlate& plate1);
 }
 
 #endif

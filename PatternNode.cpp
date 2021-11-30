@@ -15,6 +15,7 @@ void s_fNode::zero()
 	nodes = NULL;
 	w = NULL;
 	N = 0;
+	b = 0.f;
 	s_bNode::zero(); 
 }
 
@@ -121,13 +122,19 @@ namespace PatStruct {
 	void hexPlateConnectWeb(s_hexPlate& plate) {
 		for (long i = 0; i < plate.m_nHex; i++) {
 			plate.m_fhex[i].nodes = new s_bNode * [6];
+			plate.m_fhex[i].web = new s_bNode * [6];
 			plate.m_fhex[i].N = 6;
+			plate.m_fhex[i].Nweb = 6;
 			for (int j = 0; j < 6; j++) {
 				int curwebhex_i = plate.m_fhex[i].shex->web[j];
-				if (curwebhex_i >= 0)
+				if (curwebhex_i >= 0) {
 					plate.m_fhex[i].nodes[j] = (s_bNode*)&(plate.m_fhex[curwebhex_i]);
-				else
+					plate.m_fhex[i].web[j] = (s_bNode*)&(plate.m_fhex[curwebhex_i]);
+				}
+				else {
 					plate.m_fhex[i].nodes[j] = NULL;
+					plate.m_fhex[i].web[j] = NULL;
+				}
 			}
 		}
 	}
@@ -136,6 +143,214 @@ namespace PatStruct {
 			if (plate.m_fhex[i].nodes != NULL)
 				delete[] plate.m_fhex[i].nodes;
 			plate.m_fhex[i].nodes = NULL;
+			if (plate.m_fhex[i].web != NULL)
+				delete[] plate.m_fhex[i].web;
+			plate.m_fhex[i].web = NULL;
 		}
+	}
+
+	void getLayerUp(const s_hexPlate& plate0, s_hexPlate& plate1) {
+		plate1.m_Rhex = 2.f * plate0.m_Rhex;
+		plate1.m_RShex = 2.f * plate0.m_RShex;
+		plate1.m_Shex = 2.f * plate0.m_Shex;
+		for (int i = 0; i < 6; i++)
+			plate1.m_hexU[i] = plate0.m_hexU[i];
+		plate1.m_nHex = 0;
+		long numNewNodes = plate0.m_nHex / 4 + 1;
+		plate1.m_fhex = new s_fNode[numNewNodes];
+		for (long i = 0; i < numNewNodes; i++) {
+			plate1.m_fhex[i].initNodePtrs(7);
+			plate1.m_fhex[i].initWebPtrs(6);
+		}
+		int web_dir = 0;
+		long i;
+		do{
+			/*check if this hex has all 6 connections*/
+			bool conn = true;
+			for (int web_i = 0; web_i < 6; web_i++) {
+				if (plate0.m_fhex[i].web[web_i] == NULL) {
+					conn = false;
+					break;
+				}
+			}
+			if (conn) {
+				/*following what is done for the eye the center is at zero then the surroundings are 1->7*/
+				plate1.m_fhex[plate1.m_nHex].nodes[0] = (s_bNode*)&(plate0.m_fhex[i]);
+				for (int web_i = 0; web_i < 6; web_i++) {
+					plate1.m_fhex[plate1.m_nHex].nodes[1 + web_i] = plate0.m_fhex[i].web[web_i];
+				}
+				plate1.m_fhex[plate1.m_nHex].thislink = plate1.m_nHex;
+				plate1.m_fhex[plate1.m_nHex].x = plate0.m_fhex[i].x;
+				plate1.m_fhex[plate1.m_nHex].y = plate0.m_fhex[i].y;
+				plate1.m_nHex++;
+				/*try to go 2 over in the current web direction*/
+				s_fNode* oneOver = (s_fNode*)plate0.m_fhex[i].web[web_dir];
+				/*know one over not null since already checked*/
+				s_fNode* twoOver = (s_fNode*)oneOver->web[web_dir];
+				if (twoOver != NULL) {
+					i = twoOver->thislink;
+				}
+				else {
+					long skip_line_i = -1;
+					if (web_dir == 0)
+						skip_line_i = rotateCCK2(plate0, i, web_dir);
+					else
+						skip_line_i = rotateCK2(plate0, i, web_dir);
+					if (skip_line_i >= 0) {
+						int new_web_dir = (web_dir == 0) ? 3 : 0;
+						web_dir = new_web_dir;
+						i = skip_line_i;
+					}
+					else
+						break;
+				}
+			}
+			else
+				i++;
+		} while (i < plate0.m_nHex);
+		webLinkInLine(plate0, plate1);
+		weaveRows(plate0, plate1);
+	}
+	void webLinkInLine(const s_hexPlate& plate0, s_hexPlate& plate1) {
+		int web_dir = 0;
+		int web_dir_op = 3;
+		for (long i; i < (plate1.m_nHex-1); i++) {
+			long lowMid_i = plate1.m_fhex[i].nodes[web_dir]->thislink;
+			long backLowMid_i = plate1.m_fhex[i+1].nodes[web_dir_op]->thislink;
+			if (lowMid_i == backLowMid_i) {
+				plate1.m_fhex[i].web[web_dir] = (s_bNode*)&(plate1.m_fhex[i + 1]);
+				plate1.m_fhex[i + 1].web[web_dir_op] = (s_bNode*)&(plate1.m_fhex[i]);
+			}
+			else {
+				int hold_web_dir = web_dir;
+				web_dir = web_dir_op;
+				web_dir_op = hold_web_dir;
+			}
+		}
+	}
+	bool weaveRows(const s_hexPlate& plate0, s_hexPlate& plate1) {
+		long i0 = 0;
+		long i1 = 1;
+		do {
+			if (!findLeftNOneUp(plate1, i0, i1))
+				return false;
+			int weave_dir = 1;
+			long wi0 = i0;
+			long wi1 = i1;
+			findWeaveStart(plate0, plate1, weave_dir, wi0, wi1);
+			int hiw1 = wi1;
+			weaveAdjRows(plate0, plate1, weave_dir, wi0, wi1);
+			weave_dir = 2;
+			wi0 = i0;
+			wi1 = i1;
+			findWeaveStart(plate0, plate1, weave_dir, wi0, wi1);
+			if (wi1 > hiw1)
+				hiw1 = wi1;
+			weaveAdjRows(plate0, plate1, weave_dir, wi0, wi1);
+			i0 = i1;
+			i1 = hiw1 + 1;
+		} while (i1 < plate1.m_nHex);
+		return true;
+	}
+	bool findLeftNOneUp(const s_hexPlate& plate, long& i0, long& i1) {
+		long i0_cur = i0;
+		bool foundendleft = false;
+		for (long ii0 = i0; ii0 >= 0; ii0--) {
+			if (plate.m_fhex->web[3] == NULL) {
+				foundendleft = true;
+				i0_cur = ii0;
+				break;
+			}
+		}
+		if (!foundendleft)
+			return false;
+		i0 = i0_cur;
+		long next_i0 = i0_cur + 1;
+		long i1_start = (i1 >= next_i0) ? i1 : next_i0;
+		foundendleft = false;
+		for (long i = i1_start; i < plate.m_nHex; i++) {
+			if (plate.m_fhex->web[3] == NULL) {
+				foundendleft = true;
+				i1 = i;
+				break;
+			}
+		}
+		return foundendleft;
+	}
+	bool findWeaveStart(const s_hexPlate& plate0, const s_hexPlate& plate1, int weave_dir, long& i0, long& i1) {
+		bool foundstart = false;
+		/*do weave slanted from bottom to right*/
+		int weave_i = weave_dir;
+		int weave_op = Math::loop(weave_i + 3, 6);
+		/*find first upper index that can match this weave*/
+		s_fNode* overlapNd = (s_fNode*)plate1.m_fhex[i0].nodes[weave_i];
+		for (long i = i1; i < 2; i++) {
+			/*this should end way before m_nHex*/
+			s_fNode* overlapNd1 = (s_fNode*)plate1.m_fhex[i1].nodes[weave_op];
+			if (overlapNd->thislink == overlapNd1->thislink) {
+				i1 = i;
+				foundstart = true;
+				break;
+			}
+		}
+		overlapNd = (s_fNode*)plate1.m_fhex[i1].nodes[weave_op];
+		for (long i = i0; i < 2; i++) {
+			/*this should end way before m_nHex*/
+			s_fNode* overlapNd0 = (s_fNode*)plate1.m_fhex[i0].nodes[weave_i];
+			if (overlapNd->thislink == overlapNd0->thislink) {
+				i0 = i;
+				foundstart = true;
+				break;
+			}
+		}
+		return foundstart;
+	}
+	void weaveAdjRows(const s_hexPlate& plate0, s_hexPlate& plate1, int weave_dir, long& i0, long& i1) {
+		int weave_op = Math::loop(weave_dir + 3, 6);
+		long i_top = i1;
+		long i_bot = i0;
+		s_fNode* nextTopNd = NULL;
+		s_fNode* nextBotNd = NULL;
+		do {
+			plate1.m_fhex[i_bot].web[weave_dir] = (s_bNode*)&(plate1.m_fhex[i_top]);
+			plate1.m_fhex[i_top].web[weave_op] = (s_bNode*)&(plate1.m_fhex[i_bot]);
+			nextTopNd = (s_fNode*)plate1.m_fhex[i_top].web[0];
+			nextBotNd = (s_fNode*)plate1.m_fhex[i_bot].web[0];
+			i1 = i_top;
+			i0 = i_bot;
+			i_top--;
+			i_bot++;
+		} while (nextBotNd != NULL && nextTopNd!=NULL);
+
+	}
+	long rotateCCK2(const s_hexPlate& plate0, long i, int web_strt) {
+		long nd_i = -1;
+		for (int i = 0; i < 3; i++) {
+			int web_i = Math::loop(web_strt + i, 6);
+			s_fNode* nextNd = (s_fNode*)plate0.m_fhex[i].web[web_i];
+			if (nextNd != NULL) {
+				s_fNode* nextNextNd = (s_fNode*)nextNd->web[web_i];
+				if (nextNextNd != NULL) {
+					nd_i = nextNextNd->thislink;
+					break;
+				}
+			}
+		}
+		return nd_i;
+	}
+	long rotateCK2(const s_hexPlate& plate0, long i, int web_strt) {
+		long nd_i = -1;
+		for (int i = 0; i < 3; i++) {
+			int web_i = Math::loop(web_strt - i, 6);
+			s_fNode* nextNd = (s_fNode*)plate0.m_fhex[i].web[web_i];
+			if (nextNd != NULL) {
+				s_fNode* nextNextNd = (s_fNode*)nextNd->web[web_i];
+				if (nextNextNd != NULL) {
+					nd_i = nextNextNd->thislink;
+					break;
+				}
+			}
+		}
+		return nd_i;
 	}
 }

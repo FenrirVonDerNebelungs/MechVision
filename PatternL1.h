@@ -9,7 +9,7 @@
 class PatternL1 : public Base {
 public:
 
-
+	unsigned char init(s_PlateLayer& lunaPlates);
 protected:
 	/*not owned*/
 	HexEye*   m_NNetEyes;/*trained NNets that are set to search for each of the STAMPEYENUM stamps*/
@@ -24,7 +24,7 @@ protected:
 	unsigned char evalAtRoot(long i_base);/*assumes that the NNet eyes have been fully rooted*/
 	float evalNet(s_hexEye& net);
 
-	float NNetFunc(float sum);
+	inline float NNetFunc(float sum) { return Math::StepFuncSym(sum); }
 };
 #endif
 unsigned char PatternL1::evalAtRoot(long i_base) {

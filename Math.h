@@ -36,6 +36,10 @@ namespace utilStruct {
 }
 namespace Math {
 	float StepFunc(float x);/* 1/(1+exp(-x))  takes an x value and returns a step function where - x goes to 0, 0 goes to 1/2 and +x goes to 1*/
+	inline float StepFuncSym(float x) { return tanhf(x); }/* hyper bolic tangent function (exp(x) - exp(-x))/(exp(x) + exp(-x)) 0 at 0, -1 at neg inf reached close to 2, symetric pos 1 at pos inf*/
+	inline float DStepFuncSym(float x) {
+		float t = tanhf(x); return 1.f - t * t;
+	}/* derivitave of tanhf with respect to x is 1-tanhf^2(x)*/
 	int loop(int i, int n);
 	float power(float x, int y);
 }
