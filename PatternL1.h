@@ -1,10 +1,12 @@
 #pragma once
 #ifndef PATTERNL1_H
-#define PaTTERNL1_H
+#define PATTERNL1_H
 
 #ifndef STAMPEYE_H
 #include "StampEye.h"
 #endif
+
+#define PATTERNL1L0WNUM 7
 
 class PatternL1 : public Base {
 public:
@@ -20,6 +22,7 @@ protected:
 	/*     */
 	
 	unsigned char scan();
+	unsigned char updateL0();
 	unsigned char fullyRoot(s_hexEye& e0, long i);
 	unsigned char evalAtRoot(long i_base);/*assumes that the NNet eyes have been fully rooted*/
 	float evalNet(s_hexEye& net);
@@ -49,7 +52,22 @@ float PatternL1::evalNet(s_hexEye& net) {
 	}
 	return NNetFunc(sum);
 }
+unsigned char PatternL1::updateL0() {
+	for (long i = 0; i < m_L0Plates.n; i++) {
+		s_hexPlate& curPlate = m_L0Plates.p[i];
+		for (long hex_i = 0; hex_i < m_L0Plates.p[i].m_nHex; hex_i++) {
+			s_fNode& curNode = curPlate.m_fhex[hex_i];
+			/*ave over all the input luna  values*/
+			float ave_o = 0.f;
+			for (long w_i = 0; w_i < PATTERNL1L0WNUM; w_i++)
+				ave_o += curNode.w[w_i] * curNode.nodes[w_i]->o;
+			curNode.o = ave_o;
+		}
+	}
+	return ECODE_OK;
+}
 unsigned char PatternL1::scan() {
+	updateL0();
 	s_hexPlate& p0 = m_L0Plates.p[0];
 	s_hexEye& e0 = m_NNetEyes->getEye(0);
 	for (long i = 0; i < p0.m_nHex; i++) {

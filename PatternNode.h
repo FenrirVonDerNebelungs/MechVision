@@ -115,6 +115,8 @@ namespace PatStruct{
 												so that the nodes in this case point to the surroundign 6 web of 
 												s_fnodes instead of pointing downward */
 	void hexPlateReleaseWeb(s_hexPlate& plate);
+
+
 	void getLayerUp(const s_hexPlate& plate0, s_hexPlate& plate1);
 	long rotateCK2(const s_hexPlate& plate0, long i, int web_strt);
 	long rotateCCK2(const s_hexPlate& plate0, long i, int web_strt);
@@ -123,6 +125,8 @@ namespace PatStruct{
 	bool findWeaveStart(const s_hexPlate& plate0, const s_hexPlate& plate1, int weave_dir, long& i0, long& i1);
 	void weaveAdjRows(const s_hexPlate& plate0, s_hexPlate& plate1, int weave_dir, long& i0, long& i1);
 	bool weaveRows(const s_hexPlate& plate0, s_hexPlate& plate1);
+
+	void copyPlateWSameWeb(const s_hexPlate& plate0, s_hexPlate& plate1);
 }
 
 #endif
