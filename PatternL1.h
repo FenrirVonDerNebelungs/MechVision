@@ -9,7 +9,7 @@
 class PatternL1 : public Base {
 public:
 
-	unsigned char init(s_PlateLayer& lunaPlates);
+	unsigned char init(s_PlateLayer& lunaPlates, HexEye NNetEyes[], int NNets);
 protected:
 	/*not owned*/
 	HexEye*   m_NNetEyes;/*trained NNets that are set to search for each of the STAMPEYENUM stamps*/

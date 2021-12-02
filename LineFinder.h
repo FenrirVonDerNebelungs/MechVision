@@ -43,6 +43,7 @@ public:
         float mino = 0.1f,
         int minLineSegPts = 8,//6,
         int dLine = 1,//3,
+        float maxNebDistFac = 3.f,
         long minMergeOverlap = 10,
         float mergeOverlap = 0.6 /*how much merge overlap before one of the lines is removed*/
     );

@@ -19,7 +19,7 @@ namespace n_line {
 }
 
 LineFinder::LineFinder() : m_minTrigo(0.f), m_mino(0.f), m_minLineSegPts(0), m_dLine(0),
-m_minMergeOverlap(0), m_mergeOverlap(0), m_numHex(0),
+m_maxNebDist(0.f), m_minMergeOverlap(0), m_mergeOverlap(0.f), m_numHex(0),
 m_in_line(NULL), m_covered(NULL),
 m_n(0),
 m_lineSegR(NULL), m_numLineSegR(0), m_lineSegL(NULL), m_numLineSegL(0),
@@ -57,6 +57,7 @@ unsigned char LineFinder::init(
 	float mino,
 	int minLineSegPts,
 	int dLine,
+	float maxNebDistFac,
 	long minMergeOverlap,
 	float mergeOverlap
 ) {
@@ -76,7 +77,7 @@ unsigned char LineFinder::init(
 	/*all plate layers should have same structure as far as web*/
 	s_hexPlate& plate = m_plateLayer->p[0];
 	float Rs = plate.m_RShex;
-	m_maxNebDist = 3.f * Rs;
+	m_maxNebDist = maxNebDistFac * Rs;
 
 	/*owned*/
 	m_covered = new bool[m_numHex];
@@ -359,7 +360,8 @@ unsigned char LineFinder::mergeLunaLines() {
 				bool selFirst = false;
 				unsigned char err = mergeLunaLinesForward(cur_l_i, cur_c_i, m_singLunaLines[i], m_singLunaLines[j], m_scratchLine, selFirst);
 				if (selFirst) {
-					err = mergeLunaLineToTail(m_scratchLine, m_singLunaLines[i], cur_l_i, m_singLunaLines[i]);
+					err = mergeLunaLineToTail(m_scratchLine, m_singLunaLines[i], cur_l_i, m_scratchLine1);
+					n_line::copyLines(m_scratchLine1, m_singLunaLines[i]);
 				}
 				else {
 					err = mergeLunaLineToTail(m_scratchLine, m_singLunaLines[j], cur_l_i, m_singLunaLines[i]);
@@ -459,7 +461,6 @@ unsigned char LineFinder::mergeLunaLineToTail(const s_line& m, const s_line& c, 
 	mm.n = cur_mm_i;
 	return ECODE_OK;
 }
-
 bool LineFinder::neb(const s_linePoint& p1, const s_linePoint& p2) {
 	return n_line::isIn(p1, p2, m_maxNebDist);
 }
