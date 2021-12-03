@@ -117,7 +117,8 @@ namespace PatStruct{
 	void hexPlateReleaseWeb(s_hexPlate& plate);
 
 
-	void getLayerUp(const s_hexPlate& plate0, s_hexPlate& plate1);
+	void genLayerUp(const s_hexPlate& plate0, s_hexPlate& plate1);
+	void releaseLayerUp(s_hexPlate& plate);
 	long rotateCK2(const s_hexPlate& plate0, long i, int web_strt);
 	long rotateCCK2(const s_hexPlate& plate0, long i, int web_strt);
 	void webLinkInLine(const s_hexPlate& plate0, s_hexPlate& plate1);
@@ -126,7 +127,8 @@ namespace PatStruct{
 	void weaveAdjRows(const s_hexPlate& plate0, s_hexPlate& plate1, int weave_dir, long& i0, long& i1);
 	bool weaveRows(const s_hexPlate& plate0, s_hexPlate& plate1);
 
-	void copyPlateWSameWeb(const s_hexPlate& plate0, s_hexPlate& plate1);
+	void genPlateWSameWeb(const s_hexPlate& plate0, s_hexPlate& plate1);
+	void releasePlateWSameWeb(s_hexPlate& plate);
 }
 
 #endif

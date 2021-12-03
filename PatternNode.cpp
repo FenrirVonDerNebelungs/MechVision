@@ -3,7 +3,7 @@
 s_bNode::s_bNode() :o(0.f), thislink(-1) { ; }
 s_bNode::~s_bNode() { ; }
 
-s_fNode::s_fNode() : shex(NULL), x(0.f), y(0.f), Nweb(0), web(NULL), nodes(NULL), w(NULL), N(0) { ; }
+s_fNode::s_fNode() : shex(NULL), x(0.f), y(0.f), Nweb(0), web(NULL), nodes(NULL), w(NULL), N(0), b(0.f) { ; }
 s_fNode::~s_fNode() { ; }
 void s_fNode::zero()
 { 
@@ -149,7 +149,7 @@ namespace PatStruct {
 		}
 	}
 
-	void getLayerUp(const s_hexPlate& plate0, s_hexPlate& plate1) {
+	void genLayerUp(const s_hexPlate& plate0, s_hexPlate& plate1) {
 		plate1.m_Rhex = 2.f * plate0.m_Rhex;
 		plate1.m_RShex = 2.f * plate0.m_RShex;
 		plate1.m_Shex = 2.f * plate0.m_Shex;
@@ -211,10 +211,13 @@ namespace PatStruct {
 		webLinkInLine(plate0, plate1);
 		weaveRows(plate0, plate1);
 	}
+	void releaseLayerUp(s_hexPlate& plate) {
+		;
+	}
 	void webLinkInLine(const s_hexPlate& plate0, s_hexPlate& plate1) {
 		int web_dir = 0;
 		int web_dir_op = 3;
-		for (long i; i < (plate1.m_nHex-1); i++) {
+		for (long i=0; i < (plate1.m_nHex-1); i++) {
 			long lowMid_i = plate1.m_fhex[i].nodes[web_dir]->thislink;
 			long backLowMid_i = plate1.m_fhex[i+1].nodes[web_dir_op]->thislink;
 			if (lowMid_i == backLowMid_i) {
@@ -352,5 +355,46 @@ namespace PatStruct {
 			}
 		}
 		return nd_i;
+	}
+
+	void genPlateWSameWeb(const s_hexPlate& plate0, s_hexPlate& plate1) {
+		plate1.m_nHex = plate0.m_nHex;
+		plate1.m_Rhex = plate0.m_Rhex;
+		plate1.m_RShex = plate0.m_RShex;
+		plate1.m_Shex = plate0.m_Shex;
+		for (int i = 0; i < 6; i++)
+			plate1.m_hexU[i] = plate0.m_hexU[i];
+		plate1.m_fhex = new s_fNode[plate1.m_nHex];
+		for (long i = 0; i < plate1.m_nHex; i++) {
+			plate1.m_fhex[i].thislink = i;
+			plate1.m_fhex[i].o = plate0.m_fhex[i].o;
+			plate1.m_fhex[i].shex = NULL;
+			plate1.m_fhex[i].x = plate0.m_fhex[i].x;
+			plate1.m_fhex[i].y = plate0.m_fhex[i].y;
+
+			plate1.m_fhex[i].nodes = NULL;
+			plate1.m_fhex[i].w = NULL;
+			plate1.m_fhex[i].N = 0;
+			plate1.m_fhex[i].b = 0.f;
+
+			plate1.m_fhex[i].Nweb = plate0.m_fhex[i].Nweb;
+			plate1.m_fhex[i].web = new s_bNode * [plate1.m_fhex[i].Nweb];
+			for (int j = 0; j < plate0.m_fhex[i].Nweb; j++) {
+				/*the web must be the equivalent nodes in the new plate*/
+				long webmaster_i = plate0.m_fhex[i].web[j]->thislink;
+				plate1.m_fhex[i].web[j] = (s_bNode*)&(plate1.m_fhex[webmaster_i]);
+			}
+		}
+	}
+	void releasePlateWSameWeb(s_hexPlate& plate) {
+		if (plate.m_fhex != NULL) {
+			for (long i = 0; i < plate.m_nHex; i++) {
+				if (plate.m_fhex[i].web != NULL) {
+					delete[] plate.m_fhex[i].web;
+				}
+			}
+			delete[] plate.m_fhex;
+		}
+		plate.m_fhex = NULL;
 	}
 }
