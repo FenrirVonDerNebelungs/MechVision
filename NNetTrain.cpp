@@ -10,7 +10,7 @@ NNetTrain::~NNetTrain() {
 	;
 }
 unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's of its lowest level [2]*/
-	s_hexEye* net,/*net descends to one level above the base of the stamp eye*/
+	s_hexEye* net,/*net descends to one level above the base of the stamp eye?????!!!!*/
 	float stepSize,
 	float DeltaE_closeEnough,
 	long  max_loop_cnt) 

@@ -18,7 +18,9 @@ unsigned char PatternL1::init(s_PlateLayer& lunaPlates, HexEye NNetEyes[], int N
 		m_L0Plates.n++;
 	}
 	PatStruct::zeroPlateLayer(m_L1Plates);
+	PatStruct::zeroPlateLayer(m_L2Plates);
 	for (int ey_i = 0; ey_i < m_numNNets; ey_i++) {
+		PatStruct::genPlateWSameWeb(m_L0Plates.p[0], m_L1Plates.p[ey_i]);
 		PatStruct::genPlateWSameWeb(m_L0Plates.p[0], m_L1Plates.p[ey_i]);
 		/*each node in the ey plates draws from all luna plates, 
 		geometrically all plates have the same structure */
@@ -37,6 +39,8 @@ void PatternL1::release() {
 	m_L0Plates.n = 0;
 }
 
+
+
 unsigned char PatternL1::scan() {
 	updateL0();
 	s_hexPlate& p0 = m_L0Plates.p[0];
@@ -52,14 +56,20 @@ unsigned char PatternL1::updateL0() {
 		s_hexPlate& curPlate = m_L0Plates.p[i];
 		for (long hex_i = 0; hex_i < m_L0Plates.p[i].m_nHex; hex_i++) {
 			s_fNode& curNode = curPlate.m_fhex[hex_i];
-			/*ave over all the input luna  values*/
-			float ave_o = 0.f;
-			for (long w_i = 0; w_i < PATTERNL1L0WNUM; w_i++)
-				ave_o += curNode.w[w_i] * curNode.nodes[w_i]->o;
-			curNode.o = ave_o;
+			n_PatternL1::L0ToL1(curNode);
 		}
 	}
 	return ECODE_OK;
+}
+unsigned char PatternL1::transEyeToPlates(s_hexEye& e0, long i) {
+	int highestEyLev = e0.n - 1;
+	s_hexPlate& plt0 = e0.lev[highestEyLev];
+	for (int p_i = 1; p_i < m_L0Plates.n; p_i++) {
+		s_hexPlate& baseL0Plate = m_L0Plates.p[p_i];
+		for (int nd_i = 0; nd_i < plt0.m_nHex; nd_i++) {
+			
+		}
+	}
 }
 unsigned char PatternL1::fullyRoot(s_hexEye& e0, long i) {
 	/*extend eye root from p0 to the other plates*/

@@ -30,7 +30,7 @@ public:
 	~HexEye();
 
 	unsigned char init(HexBase* lowHexes);
-	unsigned char init(float r, int NLevels, int N_lowestNodePtrs=7);
+	unsigned char init(float r, int NLevels, int N_lowestNodePtrs=7);/*NLevels=1 has hex and 7 beneath*/
 
 	unsigned char spawn();
 
@@ -45,6 +45,7 @@ public:
 	inline int getMaxLevi(int ieye) { return m_eye[ieye].n - 1; }
 	inline s_2pt* getUHex() { return m_hexU; }
 	inline s_hexEye& getEye(int n) { return m_eye[n]; }
+	inline s_hexEye& getLastEye() { return m_eye[m_N_eyes - 1]; }
 	inline s_hexEye* getEyePtr(int n) { return &(m_eye[n]); }
 protected:
 	float m_r;

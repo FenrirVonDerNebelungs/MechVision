@@ -71,8 +71,9 @@ protected:
     bool* m_in_line;/*points are in line and should not be added to line during search along line*/
     bool* m_covered;/*mask over hexes line & surrounding that should not be used to start line search again*/
     s_line       m_singLunaLines[LINEFINDERMAXLINES];
-    s_line       m_lines[LINEFINDERMAXLINES];
+    s_line*      m_lines[LINEFINDERMAXLINES];/*these pointers point to lines in singLunaLines*/
     int          m_n;
+    int          m_n_lines;
     /*owned scratch*/
     s_linePoint* m_lineSegR;
     int m_numLineSegR;

@@ -1,4 +1,5 @@
 #include "StampEye.h"
+#include "PatternL1.h"
 StampEye::StampEye() : m_numAngDiv(0.f), m_smudgeNum(0), m_eyeGen(NULL), m_eyes_stamped(0), m_circle_radius(0.f) {
 	clearEyeStamps();
 	m_circle_center.x0 = 0.f;
@@ -32,13 +33,24 @@ unsigned char StampEye::init(
 	m_numAngDiv = numAngDiv;
 	m_smudgeNum = smudgeNum;
 	m_eyeGen = new HexEye;
-	
+
+	float lunaWeights[STAMPEYL0WNUM];
+	for (int i = 0; i < STAMPEYL0WNUM; i++)
+		lunaWeights[i] = 1.f / STAMPEYL0WNUM;
+
 	float targr = (hexBase == NULL) ? r : hexBase->getRhex();
 	if (RetOk(m_eyeGen->init(targr, 2))) {
 		int numSmudgeArray = smudgeNum * smudgeNum;
 		int totalNumEyes = numSmudgeArray * STAMPEYENUM;
 		for (int i = 0; i < totalNumEyes; i++) {
 			m_eyeGen->spawn();
+			/*set the luna weights at L1 for the newly spawned eye*/
+			s_hexEye curEye = m_eyeGen->getLastEye();
+			for (int i_l; i_l < curEye.lev[1].m_nHex; i_l) {
+				for(int i_lnd = 0; i_lnd < curEye.lev[1].m_fhex[i_l].N; i_lnd++) {
+					curEye.lev[1].m_fhex[i_l].w[i_lnd] = lunaWeights[i_lnd];
+				}
+			}
 		}
 	}
 	else return ECODE_FAIL;
@@ -57,9 +69,20 @@ void StampEye::release() {
 }
 unsigned char StampEye::spawn() {
 	stampFullNewMoons();
-	return stampRoundedCorners();
+	stampRoundedCorners();
+	return calcL1();
 }
-
+unsigned char StampEye::calcL1() {
+	for (int i = 0; i < m_eyes_stamped; i++) {
+		for (int j = 0; j < m_stamps[i].n; j++) {
+			s_hexEye* curStampEye = m_stamps[i].eyes[j];
+			for (int i_l = 0; i_l < STAMPEYL0WNUM; i_l++) {
+				n_PatternL1::L0ToL1(curStampEye->lev[1].m_fhex[i_l]);
+			}
+		}
+	}
+	return ECODE_OK;
+}
 void StampEye::clearEyeStamps() {
 	for (int i = 0; i < STAMPEYENUM; i++) {
 		for (int j = 0; j < STAMPEYEMAXNUM; j++)

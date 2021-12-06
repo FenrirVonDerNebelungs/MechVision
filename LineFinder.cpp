@@ -21,7 +21,7 @@ namespace n_line {
 LineFinder::LineFinder() : m_minTrigo(0.f), m_mino(0.f), m_minLineSegPts(0), m_dLine(0),
 m_maxNebDist(0.f), m_minMergeOverlap(0), m_mergeOverlap(0.f), m_numHex(0),
 m_in_line(NULL), m_covered(NULL),
-m_n(0),
+m_n(0), m_n_lines(0),
 m_lineSegR(NULL), m_numLineSegR(0), m_lineSegL(NULL), m_numLineSegL(0),
 m_plateLayer(NULL)
 {
@@ -38,11 +38,8 @@ m_plateLayer(NULL)
 		m_singLunaLines[i].pts = NULL;
 		m_singLunaLines[i].f = NULL;
 		m_singLunaLines[i].blacked = false;
-
-		m_lines[i].n = 0;
-		m_lines[i].pts = NULL;
-		m_lines[i].f = NULL;
-		m_lines[i].blacked = false;
+		
+		m_lines[i] = NULL;
 	}
 	for (int i = 0; i < 6; i++) {
 		utilStruct::zero2pt(m_lunaVecs[i]);
@@ -87,11 +84,10 @@ unsigned char LineFinder::init(
 		m_in_line[i] = false;
 	}
 	m_n = 0;
+	m_n_lines = 0;
 	for (int i = 0; i < LINEFINDERMAXLINES; i++) {
 		m_singLunaLines[i].n = 0;
 		m_singLunaLines[i].pts = new s_linePoint[m_numHex];
-		m_lines[i].n = 0;
-		m_lines[i].pts = new s_linePoint[m_numHex];
 	}
 	m_lineSegR = new s_linePoint[m_numHex];
 	m_numLineSegR = 0;
@@ -125,11 +121,7 @@ void LineFinder::release() {
 		}
 		m_singLunaLines[i].pts = NULL;
 		m_singLunaLines[i].n = 0;
-		if (m_lines[i].pts != NULL) {
-			delete[] m_lines[i].pts;
-		}
-		m_lines[i].pts = NULL;
-		m_lines[i].n = 0;
+		m_lines[i] = NULL;
 	}
 	m_n = 0;
 	if (m_in_line != NULL)
@@ -147,10 +139,10 @@ void LineFinder::reset() {
 	for (int i = 0; i < m_n; i++) {
 		m_singLunaLines[i].n = 0;
 		m_singLunaLines[i].blacked = false;
-		m_lines[i].n = 0;
-		m_lines[i].blacked = false;
+		m_lines[i] = NULL;
 	}
 	m_n = 0;
+	m_n_lines = 0;
 	m_numLineSegR = 0;
 	m_numLineSegL = 0;
 	m_scratchLine.n = 0;
@@ -368,6 +360,12 @@ unsigned char LineFinder::mergeLunaLines() {
 				}
 				m_singLunaLines[j].blacked = true;
 			}
+		}
+	}
+	for (int i = 0; i < m_n; i++) {
+		if (!m_singLunaLines[i].blacked) {
+			m_lines[i] = &(m_singLunaLines[i]);
+			m_n_lines++;
 		}
 	}
 	return ECODE_OK;

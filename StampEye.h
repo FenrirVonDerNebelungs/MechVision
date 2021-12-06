@@ -9,6 +9,7 @@
 #define STAMPEYEMINANGRAD 0.001f
 #define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
 #define STAMPEYEMAXNUM 100
+#define STAMPEYL0WNUM 7
 
 struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
@@ -18,6 +19,11 @@ struct s_eyeStamp {
 };
 
 /*this function generates dummy patterns that the NNet nodes at level 2 (0,1,2) will be trained on */
+/*after generation the lowest level (index 2) of the stamp contains the square blured image of the curve
+  or other pattern
+  the next level up (level 1) is currently  not set to anything but it is connected to the lower level
+  the top level (level 0) is also connected but not set 
+  */
 class StampEye : public Base {
 public:
 	StampEye();
@@ -59,6 +65,7 @@ protected:
 
 	unsigned char stampFullNewMoons();
 	unsigned char stampMoonEye(s_hexEye& seye, float o);
+	unsigned char calcL1();
 
 	unsigned char stampRoundedCorners();
 	int stampRoundedCornersAtCenter(const s_2pt& corner_center, int eye_cnt, s_eyeStamp stamp[]);
