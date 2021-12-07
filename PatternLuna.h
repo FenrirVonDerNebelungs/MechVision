@@ -8,7 +8,7 @@
 #include "PatternNode.h"
 #endif
 
-#define PATTERNLUNA_NUM 8
+#define PATTERNLUNA_NUM 8 //Number of luna patterns 6 round and 2 full
 #define PATTERNLUNA_FOOTS 7
 #define PATTERNLUNA_WSCALE 60.f //1.f
 

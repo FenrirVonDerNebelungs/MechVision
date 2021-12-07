@@ -13,6 +13,7 @@ unsigned char PatLunaLayer::init(HexBase* hexbase) {
 	m_colLay->init(hexbase);
 	for(int i=0; i<PATLUNALAYER_NUMCOL; i++)
 		m_colLay->addColPlate();
+
 	m_patLuna = new PatternLuna;
 	m_patLuna->init();
 

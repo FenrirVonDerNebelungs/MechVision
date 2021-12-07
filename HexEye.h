@@ -47,6 +47,7 @@ public:
 	inline s_hexEye& getEye(int n) { return m_eye[n]; }
 	inline s_hexEye& getLastEye() { return m_eye[m_N_eyes - 1]; }
 	inline s_hexEye* getEyePtr(int n) { return &(m_eye[n]); }
+	inline int getNEyes() { return m_N_eyes; }
 protected:
 	float m_r;
 	float m_rs;

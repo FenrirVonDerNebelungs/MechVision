@@ -46,8 +46,8 @@ public:
 	void zero();
 	void addHexData(s_hex& orig_hex) { PatStruct::copyHex(orig_hex, *shex); }/*creates a copy which is stored by this object*/
 	void release();/*should only be called if s_hex is owned */
-	void releaseWebPtrs();/*assumes the nodes of the web are not owned just the pointers*/
-	void releaseNodePtrs();/*assumes the nodes themselves are not owned just the pointers*/
+	void releaseWebPtrs();/*assumes the nodes of the web are NOT owned just the pointers*/
+	void releaseNodePtrs();/*assumes the nodes themselves are NOT owned just the pointers*/
 
 	s_hex* shex;
 	float x;

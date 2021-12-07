@@ -5,11 +5,13 @@
 #ifndef HEXEYE_H
 #include "HexEye.h"
 #endif
+#ifndef PATTERNLUNA_H
+#include "PatternLuna.h"
+#endif
 
 #define STAMPEYEMINANGRAD 0.001f
 #define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
 #define STAMPEYEMAXNUM 100
-#define STAMPEYL0WNUM 7
 
 struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
@@ -30,6 +32,7 @@ public:
 	~StampEye();
 
 	unsigned char init(
+		PatternLuna* patLuna,
 		float numAngDiv = 12.f,
 		int smudgeNum = 10,
 		float r=3.f,
@@ -44,9 +47,13 @@ public:
 protected:
 	float  m_numAngDiv;
 	int    m_smudgeNum;/*number of division over which the corner is smudged*/
+	/*not owned*/
+	PatternLuna* m_patternLuna;
 	/*owned*/
 	HexEye* m_eyeGen;
-	s_eyeStamp m_stamps[STAMPEYENUM];
+	HexEye* m_lunaEyeGen;
+	s_eyeStamp m_stamps[STAMPEYENUM];/*lowest level of 3 total levels has square averaged o hexes corresponding to pattern*/
+	s_eyeStamp m_lunaStamps[STAMPEYENUM]; /*these are the stamp eyes but with 2 levels, lowest nodes (beneath luna 2) are for the luna o values*/
 	int   m_eyes_stamped;
 
 	s_2pt m_circle_center;
@@ -65,7 +72,7 @@ protected:
 
 	unsigned char stampFullNewMoons();
 	unsigned char stampMoonEye(s_hexEye& seye, float o);
-	unsigned char calcL1();
+	unsigned char calcLunaStampEye(const s_hexEye& seye, s_hexEye& slunaeye);/*find the */
 
 	unsigned char stampRoundedCorners();
 	int stampRoundedCornersAtCenter(const s_2pt& corner_center, int eye_cnt, s_eyeStamp stamp[]);

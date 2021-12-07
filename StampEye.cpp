@@ -1,6 +1,6 @@
 #include "StampEye.h"
 #include "PatternL1.h"
-StampEye::StampEye() : m_numAngDiv(0.f), m_smudgeNum(0), m_eyeGen(NULL), m_eyes_stamped(0), m_circle_radius(0.f) {
+StampEye::StampEye() : m_numAngDiv(0.f), m_smudgeNum(0), m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), m_eyes_stamped(0), m_circle_radius(0.f) {
 	clearEyeStamps();
 	m_circle_center.x0 = 0.f;
 	m_circle_center.x1 = 0.f;
@@ -25,18 +25,17 @@ StampEye::~StampEye() {
 	;
 }
 unsigned char StampEye::init(
+	PatternLuna* patLuna,
 	float numAngDiv,
 	int smudgeNum,
 	float r,
 	HexBase* hexBase
 ) {
+	m_patternLuna = patLuna;
 	m_numAngDiv = numAngDiv;
 	m_smudgeNum = smudgeNum;
 	m_eyeGen = new HexEye;
-
-	float lunaWeights[STAMPEYL0WNUM];
-	for (int i = 0; i < STAMPEYL0WNUM; i++)
-		lunaWeights[i] = 1.f / STAMPEYL0WNUM;
+	m_lunaEyeGen = new HexEye;
 
 	float targr = (hexBase == NULL) ? r : hexBase->getRhex();
 	if (RetOk(m_eyeGen->init(targr, 2))) {
@@ -44,19 +43,47 @@ unsigned char StampEye::init(
 		int totalNumEyes = numSmudgeArray * STAMPEYENUM;
 		for (int i = 0; i < totalNumEyes; i++) {
 			m_eyeGen->spawn();
-			/*set the luna weights at L1 for the newly spawned eye*/
-			s_hexEye curEye = m_eyeGen->getLastEye();
-			for (int i_l; i_l < curEye.lev[1].m_nHex; i_l) {
-				for(int i_lnd = 0; i_lnd < curEye.lev[1].m_fhex[i_l].N; i_lnd++) {
-					curEye.lev[1].m_fhex[i_l].w[i_lnd] = lunaWeights[i_lnd];
+		}
+	}
+	else return ECODE_FAIL;
+	if (RetOk(m_lunaEyeGen->init(2 * targr, 1, PATTERNLUNA_NUM))) {
+		for (int i = 0; i < m_eyeGen->getNEyes(); i++) {
+			m_lunaEyeGen->spawn();
+			/*this is an unusual case where the lowest of nodes of the hexEyes will be owned by the eye*/
+			s_hexEye lastEye = m_lunaEyeGen->getLastEye();
+			for (int h_i = 0; h_i < lastEye.lev[1].m_nHex; h_i++) {
+				for (int l_i = 0; l_i < lastEye.lev[1].m_fhex[h_i].N; l_i++) {
+					lastEye.lev[1].m_fhex[h_i].nodes[l_i] = (s_bNode*)new s_fNode;
+					lastEye.lev[1].m_fhex[h_i].nodes[l_i]->zero();
 				}
 			}
 		}
 	}
 	else return ECODE_FAIL;
+
+
+
 	return ECODE_OK;
 }
 void StampEye::release() {
+	if (m_lunaEyeGen != NULL) {
+		/*this is an case where the node pointers of the lowest level of the eyes is actually owned by the hexEyes so this must be released before they are deleted*/
+		for (int i = 0; i < m_lunaEyeGen->getNEyes(); i++) {
+			s_hexEye* Eye = m_lunaEyeGen->getEyePtr(i);
+			if (Eye != 0) {
+				for (int h_i = 0; h_i < Eye->lev[1].m_nHex; h_i++) {
+					for (int l_i = 0; l_i < Eye->lev[1].m_fhex[h_i].N; l_i++) {
+						if (Eye->lev[1].m_fhex[h_i].nodes[l_i] != NULL)
+							delete Eye->lev[1].m_fhex[h_i].nodes[l_i];
+					}
+				}
+			}
+		}
+
+		m_lunaEyeGen->release();
+		delete m_lunaEyeGen;
+	}
+	m_lunaEyeGen = NULL;
 	if (m_eyeGen != NULL) {
 		m_eyeGen->release();
 		delete m_eyeGen;
@@ -70,25 +97,37 @@ void StampEye::release() {
 unsigned char StampEye::spawn() {
 	stampFullNewMoons();
 	stampRoundedCorners();
-	return calcL1();
+	return calcLunaStampEye();
 }
-unsigned char StampEye::calcL1() {
-	for (int i = 0; i < m_eyes_stamped; i++) {
-		for (int j = 0; j < m_stamps[i].n; j++) {
-			s_hexEye* curStampEye = m_stamps[i].eyes[j];
-			for (int i_l = 0; i_l < STAMPEYL0WNUM; i_l++) {
-				n_PatternL1::L0ToL1(curStampEye->lev[1].m_fhex[i_l]);
+
+void StampEye::clearEyeStamps() {
+	for (int i = 0; i < STAMPEYENUM; i++) {
+		for (int j = 0; j < STAMPEYEMAXNUM; j++) {
+			m_lunaStamps[i].eyes[j] = NULL;
+			m_stamps[i].eyes[j] = NULL;
+		}
+		m_lunaStamps[i].n = 0;
+		m_stamps[i].n = 0;
+	}
+}
+unsigned char StampEye::calcLunaStampEye(const s_hexEye& seye, s_hexEye& slunaeye) {
+	for (int s_i = 0; s_i < STAMPEYENUM; s_i++) {
+		for (int e_i = 0; e_i < m_stamps[s_i].n; e_i++) {
+			s_hexEye* curLunaStampEye = m_lunaStamps[s_i].eyes[e_i];
+			s_hexEye* curStampEye = m_stamps[s_i].eyes[e_i];
+			/*loop over the lowest level of the lunaeyestamps and the 2nd lowest of eyestamps to fill luna value for each hex in the luna eye stamp*/
+			for (int l_i = 0; l_i < curLunaStampEye->lev[1].m_nHex; l_i++) {
+				/*the nodes hanging from lev 1of the stamp eye are already generated and owned by the stamp eye
+				  the number of these nodes corresponds to the number of luna's */
+				for (int lun_i = 0; lun_i < curLunaStampEye->lev[1].m_fhex[l_i].N; lun_i++) {
+					s_fNode& lunaPatNode = *(m_patternLuna->getPatNode(lun_i));
+					s_fNode& curStampNode = *(s_fNode*)(curLunaStampEye->lev[1].m_fhex[l_i].nodes[lun_i]);
+					PatternLunaThreaded::evalAtPlateNode(lunaPatNode, curStampNode);/*this fills the o of the curStampNode so that it returns the luna value from evaluating in the center of the hex*/
+				}
 			}
 		}
 	}
 	return ECODE_OK;
-}
-void StampEye::clearEyeStamps() {
-	for (int i = 0; i < STAMPEYENUM; i++) {
-		for (int j = 0; j < STAMPEYEMAXNUM; j++)
-			m_stamps[i].eyes[j] = NULL;
-		m_stamps[i].n = 0;
-	}
 }
 unsigned char StampEye::stampFullNewMoons() {
 	stampMoonEye(m_eyeGen->getEye(m_eyes_stamped), 0.f);

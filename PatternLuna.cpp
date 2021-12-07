@@ -90,7 +90,7 @@ namespace PatternLunaThreaded {
 	void evalAtPlateNode(s_fNode& lev0, s_fNode& plateNode){
 		float sumN = 0.f;
 		for (int i = 0; i < 6; i++) {
-			s_bNode* sidelinkPtr = plateNode.nodes[i];
+			s_bNode* sidelinkPtr = plateNode.web[i];
 			if (sidelinkPtr != NULL)
 				sumN += sidelinkPtr->o * lev0.w[i];
 		}
