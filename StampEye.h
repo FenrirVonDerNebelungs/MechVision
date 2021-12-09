@@ -26,6 +26,17 @@ struct s_eyeStamp {
   the next level up (level 1) is currently  not set to anything but it is connected to the lower level
   the top level (level 0) is also connected but not set 
   */
+/*
+* The luna stamps are similar to the other stamps but are processed to include the results of evaluating the lowest
+* level with luna patterns.
+* luna stamps contain 2 levels and have a lowest radius of 2 * the base hex radius used by the other stamps at lowest level
+* level 0 of the luna stamps doesn't contain anything but connects to the lower level
+* level 1 of the luna stamps contain 7 hexes which correspond geometrically to level 1 of the other stamps
+* below level 1 the s_fhex nodes (which are owned by these stamps) contain the results of evaluating the image
+* on the lowest level of the other stamp with a luna pattern centered in each of the 7 level 1 hexes
+* the number of nodes hanging from level 1 correspond to the number of luna patterns (usually 8)
+* results of the pattern evaluation are stored in the o of the hanging nodes
+*/
 class StampEye : public Base {
 public:
 	StampEye();
@@ -41,8 +52,10 @@ public:
 	void release();
 
 	unsigned char spawn();
+	void          setupForStampi(int i);/*sets up the stamps with the o's so that they are ready to be run with the i'th configuration selectedd*/
 
 	inline s_eyeStamp* getEyeStamps() { return m_stamps; }
+	inline s_eyeStamp* getLunaEyeStamps() { return m_lunaStamps; }
 	inline int numEyeStamps() { return m_eyes_stamped; }
 protected:
 	float  m_numAngDiv;

@@ -7,7 +7,10 @@
 #endif
 
 #define PATTERNL1L0WNUM 7
-
+/*once initiallized the entire web, with the results of the 1st level nnet is constructed
+* for each frame this web is triggered
+* this leads to larger memory size but nnet does not need to be rerooted and scanned each frame
+*/
 class PatternL1 : public Base {
 public:
 
@@ -25,7 +28,7 @@ protected:
 	
 	unsigned char scan();
 	unsigned char updateL0();
-	unsigned char transEyeToPlates(s_hexEye& e0, long i);
+	unsigned char transNNetToPlates();
 
 	unsigned char fullyRoot(s_hexEye& e0, long i);
 	unsigned char evalAtRoot(long i_base);/*assumes that the NNet eyes have been fully rooted*/
@@ -35,13 +38,12 @@ protected:
 };
 
 namespace n_PatternL1 {
-	float L0ToL1(s_fNode& curNode) {
-		/*ave over all the input luna  values*/
-		float ave_o = 0.f;
-		for (long w_i = 0; w_i < PATTERNL1L0WNUM; w_i++)
-			ave_o += curNode.w[w_i] * curNode.nodes[w_i]->o;
-		curNode.o = ave_o;
-		return ave_o;
+	inline float updateL0Node(s_fNode& curNode) {
+		/*since the stamp is trained where only the luna value in the center matterns
+		  this will be the only luna value used 
+		  center node should be at 0th index in lower node web???check this
+		  */
+		return curNode.nodes[0]->o;		
 	}
 };
 #endif

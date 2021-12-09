@@ -60,9 +60,6 @@ unsigned char StampEye::init(
 		}
 	}
 	else return ECODE_FAIL;
-
-
-
 	return ECODE_OK;
 }
 void StampEye::release() {
@@ -97,7 +94,15 @@ void StampEye::release() {
 unsigned char StampEye::spawn() {
 	stampFullNewMoons();
 	stampRoundedCorners();
-	return calcLunaStampEye();
+	for (int i = 0; i < m_eyes_stamped; i++) {
+		calcLunaStampEye(m_eyeGen->getEye(i), m_lunaEyeGen->getEye(i));
+	}
+}
+void StampEye::setupForStampi(int i) {
+	for (int j = 0; j < STAMPEYENUM; j++) {
+		m_lunaStamps[j].o = 0;
+	}
+	m_lunaStamps[i].o = 1.f;
 }
 
 void StampEye::clearEyeStamps() {

@@ -10,7 +10,7 @@ NNetTrain::~NNetTrain() {
 	;
 }
 unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's of its lowest level [2]*/
-	s_hexEye* net,/*net descends to one level above the base of the stamp eye?????!!!!*/
+	s_hexEye* net,/*net has essentially same structure as the stampe eye's s_hexEye's*/
 	float stepSize,
 	float DeltaE_closeEnough,
 	long  max_loop_cnt) 
@@ -19,7 +19,7 @@ unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's 
 	m_net = net;
 	m_DeltaE_closeEnough = DeltaE_closeEnough;
 	m_max_loop_cnt = max_loop_cnt;
-	s_eyeStamp* eyeStampsp = m_stampEye->getEyeStamps();
+	s_eyeStamp* eyeStampsp = m_stampEye->getLunaEyeStamps();
 	m_QN = 0;
 	for (int i = 0; i < m_stampEye->numEyeStamps(); i++) {
 		for (int j = 0; j < eyeStampsp[i].n; i++) {
@@ -28,7 +28,7 @@ unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's 
 			m_QN++;
 		}
 	}
-	/*all eyes used in training should have the same structure, and all of the 7 pack on the bottom should descend to 7 sub nodes each*/
+	/*all eyes used in training should have the same structure, and all of the 7 pack on the bottom should descend to the number of luna pattern sub nodes each*/
 	int m_Ws_N = net->lev[1].m_nHex * net->lev[1].m_fhex[0].N;
 	if (m_Ws_N != m_dataStamps[0]->lev[2].m_nHex)
 		return ECODE_ABORT;
