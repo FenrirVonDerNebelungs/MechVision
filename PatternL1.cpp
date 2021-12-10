@@ -1,5 +1,5 @@
 #include "PatternL1.h"
-unsigned char PatternL1::init(s_PlateLayer& lunaPlates, HexEye NNetEyes[], int NNets) {
+unsigned char PatternL1::init(s_PlateLayer& lunaPlates,s_hexEye NNetEyes[], int NNets) {
 	m_NNetEyes = NNetEyes;
 	m_numNNets = NNets;
 	if (NNets < 1 || lunaPlates.n < 1)
@@ -19,9 +19,13 @@ unsigned char PatternL1::init(s_PlateLayer& lunaPlates, HexEye NNetEyes[], int N
 	}
 	PatStruct::zeroPlateLayer(m_L1Plates);
 	PatStruct::zeroPlateLayer(m_L2Plates);
+	int Nnodes_L1 = m_NNetEyes[0].lev[0].m_fhex[0].N * m_NNetEyes[0].lev[1].m_fhex[0].N; /*number of hexes in L1 of the net eye * the number of lower nodes (luna plates) handing from L1 of the hex eye*/
+	int Nnodes_L2 = m_NNetEyes[0].lev[0].m_fhex[0].N;
 	for (int ey_i = 0; ey_i < m_numNNets; ey_i++) {
 		PatStruct::genPlateWSameWeb(m_L0Plates.p[0], m_L1Plates.p[ey_i]);
 		PatStruct::genPlateWSameWeb(m_L0Plates.p[0], m_L2Plates.p[ey_i]);
+		PatStruct::genLowerNodesForPlate(m_L1Plates.p[ey_i], Nnodes_L1);
+		PatStruct::genLowerNodesForPlate(m_L2Plates.p[ey_i], Nnodes_L2);
 		/*each node in the ey plates draws from all luna plates, 
 		geometrically all plates have the same structure */
 	}
@@ -30,6 +34,8 @@ unsigned char PatternL1::init(s_PlateLayer& lunaPlates, HexEye NNetEyes[], int N
 }
 void PatternL1::release() {
 	for (int ey_i = 0; ey_i < m_numNNets; ey_i++) {
+		PatStruct::releaseLowerNodesForPlate(m_L2Plates.p[ey_i]);
+		PatStruct::releaseLowerNodesForPlate(m_L1Plates.p[ey_i]);
 		PatStruct::releasePlateWSameWeb(m_L2Plates.p[ey_i]);
 		PatStruct::releasePlateWSameWeb(m_L1Plates.p[ey_i]);
 	}
@@ -62,8 +68,16 @@ unsigned char PatternL1::updateL0() {
 	}
 	return ECODE_OK;
 }
-unsigned char PatternL1::transNNetToPlates() {
+unsigned char PatternL1::transNNetToPlates(int net_index) {
+	/*L1 & L2 should have the same hexes with the same indexes as L0 but above L0*/
+	/* add the lowest level of the NNet to Pattern L1, connecting its nodes to the different L0 plates */
+	for (long plate_i = 0; plate_i < m_L0Plates.p[0].m_nHex; plate_i++) {
+		/*all plates should have the same number of hexes*/
+		s_hexEye& NNet = m_NNetEyes[net_index];
+		s_hexPlate& L1Plate = m_L1Plates.p[net_index];
+		s_hexPlate& L2Plate = m_L2Plates.p[net_index];
 
+	}
 }
 unsigned char PatternL1::fullyRoot(s_hexEye& e0, long i) {
 	/*extend eye root from p0 to the other plates*/

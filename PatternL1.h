@@ -14,11 +14,11 @@
 class PatternL1 : public Base {
 public:
 
-	unsigned char init(s_PlateLayer& lunaPlates, HexEye NNetEyes[], int NNets);/*****!!need to get lunaWeights from stamp*/
+	unsigned char init(s_PlateLayer& lunaPlates, s_hexEye NNetEyes[], int NNets);/*****!!need to get lunaWeights from stamp*/
 	void release();
 protected:
 	/*not owned*/
-	HexEye*   m_NNetEyes;/*trained NNets that are set to search for each of the STAMPEYENUM stamps*/
+	s_hexEye*   m_NNetEyes;/*trained NNets that are set to search for each of the STAMPEYENUM stamps*/
 	int       m_numNNets;/*should be STAMPEYENUM*/
 	/*owned*/
 	s_PlateLayer m_L0Plates;/* each plate in layer corresponds to one of the lunas, reduced to one hex up, with the luna node in the center picked for the luna value*/
@@ -28,7 +28,7 @@ protected:
 	
 	unsigned char scan();
 	unsigned char updateL0();
-	unsigned char transNNetToPlates();
+	unsigned char transNNetToPlates(int net_index);
 
 	unsigned char fullyRoot(s_hexEye& e0, long i);
 	unsigned char evalAtRoot(long i_base);/*assumes that the NNet eyes have been fully rooted*/

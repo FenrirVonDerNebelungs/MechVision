@@ -128,7 +128,9 @@ namespace PatStruct{
 	bool weaveRows(const s_hexPlate& plate0, s_hexPlate& plate1);
 
 	void genPlateWSameWeb(const s_hexPlate& plate0, s_hexPlate& plate1);
+	void genLowerNodesForPlate(s_hexPlate& plate, int Nnodes);
 	void releasePlateWSameWeb(s_hexPlate& plate);
+	void releaseLowerNodesForPlate(s_hexPlate& plate);
 }
 
 #endif
