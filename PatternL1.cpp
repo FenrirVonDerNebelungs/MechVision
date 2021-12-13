@@ -71,13 +71,32 @@ unsigned char PatternL1::updateL0() {
 unsigned char PatternL1::transNNetToPlates(int net_index) {
 	/*L1 & L2 should have the same hexes with the same indexes as L0 but above L0*/
 	/* add the lowest level of the NNet to Pattern L1, connecting its nodes to the different L0 plates */
-	for (long plate_i = 0; plate_i < m_L0Plates.p[0].m_nHex; plate_i++) {
-		/*all plates should have the same number of hexes*/
-		s_hexEye& NNet = m_NNetEyes[net_index];
-		s_hexPlate& L1Plate = m_L1Plates.p[net_index];
-		s_hexPlate& L2Plate = m_L2Plates.p[net_index];
-
+	s_hexEye& NNet = m_NNetEyes[net_index];
+	s_hexPlate& L1Plate = m_L1Plates.p[net_index];
+	s_hexPlate& L2Plate = m_L2Plates.p[net_index];
+	for (long L1Hex_i = 0; L1Hex_i < L1Plate.m_nHex; L1Hex_i++) {
+		int down_i = 0;
+		s_fNode& l1Node = L1Plate.m_fhex[L1Hex_i];
+		for (int luna_i = 0; luna_i < NNet.lev[1].m_fhex[down_i].N; luna_i++) {
+			int l1_down_i = down_i * NNet.lev[1].m_fhex[down_i].N + luna_i;
+			l1Node.w[l1_down_i] = NNet.lev[1].m_fhex[down_i].w[luna_i];
+			l1Node.nodes[l1_down_i] = (s_bNode*)&(m_L0Plates.p[luna_i].m_fhex[L1Hex_i]);
+		}
+		for (int web_i = 0; web_i < 6; web_i++) {
+			down_i++;
+			for (int luna_i = 0; luna_i < NNet.lev[1].m_fhex[down_i].N; luna_i++) {
+				int l1_down_i = down_i * NNet.lev[1].m_fhex[down_i].N + luna_i;
+				l1Node.w[l1_down_i] = NNet.lev[1].m_fhex[down_i].w[luna_i];
+				s_bNode* webNode = m_L0Plates.p[luna_i].m_fhex[L1Hex_i].web[web_i];
+				if (webNode != NULL) {
+					long web_plate_i = webNode->thislink;
+					l1Node.nodes[l1_down_i] = (s_bNode*)&(m_L0Plates.p[luna_i].m_fhex[web_plate_i]);
+				}
+			}
+		}
 	}
+
+	
 }
 unsigned char PatternL1::fullyRoot(s_hexEye& e0, long i) {
 	/*extend eye root from p0 to the other plates*/
