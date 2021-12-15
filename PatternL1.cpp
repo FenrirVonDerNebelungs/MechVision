@@ -2,6 +2,8 @@
 unsigned char PatternL1::init(s_PlateLayer& lunaPlates,s_hexEye NNetEyes[], int NNets) {
 	m_NNetEyes = NNetEyes;
 	m_numNNets = NNets;
+	if (m_numNNets > PATTERNL1MAXNUMNETS)
+		return ECODE_FAIL;
 	if (NNets < 1 || lunaPlates.n < 1)
 		return ECODE_ABORT;
 	m_L0Plates.n = 0;
@@ -18,25 +20,27 @@ unsigned char PatternL1::init(s_PlateLayer& lunaPlates,s_hexEye NNetEyes[], int 
 		m_L0Plates.n++;
 	}
 	PatStruct::zeroPlateLayer(m_L1Plates);
-	PatStruct::zeroPlateLayer(m_L2Plates);
-	int Nnodes_L1 = m_NNetEyes[0].lev[0].m_fhex[0].N * m_NNetEyes[0].lev[1].m_fhex[0].N; /*number of hexes in L1 of the net eye * the number of lower nodes (luna plates) handing from L1 of the hex eye*/
-	int Nnodes_L2 = m_NNetEyes[0].lev[0].m_fhex[0].N;
+	long Nnodes_L1_l1 = m_NNetEyes[0].lev[0].m_fhex[0].N * m_L1Plates.p[0].m_nHex; 
 	for (int ey_i = 0; ey_i < m_numNNets; ey_i++) {
 		PatStruct::genPlateWSameWeb(m_L0Plates.p[0], m_L1Plates.p[ey_i]);
-		PatStruct::genPlateWSameWeb(m_L0Plates.p[0], m_L2Plates.p[ey_i]);
-		PatStruct::genLowerNodesForPlate(m_L1Plates.p[ey_i], Nnodes_L1);
-		PatStruct::genLowerNodesForPlate(m_L2Plates.p[ey_i], Nnodes_L2);
+		PatStruct::genLowerNodePtrsForPlate(m_L1Plates.p[ey_i], m_NNetEyes[0].lev[0].m_fhex[0].N);
 		/*each node in the ey plates draws from all luna plates, 
 		geometrically all plates have the same structure */
+		m_L1MemNodes[ey_i].nd = new s_fNode[Nnodes_L1_l1];
+		m_L1MemNodes[ey_i].n = Nnodes_L1_l1;
+		genL1midNodes(m_L1MemNodes[ey_i]);
 	}
 
 	return ECODE_OK;
 }
+void PatternL1::genL1midNodes(s_patL1Nodes& patL1Nds) {
+	for (long i = 0; i < patL1Nds.n; i++) {
+		patL1Nds.nd[i].zero();
+		patL1Nds.nd[i].initNodePtrs(m_NNetEyes[0].lev[1].m_fhex[0].N);
+	}
+}
 void PatternL1::release() {
 	for (int ey_i = 0; ey_i < m_numNNets; ey_i++) {
-		PatStruct::releaseLowerNodesForPlate(m_L2Plates.p[ey_i]);
-		PatStruct::releaseLowerNodesForPlate(m_L1Plates.p[ey_i]);
-		PatStruct::releasePlateWSameWeb(m_L2Plates.p[ey_i]);
 		PatStruct::releasePlateWSameWeb(m_L1Plates.p[ey_i]);
 	}
 	m_numNNets = 0;
@@ -69,34 +73,55 @@ unsigned char PatternL1::updateL0() {
 	return ECODE_OK;
 }
 unsigned char PatternL1::transNNetToPlates(int net_index) {
+
 	/*L1 & L2 should have the same hexes with the same indexes as L0 but above L0*/
 	/* add the lowest level of the NNet to Pattern L1, connecting its nodes to the different L0 plates */
 	s_hexEye& NNet = m_NNetEyes[net_index];
 	s_hexPlate& L1Plate = m_L1Plates.p[net_index];
-	s_hexPlate& L2Plate = m_L2Plates.p[net_index];
-	for (long L1Hex_i = 0; L1Hex_i < L1Plate.m_nHex; L1Hex_i++) {
-		int down_i = 0;
-		s_fNode& l1Node = L1Plate.m_fhex[L1Hex_i];
-		for (int luna_i = 0; luna_i < NNet.lev[1].m_fhex[down_i].N; luna_i++) {
-			int l1_down_i = down_i * NNet.lev[1].m_fhex[down_i].N + luna_i;
-			l1Node.w[l1_down_i] = NNet.lev[1].m_fhex[down_i].w[luna_i];
-			l1Node.nodes[l1_down_i] = (s_bNode*)&(m_L0Plates.p[luna_i].m_fhex[L1Hex_i]);
-		}
-		for (int web_i = 0; web_i < 6; web_i++) {
-			down_i++;
-			for (int luna_i = 0; luna_i < NNet.lev[1].m_fhex[down_i].N; luna_i++) {
-				int l1_down_i = down_i * NNet.lev[1].m_fhex[down_i].N + luna_i;
-				l1Node.w[l1_down_i] = NNet.lev[1].m_fhex[down_i].w[luna_i];
-				s_bNode* webNode = m_L0Plates.p[luna_i].m_fhex[L1Hex_i].web[web_i];
-				if (webNode != NULL) {
-					long web_plate_i = webNode->thislink;
-					l1Node.nodes[l1_down_i] = (s_bNode*)&(m_L0Plates.p[luna_i].m_fhex[web_plate_i]);
+	/*connect the network of nodes hanging from the L1 plate to the L0 plates so that the weights and
+	  network are duplicates for each high L1 node of the NNet */
+
+	if (L1Plate.m_nHex != m_L0Plates.p[0].m_nHex)
+		return ECODE_FAIL;
+	if (NNet.lev[1].m_nHex != m_NNetEyes[0].lev[0].m_fhex[0].N)
+		return ECODE_FAIL;
+
+	for (long i_hex = 0; i_hex < L1Plate.m_nHex; i_hex++) {
+		if (NNet.lev[1].m_nHex != L1Plate.m_fhex[i_hex].N)
+			return ECODE_FAIL;
+		if (NNet.lev[0].m_fhex[0].N != NNet.lev[1].m_nHex)
+			return ECODE_FAIL;
+		for (int i_1nd = 0; i_1nd < NNet.lev[1].m_nHex; i_1nd++) {
+			/*connnect the L1 plate to the memory chain of nodes*/
+			long memNd_i = m_NNetEyes[0].lev[0].m_fhex[0].N * i_hex + i_1nd;
+			L1Plate.m_fhex[i_hex].nodes[i_1nd] = (s_bNode*)&(m_L1MemNodes[net_index].nd[memNd_i]);
+			L1Plate.m_fhex[i_hex].w[i_1nd] = NNet.lev[0].m_fhex[0].w[i_1nd];
+			/*now connect each 1 level down node to the final level down which connects to the plates*/
+			s_fNode* hangingNode = (s_fNode*)L1Plate.m_fhex[i_hex].nodes[i_1nd];
+			if (NNet.lev[1].m_fhex[i_1nd].N != m_L0Plates.n)
+				return ECODE_FAIL;
+			for (int i_luna = 0; i_luna < NNet.lev[1].m_fhex[1].N; i_luna++) {
+				s_fNode* centerPlateHex = (s_fNode*)&(m_L0Plates.p[i_luna].m_fhex[i_hex]);
+				if (NNet.lev[1].m_nHex != 7)
+					return ECODE_FAIL;
+				if (i_1nd == 0) {
+					/*this is the center*/
+					hangingNode->nodes[i_luna] = (s_bNode*)centerPlateHex;
+					hangingNode->w[i_luna] = NNet.lev[1].m_fhex[i_1nd].w[i_luna];
+				}
+				else {
+					/*these need to be connected to the web around the center node on the plate*/
+					int web_i = i_1nd - 1;
+					s_bNode* adjNodePlate_ptr = centerPlateHex->web[web_i];
+					hangingNode->nodes[i_luna] = adjNodePlate_ptr;
+					if (adjNodePlate_ptr != NULL) {
+						hangingNode->w[i_luna] = NNet.lev[1].m_fhex[i_1nd].w[i_luna];
+					}
 				}
 			}
 		}
 	}
-
-	
+	return ECODE_OK;
 }
 unsigned char PatternL1::fullyRoot(s_hexEye& e0, long i) {
 	/*extend eye root from p0 to the other plates*/

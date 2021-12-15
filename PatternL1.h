@@ -7,10 +7,15 @@
 #endif
 
 #define PATTERNL1L0WNUM 7
+#define PATTERNL1MAXNUMNETS 100
 /*once initiallized the entire web, with the results of the 1st level nnet is constructed
 * for each frame this web is triggered
 * this leads to larger memory size but nnet does not need to be rerooted and scanned each frame
 */
+struct s_patL1Nodes {
+	s_fNode* nd;
+	long     n;
+};
 class PatternL1 : public Base {
 public:
 
@@ -23,12 +28,14 @@ protected:
 	/*owned*/
 	s_PlateLayer m_L0Plates;/* each plate in layer corresponds to one of the lunas, reduced to one hex up, with the luna node in the center picked for the luna value*/
 	s_PlateLayer m_L1Plates;/*results of first layer of the eyes run, setup with the proper connections before the run*/
-	s_PlateLayer m_L2Plates;/*results of the trained nnets run, will be STAMPEYENUM plates actually used*/
+	s_patL1Nodes m_L1MemNodes[PATTERNL1MAXNUMNETS]; /*each L1 hex plate each node of this plate has a 2 layer structure that it does not own, the intermedary nodes are stored in mem here*/
 	/*     */
 	
 	unsigned char scan();
 	unsigned char updateL0();
 	unsigned char transNNetToPlates(int net_index);
+	void          genL1midNodes(s_patL1Nodes& patL1Nds);
+	void          releaseL1midNodes(s_patL1Nodes& patL1Nds);
 
 	unsigned char fullyRoot(s_hexEye& e0, long i);
 	unsigned char evalAtRoot(long i_base);/*assumes that the NNet eyes have been fully rooted*/
