@@ -1,4 +1,15 @@
 #include "PatternL1.h"
+PatternL1::PatternL1() :m_NNetEyes(NULL), m_numNNets(0) {
+	PatStruct::zeroPlateLayer(m_L0Plates);
+	PatStruct::zeroPlateLayer(m_L1Plates);
+	for (int i = 0; i < PATTERNL1MAXNUMNETS; i++) {
+		m_L1MemNodes[i].nd = NULL;
+		m_L1MemNodes[i].n = 0;
+	}
+}
+PatternL1::~PatternL1() {
+	;
+}
 unsigned char PatternL1::init(s_PlateLayer& lunaPlates,s_hexEye NNetEyes[], int NNets) {
 	m_NNetEyes = NNetEyes;
 	m_numNNets = NNets;
@@ -35,14 +46,11 @@ unsigned char PatternL1::init(s_PlateLayer& lunaPlates,s_hexEye NNetEyes[], int 
 	transNNets();
 	return ECODE_OK;
 }
-void PatternL1::genL1midNodes(s_patL1Nodes& patL1Nds) {
-	for (long i = 0; i < patL1Nds.n; i++) {
-		patL1Nds.nd[i].zero();
-		patL1Nds.nd[i].initNodePtrs(m_NNetEyes[0].lev[1].m_fhex[0].N);
-	}
-}
+
 void PatternL1::release() {
 	for (int ey_i = 0; ey_i < m_numNNets; ey_i++) {
+		releaseL1midNodes(m_L1MemNodes[ey_i]);
+		PatStruct::releaseLowerNodePtrsForPlate(m_L1Plates.p[ey_i]);
 		PatStruct::releasePlateWSameWeb(m_L1Plates.p[ey_i]);
 	}
 	m_numNNets = 0;
@@ -51,49 +59,15 @@ void PatternL1::release() {
 	}
 	m_L0Plates.n = 0;
 }
-
-
-
-/*note on next steps
-* strongest feature
-* features present from strongest feature
-* multi hex location of features present
-*/
-unsigned char PatternL1::scan() {
-	updateL0();
-	for (int plate_i = 0; plate_i < m_L1Plates.n; plate_i++) {
-		s_hexPlate& l1Plate = m_L1Plates.p[plate_i];
-		for (long hex_i; hex_i < l1Plate.m_nHex; hex_i++) {
-			s_fNode& tophex = l1Plate.m_fhex[hex_i];
-			/*scan over l1 of net*/
-			float l1_sum = 0.f;
-			for (int l1_i = 0; l1_i < tophex.N; l1_i++) {
-				s_fNode* l1node = (s_fNode*)tophex.nodes[l1_i];
-				/*scan over bottom l2 of net*/
-				float l2_sum = 0.f;
-				if (l1node != NULL) {
-					for (int l2_i = 0; l2_i < l1node->N; l2_i++) {
-						s_fNode* l2node = (s_fNode*)l1node->nodes[l2_i];
-						if (l2node != NULL)
-							l2_sum += l1node->w[l2_i] * l2node->o;
-					}
-				}
-				l1_sum += tophex.w[l1_i] * l2_sum;
-			}
-			tophex.o = l1_sum;
-		}
+void PatternL1::genL1midNodes(s_patL1Nodes& patL1Nds) {
+	for (long i = 0; i < patL1Nds.n; i++) {
+		patL1Nds.nd[i].zero();
+		patL1Nds.nd[i].initNodePtrs(m_NNetEyes[0].lev[1].m_fhex[0].N);
 	}
-	return ECODE_OK;
 }
-unsigned char PatternL1::updateL0() {
-	for (long i = 0; i < m_L0Plates.n; i++) {
-		s_hexPlate& curPlate = m_L0Plates.p[i];
-		for (long hex_i = 0; hex_i < m_L0Plates.p[i].m_nHex; hex_i++) {
-			s_fNode& curNode = curPlate.m_fhex[hex_i];
-			n_PatternL1::updateL0Node(curNode);
-		}
-	}
-	return ECODE_OK;
+void PatternL1::releaseL1midNodes(s_patL1Nodes& patL1Nds) {
+	for (long i = 0; i < patL1Nds.n; i++)
+		patL1Nds.nd[i].releaseNodePtrs();
 }
 unsigned char PatternL1::transNNets() {
 	for (int i = 0; i < m_numNNets; i++)
@@ -147,6 +121,50 @@ unsigned char PatternL1::transNNetToPlates(int net_index) {
 					}
 				}
 			}
+		}
+	}
+	return ECODE_OK;
+}
+
+
+
+/*note on next steps
+* strongest feature
+* features present from strongest feature
+* multi hex location of features present
+*/
+unsigned char PatternL1::scan() {
+	updateL0();
+	for (int plate_i = 0; plate_i < m_L1Plates.n; plate_i++) {
+		s_hexPlate& l1Plate = m_L1Plates.p[plate_i];
+		for (long hex_i=0; hex_i < l1Plate.m_nHex; hex_i++) {
+			s_fNode& tophex = l1Plate.m_fhex[hex_i];
+			/*scan over l1 of net*/
+			float l1_sum = 0.f;
+			for (int l1_i = 0; l1_i < tophex.N; l1_i++) {
+				s_fNode* l1node = (s_fNode*)tophex.nodes[l1_i];
+				/*scan over bottom l2 of net*/
+				float l2_sum = 0.f;
+				if (l1node != NULL) {
+					for (int l2_i = 0; l2_i < l1node->N; l2_i++) {
+						s_fNode* l2node = (s_fNode*)l1node->nodes[l2_i];
+						if (l2node != NULL)
+							l2_sum += l1node->w[l2_i] * l2node->o;
+					}
+				}
+				l1_sum += tophex.w[l1_i] * l2_sum;
+			}
+			tophex.o = l1_sum;
+		}
+	}
+	return ECODE_OK;
+}
+unsigned char PatternL1::updateL0() {
+	for (long i = 0; i < m_L0Plates.n; i++) {
+		s_hexPlate& curPlate = m_L0Plates.p[i];
+		for (long hex_i = 0; hex_i < m_L0Plates.p[i].m_nHex; hex_i++) {
+			s_fNode& curNode = curPlate.m_fhex[hex_i];
+			n_PatternL1::updateL0Node(curNode);
 		}
 	}
 	return ECODE_OK;

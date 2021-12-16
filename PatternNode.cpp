@@ -386,6 +386,17 @@ namespace PatStruct {
 			}
 		}
 	}
+	void genLowerNodePtrsForPlate(s_hexPlate& plate, int N) {
+		for (long i = 0; i < plate.m_nHex; i++) {
+			plate.m_fhex[i].nodes = new s_bNode * [N];
+			plate.m_fhex[i].w = new float[N];
+			plate.m_fhex[i].N = N;
+			for (int j = 0; j < N; j++) {
+				plate.m_fhex[i].nodes[j] = NULL;
+				plate.m_fhex[i].w[j] = 0.f;
+			}
+		}
+	}
 	void releasePlateWSameWeb(s_hexPlate& plate) {
 		if (plate.m_fhex != NULL) {
 			for (long i = 0; i < plate.m_nHex; i++) {
@@ -396,5 +407,17 @@ namespace PatStruct {
 			delete[] plate.m_fhex;
 		}
 		plate.m_fhex = NULL;
+	}
+	void releaseLowerNodePtrsForPlate(s_hexPlate& plate) {
+		for (long i = 0; i < plate.m_nHex; i++) 
+		{
+			if (plate.m_fhex[i].nodes != NULL)
+				delete[] plate.m_fhex[i].nodes;
+			plate.m_fhex[i].nodes = NULL;
+			if (plate.m_fhex[i].w != NULL)
+				delete[] plate.m_fhex[i].w;
+			plate.m_fhex[i].w = NULL;
+			plate.m_fhex[i].N = 0;
+		}
 	}
 }

@@ -16,10 +16,13 @@ struct s_patL1Nodes {
 	s_fNode* nd;
 	long     n;
 };
+
 class PatternL1 : public Base {
 public:
+	PatternL1();
+	~PatternL1();
 
-	unsigned char init(s_PlateLayer& lunaPlates, s_hexEye NNetEyes[], int NNets);/*****!!need to get lunaWeights from stamp*/
+	unsigned char init(s_PlateLayer& lunaPlates, s_hexEye NNetEyes[], int NNets);
 	void release();
 protected:
 	/*not owned*/
@@ -30,14 +33,13 @@ protected:
 	s_PlateLayer m_L1Plates;/*results of first layer of the eyes run, setup with the proper connections before the run*/
 	s_patL1Nodes m_L1MemNodes[PATTERNL1MAXNUMNETS]; /*each L1 hex plate each node of this plate has a 2 layer structure that it does not own, the intermedary nodes are stored in mem here*/
 	/*     */
-	
-	unsigned char scan();
-	unsigned char updateL0();
-	unsigned char transNNets();
-	unsigned char transNNetToPlates(int net_index);
 	void          genL1midNodes(s_patL1Nodes& patL1Nds);
 	void          releaseL1midNodes(s_patL1Nodes& patL1Nds);
+	unsigned char transNNets();
+	unsigned char transNNetToPlates(int net_index);
 
+	unsigned char scan();
+	unsigned char updateL0();
 
 	inline float NNetFunc(float sum) { return Math::StepFuncSym(sum); }
 };
