@@ -33,13 +33,11 @@ protected:
 	
 	unsigned char scan();
 	unsigned char updateL0();
+	unsigned char transNNets();
 	unsigned char transNNetToPlates(int net_index);
 	void          genL1midNodes(s_patL1Nodes& patL1Nds);
 	void          releaseL1midNodes(s_patL1Nodes& patL1Nds);
 
-	unsigned char fullyRoot(s_hexEye& e0, long i);
-	unsigned char evalAtRoot(long i_base);/*assumes that the NNet eyes have been fully rooted*/
-	float evalNet(s_hexEye& net);
 
 	inline float NNetFunc(float sum) { return Math::StepFuncSym(sum); }
 };
