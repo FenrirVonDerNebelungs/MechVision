@@ -125,10 +125,10 @@ unsigned char DrawHexImg::genLineImg(LineFinder* lineFinder) {
 	int nlines = lineFinder->getNLines();
 	if (nlines <= 0)
 		return ECODE_ABORT;
-	s_line* lines = lineFinder->getLines();
+	s_line** lines = lineFinder->getLines();
 	for (int i_line = 0; i_line < nlines; i_line++) {
-		for (int i = 0; i < lines[i_line].n; i++) {
-			s_linePoint& pt = lines[i_line].pts[i];
+		for (int i = 0; i < lines[i_line]->n; i++) {
+			s_linePoint& pt = lines[i_line]->pts[i];
 			s_rgb hexCol = genLineCol(pt.lunai);
 			int hex_i = pt.hexi;
 			m_hexedImg->PrintMaskedImg(m_hex[hex_i].i, m_hex[hex_i].j, *m_hexMaskPlus, hexCol);

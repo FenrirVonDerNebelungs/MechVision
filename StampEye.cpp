@@ -97,6 +97,7 @@ unsigned char StampEye::spawn() {
 	for (int i = 0; i < m_eyes_stamped; i++) {
 		calcLunaStampEye(m_eyeGen->getEye(i), m_lunaEyeGen->getEye(i));
 	}
+	return ECODE_OK;
 }
 void StampEye::setupForStampi(int i) {
 	for (int j = 0; j < STAMPEYENUM; j++) {
@@ -239,7 +240,7 @@ float StampEye::AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt&
 			}
 		}
 	}
-	float tot = WH * WH;
+	float tot = (float)(WH * WH);
 	return av / tot;
 }
 unsigned char StampEye::setBasisFromAng(float ang) {

@@ -28,7 +28,7 @@ int runTestEye() {
 	HexLow.Init(&dummyImg);
 	HexEye hEye;
 	hEye.init(&HexLow);
-	hEye.spawn(3);
+	hEye.spawn();
 	DrawHexImg drawEye;
 	drawEye.Init(&HexLow);
 	drawEye.renderEyeImg(hEye.getEye(0));

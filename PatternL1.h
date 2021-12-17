@@ -27,7 +27,7 @@ public:
 protected:
 	/*not owned*/
 	s_hexEye*   m_NNetEyes;/*trained NNets that are set to search for each of the STAMPEYENUM stamps*/
-	int       m_numNNets;/*should be STAMPEYENUM*/
+	int         m_numNNets;/*should be STAMPEYENUM*/
 	/*owned*/
 	s_PlateLayer m_L0Plates;/* each plate in layer corresponds to one of the lunas, reduced to one hex up, with the luna node in the center picked for the luna value*/
 	s_PlateLayer m_L1Plates;/*results of first layer of the eyes run, setup with the proper connections before the run*/

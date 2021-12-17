@@ -51,9 +51,9 @@ public:
 
     unsigned char spawn();
 
-    inline s_line& getLine(int i) { return m_lines[i]; }
-    inline s_line* getLines() { return m_lines; }
-    inline int getNLines() { return m_n; }
+    inline s_line* getLine(int i) { return m_lines[i]; }
+    inline s_line** getLines() { return m_lines; }
+    inline int getNLines() { return m_n_lines; }
 
 protected:
     float m_minTrigo;/*min o to start a line*/
@@ -105,10 +105,10 @@ protected:
     unsigned char blackoutSurrounding(long hex_i);
 
     unsigned char mergeSegs(s_linePoint lineR[], int nlineR, s_linePoint lineL[], int nlineL, s_line& newLine);
-    unsigned char formLine(s_line& denseLine, s_line& newLine);
+    //unsigned char formLine(s_line& denseLine, s_line& newLine);
  
-
-    unsigned char setVectors(s_linePoint& prePt, s_linePoint& postPt, s_linePoint& pt);/*set vectors for point using pre & post info*/
+    unsigned char setVectorsForLine(s_line* lineptr);
+    unsigned char setVectors(s_linePoint& pt);/*set vectors for point using pre & post info*/
 
     /*merge functions for lines that may change luna*/
     unsigned char mergeLunaLines();/*this should be run on the lines before they are spaced out*/

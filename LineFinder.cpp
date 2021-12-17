@@ -317,6 +317,7 @@ unsigned char LineFinder::mergeSegs(s_linePoint lineR[], int nlineR, s_linePoint
 	}
 	return ECODE_OK;
 }
+/*
 unsigned char LineFinder::formLine(s_line& denseLine, s_line& newLine) {
 	newLine.n = 0;
 	for (int i = 1; i < (denseLine.n - 1); i += m_dLine) {
@@ -333,8 +334,13 @@ unsigned char LineFinder::formLine(s_line& denseLine, s_line& newLine) {
 	}
 	return ECODE_OK;
 }
-
-unsigned char LineFinder::setVectors(s_linePoint& prePt, s_linePoint& postPt, s_linePoint& pt) {
+*/
+unsigned char LineFinder::setVectorsForLine(s_line* lineptr) {
+	for (int i = 0; i < lineptr->n; i++)
+		setVectors(lineptr->pts[i]);
+	return ECODE_OK;
+}
+unsigned char LineFinder::setVectors(s_linePoint& pt) {
 	pt.perp = m_lunaVecPerp[pt.lunai];
 	pt.v = vecMath::perpUL(pt.perp);
 	return ECODE_OK;
@@ -362,9 +368,11 @@ unsigned char LineFinder::mergeLunaLines() {
 			}
 		}
 	}
+	m_n_lines = 0;
 	for (int i = 0; i < m_n; i++) {
 		if (!m_singLunaLines[i].blacked) {
-			m_lines[i] = &(m_singLunaLines[i]);
+			m_lines[m_n_lines] = &(m_singLunaLines[i]);
+			setVectorsForLine(m_lines[m_n_lines]);
 			m_n_lines++;
 		}
 	}

@@ -42,6 +42,7 @@ unsigned char HexEye::init(float r, int NLevels, int N_lowestNodePtrs) {
 	}
 	else
 		return ECODE_FAIL;
+	return ECODE_OK;
 }
 unsigned char HexEye::initWithNLevels(int NLevels) {
 	m_N_levels = NLevels;

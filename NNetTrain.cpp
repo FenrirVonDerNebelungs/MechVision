@@ -112,7 +112,7 @@ unsigned char NNetTrain::findDeltaEs(s_hexPlate& netBot) {
 			for (int k_indx = 0; k_indx < netBot.m_fhex[j_indx].N; k_indx++) {
 				int W_jk_indx = j_indx * netBot.m_fhex[j_indx].N + k_indx;
 				m_DeltaEs[W_jk_indx] += m_steps[W_jk_indx] * evalForQth_jk(y, netBot.m_fhex[j_indx], k_indx);
-				m_E[W_jk_indx] += 0.5 * evalEForQth_j(y, netBot.m_fhex[j_indx]);
+				m_E[W_jk_indx] += 0.5f * evalEForQth_j(y, netBot.m_fhex[j_indx]);
 			}
 		}
 	}

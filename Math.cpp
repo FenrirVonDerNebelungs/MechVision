@@ -93,6 +93,10 @@ namespace vecMath {
 		s_2pt v1 = mul(vecInBasis.x1, basisU1);
 		return add(v0, v1);
 	}
+	bool inCircle(float r, const s_2pt& center, const s_2pt& pt) {
+		float d = dist(center, pt);
+		return d <= r;
+	}
 }
 
 namespace imgMath {

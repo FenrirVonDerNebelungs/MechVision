@@ -59,10 +59,7 @@ namespace vecMath {
 	void  setBasis(float angRad, s_2pt& basisU0, s_2pt& basisU1);
 	void  revBasis(const s_2pt& basisU0, const s_2pt& basisU1, s_2pt& revBasisU0, s_2pt& revBasisU1);
 	s_2pt convBasis(const s_2pt& basisU0, const s_2pt& basisU1, const s_2pt& vecInBasis);
-	bool inCircle(float r, const s_2pt& center, const s_2pt& pt) {
-		float d = dist(center, pt);
-		return d <= r;
-	}
+	bool inCircle(float r, const s_2pt& center, const s_2pt& pt);
 }
 namespace imgMath {
 	s_rgba convToRGBA(float r, float g, float b);
