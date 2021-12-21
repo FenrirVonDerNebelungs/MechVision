@@ -54,6 +54,7 @@ protected:
 
 	unsigned char genHexImgDebug();
 	unsigned char renderHexOuput();/*renders monoscale in col of hex o variable*/
+	unsigned char genSingLunaLineImg(LineFinder* lineFinder);
 	unsigned char genLineImg(LineFinder* lineFinder);
 	s_rgb genLineCol(int lunai);
 	unsigned char genEyeImgDebug(s_hexEye& eye);

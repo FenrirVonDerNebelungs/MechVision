@@ -87,7 +87,7 @@ int runTest0() {
 
 	int cnt = 0;
 	bool doCol = false;
-	while (cnt<2000) {
+	while (cnt<2){//000) {
 		Mat frame0;
 		cap >> frame0;
 		if (frame0.empty())

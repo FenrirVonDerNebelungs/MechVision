@@ -38,6 +38,10 @@ m_plateLayer(NULL)
 		m_singLunaLines[i].pts = NULL;
 		m_singLunaLines[i].f = NULL;
 		m_singLunaLines[i].blacked = false;
+		m_mergedLines[i].n = 0;
+		m_mergedLines[i].pts = NULL;
+		m_mergedLines[i].f = NULL;
+		m_mergedLines[i].blacked = false;
 		
 		m_lines[i] = NULL;
 	}
@@ -88,6 +92,8 @@ unsigned char LineFinder::init(
 	for (int i = 0; i < LINEFINDERMAXLINES; i++) {
 		m_singLunaLines[i].n = 0;
 		m_singLunaLines[i].pts = new s_linePoint[m_numHex];
+		m_mergedLines[i].n = 0;
+		m_mergedLines[i].pts = new s_linePoint[m_numHex];
 	}
 	m_lineSegR = new s_linePoint[m_numHex];
 	m_numLineSegR = 0;
@@ -121,6 +127,12 @@ void LineFinder::release() {
 		}
 		m_singLunaLines[i].pts = NULL;
 		m_singLunaLines[i].n = 0;
+		if (m_mergedLines[i].pts != NULL) {
+			delete[] m_mergedLines[i].pts;
+		}
+		m_mergedLines[i].pts = NULL;
+		m_mergedLines[i].n = 0;
+
 		m_lines[i] = NULL;
 	}
 	m_n = 0;
@@ -139,6 +151,8 @@ void LineFinder::reset() {
 	for (int i = 0; i < m_n; i++) {
 		m_singLunaLines[i].n = 0;
 		m_singLunaLines[i].blacked = false;
+		m_mergedLines[i].n = 0;
+		m_mergedLines[i].blacked = false;
 		m_lines[i] = NULL;
 	}
 	m_n = 0;
@@ -273,22 +287,7 @@ unsigned char LineFinder::scanNextLink(int webCircleStart_i, long hex_i, int lun
 			}
 		}
 	}
-	/*
-	for (int i = 0; i < 3; i++) {
-		int webi = Math::loop(webCircleStart_i + i, 6);
-		for (int j = -1; j <= 1; j++) {
-			int cur_lunai = Math::loop(lunai + j, 6);
-			s_fNode* cur_lunaNode = (s_fNode*)m_plateLayer->p[cur_lunai].m_fhex[hex_i].nodes[webi];
-			if (cur_lunaNode != NULL) {
-				if (cur_lunaNode->o > hio && !(m_in_line[cur_lunaNode->thislink])) {
-					hio = cur_lunaNode->o;
-					retlunai = cur_lunai;
-					retHexi = cur_lunaNode->thislink;
-				}
-			}
-		}
-	}
-	*/
+
 	return (hio >= m_mino) ? ECODE_OK : ECODE_ABORT;
 }
 unsigned char LineFinder::blackoutSurrounding(long hex_i) {
@@ -347,31 +346,28 @@ unsigned char LineFinder::setVectors(s_linePoint& pt) {
 }
 unsigned char LineFinder::mergeLunaLines() {
 	for (int i = 0; i < m_n; i++) {
-		if (m_singLunaLines[i].blacked)
-			continue;
+		bool wasMerged = false;
+		s_line* firstLine = &(m_singLunaLines[i]);
 		for (int j = i + 1; j < m_n; j++) {
-			if (m_singLunaLines[j].blacked)
-				continue;
+			s_line* secondLine = (m_singLunaLines[j].blacked) ? &(m_mergedLines[j]) :&(m_singLunaLines[j]);
 			long cur_l_i = 0;
 			long cur_c_i = 0;
-			if (doMergeLunaLines(m_singLunaLines[i], m_singLunaLines[j], cur_l_i, cur_c_i)) {
+			if (doMergeLunaLines(*firstLine, *secondLine, cur_l_i, cur_c_i)) {
 				bool selFirst = false;
-				unsigned char err = mergeLunaLinesForward(cur_l_i, cur_c_i, m_singLunaLines[i], m_singLunaLines[j], m_scratchLine, selFirst);
-				if (selFirst) {
-					err = mergeLunaLineToTail(m_scratchLine, m_singLunaLines[i], cur_l_i, m_scratchLine1);
-					n_line::copyLines(m_scratchLine1, m_singLunaLines[i]);
-				}
-				else {
-					err = mergeLunaLineToTail(m_scratchLine, m_singLunaLines[j], cur_l_i, m_singLunaLines[i]);
-				}
+				unsigned char err = mergeLunaLinesForward(cur_l_i, cur_c_i, *firstLine, *secondLine, m_scratchLine, selFirst);
+				err = mergeLunaLineToTail(m_scratchLine, *firstLine, cur_l_i, m_mergedLines[j]);/*really this should merge which ever line is stronger instead of always selecting the 1st line in the array, however this is faster since it avoids a copy of the line*/
 				m_singLunaLines[j].blacked = true;
+				wasMerged = true;
+				firstLine = &(m_mergedLines[j]);
 			}
 		}
+		if(!wasMerged && m_mergedLines[i].n<=0)
+			n_line::copyLines(m_singLunaLines[i], m_mergedLines[i]);
 	}
 	m_n_lines = 0;
 	for (int i = 0; i < m_n; i++) {
-		if (!m_singLunaLines[i].blacked) {
-			m_lines[m_n_lines] = &(m_singLunaLines[i]);
+		if (m_mergedLines[i].n>0) {
+			m_lines[m_n_lines] = &(m_mergedLines[i]);
 			setVectorsForLine(m_lines[m_n_lines]);
 			m_n_lines++;
 		}

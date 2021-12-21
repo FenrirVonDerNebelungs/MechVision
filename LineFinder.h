@@ -53,6 +53,8 @@ public:
 
     inline s_line* getLine(int i) { return m_lines[i]; }
     inline s_line** getLines() { return m_lines; }
+    inline s_line* getSingLunaLines() { return m_singLunaLines; }
+    inline int getNSingLunaLines() { return m_n; }
     inline int getNLines() { return m_n_lines; }
 
 protected:
@@ -71,6 +73,7 @@ protected:
     bool* m_in_line;/*points are in line and should not be added to line during search along line*/
     bool* m_covered;/*mask over hexes line & surrounding that should not be used to start line search again*/
     s_line       m_singLunaLines[LINEFINDERMAXLINES];
+    s_line       m_mergedLines[LINEFINDERMAXLINES];
     s_line*      m_lines[LINEFINDERMAXLINES];/*these pointers point to lines in singLunaLines*/
     int          m_n;
     int          m_n_lines;

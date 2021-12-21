@@ -80,7 +80,7 @@ unsigned char DrawHexImg::renderHexImg()
 	return ECODE_OK;
 }
 unsigned char DrawHexImg::renderLineImg(LineFinder* lineFinder) {
-	return genLineImg(lineFinder);
+	return genSingLunaLineImg(lineFinder);
 }
 unsigned char DrawHexImg::renderEyeImg(s_hexEye& eye) {
 	return genEyeImgDebug(eye);
@@ -117,6 +117,22 @@ unsigned char DrawHexImg::renderHexOuput() {
 		if (m_nodes[i].o < 0.0)
 			hexCol = imgMath::convToRGB(0, 0, 0);
 		m_hexedImg->PrintMaskedImg(m_nodes[i].shex->i, m_nodes[i].shex->j, *m_hexMaskPlus, hexCol);
+	}
+	return ECODE_OK;
+}
+unsigned char DrawHexImg::genSingLunaLineImg(LineFinder* lineFinder) {
+	m_hexedImg->clearToChar(0x00);
+	int nlines = lineFinder->getNSingLunaLines();
+	if (nlines <= 0)
+		return ECODE_ABORT;
+	s_line* lines = lineFinder->getSingLunaLines();
+	for (int i_line = 0; i_line < nlines; i_line++) {
+		for (int i = 0; i < lines[i_line].n; i++) {
+			s_linePoint& pt = lines[i_line].pts[i];
+			s_rgb hexCol = genLineCol(pt.lunai);
+			int hex_i = pt.hexi;
+			m_hexedImg->PrintMaskedImg(m_hex[hex_i].i, m_hex[hex_i].j, *m_hexMaskPlus, hexCol);
+		}
 	}
 	return ECODE_OK;
 }
