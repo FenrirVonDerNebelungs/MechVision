@@ -7,6 +7,7 @@
 #endif
 
 #define LINEFINDERMAXLINES 500
+#define LINEFINDERMAXLUNADIFF 1
 struct s_linePoint {
     float o;
     int lunai;/*dominate maski at this point*/
@@ -22,11 +23,12 @@ struct s_line {
     s_linePoint* pts;
     bool* f;
     bool blacked;
+    bool lowerHalf;
 };
 
 namespace n_line{
     inline float dist(const s_linePoint& p1, const s_linePoint& p2) { return vecMath::dist(p1.loc, p2.loc); }
-    inline bool isIn(const s_linePoint& p1, const s_linePoint& p2, float d) { return d <= dist(p1, p2); }
+    inline bool isIn(const s_linePoint& p1, const s_linePoint& p2, float d) { return d >= dist(p1, p2); }
     void copyPt(const s_linePoint& p1, s_linePoint& p2);
     void copyLines(const s_line& l1, s_line& l2);
 }
@@ -39,6 +41,7 @@ public:
 
     unsigned char init(
         s_PlateLayer* plateLayer,
+        long spawn_start_hexi = 6000,
         float minTrigo = 0.3f,//0.3f,
         float mino = 0.1f,
         int minLineSegPts = 8,//6,
@@ -58,6 +61,7 @@ public:
     inline int getNLines() { return m_n_lines; }
 
 protected:
+    long m_spawn_start_hexi; /*where the search for new lines starts*/
     float m_minTrigo;/*min o to start a line*/
     float m_mino;/*min o to continue a line*/
     int   m_minLineSegPts;/*should be set to greater than three*/
@@ -120,9 +124,10 @@ protected:
     unsigned char mergeLunaLinesForward(int l_i, int c_i, const s_line& l, const s_line& c, s_line& m, bool& selFirst);
     unsigned char mergeLunaLineToTail(const s_line& m, const s_line& c, long c_i, s_line& mm);
 
+    bool lunaNeb(const s_linePoint& p1, const s_linePoint& p2);
     bool neb(const s_linePoint& p1, const s_linePoint& p2);
     bool overlapPts(const s_linePoint& p1, const s_linePoint& p2);
- 
+
 };
 
 #endif

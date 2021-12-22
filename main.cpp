@@ -18,7 +18,7 @@ int runTest0();
 int runTestEye();
 int main() {
 
-	return runTestEye();
+	return runTest0();
 }
 
 int runTestEye() {
@@ -129,6 +129,6 @@ int runTest0() {
 	cap.release();
 
  	cout << "Hello with OpenCV\n";
-	destroyAllWindows();
+ 	destroyAllWindows();
 	return 0;
 }
