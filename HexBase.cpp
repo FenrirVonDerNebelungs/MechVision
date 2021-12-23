@@ -70,6 +70,8 @@ unsigned char HexBase::genStructuredPlate(s_hexPlate& plate) {
 		plate.m_fhex[i].x = m_hex[i].x;
 		plate.m_fhex[i].y = m_hex[i].y;
 	}
+	plate.m_height = m_img->getHeight();
+	plate.m_width = m_img->getWidth();
 	plate.m_Rhex = m_Rhex;
 	plate.m_RShex = m_RShex;
 	plate.m_Shex = m_Shex;

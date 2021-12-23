@@ -84,6 +84,8 @@ struct s_hexPlate {
 	long    m_nHex;
 
 	/*for img output*/
+	long  m_height;
+	long  m_width;
 	float m_Rhex;
 	float m_RShex;
 	float m_Shex;

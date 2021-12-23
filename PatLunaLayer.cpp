@@ -55,6 +55,8 @@ unsigned char PatLunaLayer::Update() {
 	return ECODE_OK;
 }
 void PatLunaLayer::initHexPlate(s_hexPlate& o, s_hexPlate& n, s_fNode* patNode) {
+	n.m_height = o.m_height;
+	n.m_width = o.m_width;
 	n.m_Rhex = 2.f * o.m_Rhex;
 	n.m_RShex = 2.f * o.m_RShex;
 	n.m_Shex = 2.f * o.m_Shex;
