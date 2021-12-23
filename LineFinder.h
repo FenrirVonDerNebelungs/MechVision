@@ -6,7 +6,7 @@
 #include "PatternLuna.h"
 #endif
 
-#define LINEFINDERMAXLINES 500
+#define LINEFINDERMAXLINES 50
 #define LINEFINDERMAXLUNADIFF 1
 struct s_linePoint {
     float o;
@@ -42,12 +42,13 @@ public:
     unsigned char init(
         s_PlateLayer* plateLayer,
         long spawn_start_hexi = 6000,
+        long min_scan_hexi=5000,
         float minTrigo = 0.3f,//0.3f,
         float mino = 0.1f,
         int minLineSegPts = 8,//6,
         int dLine = 1,//3,
         float maxNebDistFac = 3.f,
-        long minMergeOverlap = 10,
+        long minMergeOverlap = 6,
         float mergeOverlap = 0.6 /*how much merge overlap before one of the lines is removed*/
     );
     void release();
@@ -62,6 +63,7 @@ public:
 
 protected:
     long m_spawn_start_hexi; /*where the search for new lines starts*/
+    long m_min_scan_hexi;/*points below this will not be added to line, way of eliminating hi lines*/
     float m_minTrigo;/*min o to start a line*/
     float m_mino;/*min o to continue a line*/
     int   m_minLineSegPts;/*should be set to greater than three*/

@@ -15,10 +15,11 @@ namespace n_line {
 		for (long i = 0; i < l1.n; i++) {
 			copyPt(l1.pts[i], l2.pts[i]);
 		}
+		l2.n = l1.n;
 	}
 }
 
-LineFinder::LineFinder() : m_spawn_start_hexi(0), m_minTrigo(0.f), m_mino(0.f), m_minLineSegPts(0), m_dLine(0),
+LineFinder::LineFinder() : m_spawn_start_hexi(0), m_min_scan_hexi(0), m_minTrigo(0.f), m_mino(0.f), m_minLineSegPts(0), m_dLine(0),
 m_maxNebDist(0.f), m_minMergeOverlap(0), m_mergeOverlap(0.f), m_numHex(0),
 m_in_line(NULL), m_covered(NULL),
 m_n(0), m_n_lines(0),
@@ -59,6 +60,7 @@ LineFinder::~LineFinder() { ; }
 unsigned char LineFinder::init(
 	s_PlateLayer* plateLayer,
 	long spawn_start_hexi,
+	long min_scan_hexi,
 	float minTrigo,
 	float mino,
 	int minLineSegPts,
@@ -68,6 +70,7 @@ unsigned char LineFinder::init(
 	float mergeOverlap
 ) {
 	m_spawn_start_hexi = spawn_start_hexi;
+	m_min_scan_hexi = min_scan_hexi;
 	m_minTrigo = minTrigo;
 	m_mino = mino;
 	m_minLineSegPts = minLineSegPts;
@@ -281,6 +284,8 @@ unsigned char LineFinder::addLinePoint(int lunai, int hexi, float o, s_linePoint
 }
 unsigned char LineFinder::scanNextLink(int webCircleStart_i, long hex_i, int lunai, int& retHexi, int& retlunai, float& o) 
 {
+	if (hex_i < m_min_scan_hexi)
+		return ECODE_ABORT;
 	float hio = -100.f;
 	retlunai = -1;
 	retHexi = -1;
@@ -434,8 +439,10 @@ unsigned char LineFinder::mergeLunaLinesForward(int l_i, int c_i, const s_line& 
 				n_line::copyPt(c.pts[cur_c_i], m.pts[cur_m_i]);
 			cur_m_i++;
 			cur_c_i++;
-			if (cur_c_i >= c.n)
+			if (cur_c_i >= c.n) {
+				i++;
 				break;
+			}
 		}
 		else {
 			break;
@@ -454,8 +461,8 @@ unsigned char LineFinder::mergeLunaLinesForward(int l_i, int c_i, const s_line& 
 		for (; i < l.n; i++) {
 			n_line::copyPt(l.pts[i], m.pts[cur_m_i]);
 			cur_m_i++;
+			i++;
 		}
-		i++;
 	}
 	else {
 		for (; cur_c_i < c.n; cur_c_i++) {
