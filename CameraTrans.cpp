@@ -68,7 +68,7 @@ bool CameraTrans::drivePlaneCoord(const s_2pt& screenCoord, s_2pt& planeCoord) {
 	planeCoord.x1 += m_camera_y;
 	return true;
 }
-bool CameraTrans::screenToDriveplane(const s_2pt& screenXY, s_2pt& XY) {
+bool CameraTrans::screenToDriveplane_Unit_d(const s_2pt& screenXY, s_2pt& XY) {
 	/*y starts at top so angle from top of screen*/
 	float yScdown = m_screen_y_horizion - screenXY.x1;
 	if (yScdown <= 0.f)
@@ -79,12 +79,19 @@ bool CameraTrans::screenToDriveplane(const s_2pt& screenXY, s_2pt& XY) {
 	  /* camera_y/f = d/y
 	  *  y = d*f/camera_y
 	  */
-	XY.x1 = m_camera_d * m_f_pix / yScdown;/*y*/
+	XY.x1 = m_f_pix / yScdown;/*y when * m_camera_d */
 	/*
 	*camera_x/f =x/y
 	* x = camera_x/f * y
 	*/
 	float xScAccross = screenXY.x0 - m_screen_x_center;
-	XY.x0 = xScAccross / m_f_pix * XY.x1; /*x*/
+	/* Xsc/f * y -> substitung for y: Xsc/Ysc * d */
+	XY.x0 = xScAccross / yScdown; /*x when * m_camera_d */
+	return true;
+}
+bool CameraTrans::screenToDriveplane(const s_2pt& screenXY, s_2pt& XY) {
+	if (!screenToDriveplane_Unit_d)
+		return false;
+	convFastCoordToCoord(XY);
 	return true;
 }
