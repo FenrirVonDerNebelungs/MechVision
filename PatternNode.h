@@ -90,6 +90,15 @@ struct s_hexPlate {
 	float m_RShex;
 	float m_Shex;
 	s_2pt m_hexU[6];
+	/*for fast scan xy to plate loc for a square plate configuration*/
+	float* m_Row_y;/*array of the y loc of each row*/
+	float* m_Col_x;/*array of the x loc of each column*/
+	long   m_Row_N;
+	long   m_Col_N;
+	float  m_Row_offset;/*y start of center of 0th, row (row count starts from 0)*/
+	float  m_Col_offset;/*x start of center of 0th col for the 0th row (col count starts from 0) */
+	float  m_Col_d;/*seperation between columns 2/3 * R */
+	float  m_Row_d;/*seperation between rows 2*RS */
 };
 struct s_tPlate {
 	s_tNode* m_tnodes;
@@ -111,6 +120,8 @@ public:
 namespace PatStruct{
 	void zeroHexPlate(s_hexPlate& plate);
 	void zeroPlateLayer(s_PlateLayer& player);
+
+	long squarePlate_xyToHexi(const s_hexPlate& p, const s_2pt& xy);
 
 	void hexPlateConnectWeb(s_hexPlate& plate);/*assumes the hexes in the plates' s_fNodes have already been filled
 											    connects the splayed s_fnode that attached directly to the plate

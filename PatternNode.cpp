@@ -119,6 +119,31 @@ namespace PatStruct {
 			zeroHexPlate(player.p[i]);
 		player.n = 0;
 	}
+	long squarePlate_xyToHexi(const s_hexPlate& p, const s_2pt& xy) {
+		if (xy.x0 < 0.f || xy.x1 < 0.f)
+			return -1;
+		if (xy.x1 >= p.m_height || xy.x0 >= p.m_width)
+			return -1;
+		//float colH = 0.66666f * p.m_Rhex;
+		//float rowW = 2.f * p.m_RShex;
+		float cnt_y = (xy.x1 - p.m_Row_offset)/p.m_Row_d;
+		if (cnt_y < 0.f)
+			cnt_y = 0.f;
+		long row_y_i = (long)roundf(cnt_y);
+		if (row_y_i >= p.m_Row_N)
+			row_y_i -= 1;
+
+		/*figure out whether the 0th col starts back or in a bit*/
+		/* assume that 0th and all even rows start at lowest offset*/
+		float notEven = (float)(row_y_i % 2);
+		float cnt_x = (xy.x0 - (1 + notEven*p.m_RShex) * p.m_Col_offset) / p.m_Col_d;
+		if (cnt_x < 0.f)
+			cnt_x = 0.f;
+		long col_x_i = (long)roundf(cnt_x);
+		if (col_x_i >= p.m_Col_N)
+			col_x_i -= 1;
+
+	}
 	void hexPlateConnectWeb(s_hexPlate& plate) {
 		for (long i = 0; i < plate.m_nHex; i++) {
 			plate.m_fhex[i].nodes = new s_bNode * [6];
