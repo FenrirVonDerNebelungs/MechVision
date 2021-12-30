@@ -26,12 +26,13 @@ public:
 		float screen_y_horizion_offset = 0.f,/*offset for horizontal of screen horizion in pix*/
 		float screen_x_center_offset = 0.f /*offset from center of screen in pix of camera center*/
 	);
-	/*h opening angle raspberry pi 0.85172067497, 48.8 degrees for 480 H, 640 62.2degrees*/
 	unsigned char setFocalFromOpeningAngle(float openingAngleH);/*use the vertical opening angle (in rad) of the camera to reset focal lenght in pix*/
 	void release();
 
 	bool drivePlaneCoord(const s_2pt& screenCoord, s_2pt& planeCoord);
 	inline bool drivePlaneCoordCameraCent(const s_2pt& screenCoord, s_2pt& planeCoord) { return screenToDriveplane(screenCoord, planeCoord); }
+	inline bool drivePlaneCoordFast(const s_2pt& screenCoord, s_2pt& planeCoord) { return screenToDriveplane_Unit_d(screenCoord, planeCoord); }
+	inline void convFastCoordToCoord(s_2pt& XY) { XY.x0 *= m_camera_d; XY.x1 *= m_camera_d; }
 	inline float getScreenLowPt() { return m_yPinHole_screenLowPt; }
 protected:
 	float m_yPinHole_screenLowPt;/*dist in y from pin hole camera of closest point viewable by camera in drive plane*/
@@ -55,6 +56,10 @@ protected:
 															   plane y zero starting at the center in y of the 
 															   'pinhole' camera
 															   */
+	bool screenToDriveplane_Unit_d(const s_2pt& screenXY, s_2pt& XY);/*same as above but all values must be multiplied
+																	  by d to get the correct distances, 
+																	  camera_d is effectively set to the unit distance by this
+																	  function */
 };
 
 #endif
