@@ -7,7 +7,18 @@
 #ifndef LINEFINDER_H
 #include "LineFinder.h"
 #endif
+struct s_DrivePlate {
+	/*not owned input*/
+	s_line** screen_lines; /*not owned, lines in*/
+	int      screen_n_lines;/*number of lines on screen*/
 
+	/*output*/
+	int      maxLinePts;/*max allowed points for a plane line in memory*/
+	s_line   lines[LINEFINDERMAXLINES];/*the lines coverted to almost robot coord on plane but 
+									    camera centerd coordinates with camera_d as the unit distance */
+	int      n_lines;/*number of converted lines on the plate*/
+	s_hexPlate p;/*hex plate of the drive plane with the converted lines on it*/
+};
 /* Drive plane is designed to take the lines from lineFinder and project them onto
  a plate (or set of plates) that represent the flat area the 'drive plane' in front
  of the robot 
@@ -21,27 +32,30 @@ protected:
 	float m_screenClosestY_Unit_d;/*same as above but with the distance of the camera above the plane set to the unit distance for y
 								    subtract 1 from this for a buffer*/
 	float m_plateXcenter;/*center of hex plate that image is being projected onto*/
-	/*not owned*/
-	s_line** m_lines;
-	int      m_n_lines;
+	float m_screenHYDim;/*determines zoom of image, how far in outer robot coord the top of the proj region is from the bottom, in this case used to scale all plates*/
+	/*plates are assumed to start at closest visible distance */
+	/*mixed, owned/not owned*/
+	s_DrivePlate plates[MAXPLATESPERLAYER];
 	/*owned    */
 	CameraTrans* m_cameraTrans;
-	s_PlateLayer m_plateLayer;/*plates are assumed to start at closest visible distance */
-	float m_plateDimToPix[MAXPLATESPERLAYER]; /*scale factors that scale the dimension of the 
-											   real distance on the drive plane to the pix dim of
-											   the plate representing 
-											   the plane seen by the camera */
-	int          m_maxLinePts;/*max allowed points for a plane line in memory*/
-	s_line       m_planelines[LINEFINDERMAXLINES];/*the lines coverted by into camera centerd coordinates with camera_d as the unit distance */
-	int          m_n_planelines;
+	float m_plateDimToPix;    /*scale factor that scale the dimension of the
+							real distance on the drive plane to the pix dim of
+							the plate representing
+							the plane seen by the camera */
 
 
 	unsigned char convertLines();
 	inline bool screenLineCoordToPlaneCoord(const s_2pt& screenXY, s_2pt& planeXY) { return m_cameraTrans->drivePlaneCoordFast(screenXY, planeXY); }
 
-	unsigned char transLineToPlate(float scaleFac, s_hexPlate& plate, const s_line* pline);
-	bool linePtToHexCoord(float scaleFac, const s_linePoint& linePt, const s_hexPlate& plate, s_2pt_i& ij);
+
+
 	bool LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& plateXY);
+
+
+	bool PlateLocToHexCoord(const s_hexPlate& p, const s_2pt& plateXY, s_2pt_i& ij);
+	bool fillHex(const s_2pt& plateXY, s_hexPlate& p);
+
+	bool fillPlateHexSpotty(int plate_i, float scaleFac);
 
 	/*utility*/
 	void copyLinePts(const s_linePoint& p1, s_linePoint& p2);
@@ -89,24 +103,34 @@ bool DrivePlane::LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& p
 	plateXY.x1 *=scaleFac;
 	return true;
 }
-bool DrivePlane::linePtToHexCoord(float scaleFac, const s_linePoint& linePt, const s_hexPlate& plate, s_2pt_i& ij) {
-	s_2pt plateXY;
-	if (!LineLocToPlateLoc(scaleFac, linePt.loc, plateXY))
+bool DrivePlane::PlateLocToHexCoord(const s_hexPlate& p, const s_2pt& plateXY, s_2pt_i& ij) {
+	/*plateXY.x1 will be >= 0*/
+	ij.x1 = roundf(plateXY.x1);
+	if (ij.x1 >= p.m_height)
 		return false;
-	plateXY.x1 = plate.m_height - 1 - plateXY.x1;
-	if (plateXY.x1 < 0.f)
+	ij.x1 = p.m_height - 1 - ij.x1;
+	ij.x0 = roundf(plateXY.x0) + p.m_width / 2;
+	if (ij.x0 < 0 || ij.x0 >= p.m_width)
 		return false;
-	plateXY.x0 += m_plateXcenter;/*check bounds after rounded*/
-	/*the i, j of a hex on a plate are essentially the same as its location on the plate*/
-	long plateX = (long)roundf(plateXY.x0);
-	if (plateX < 0 || plateX >= plate.m_width)
-		return false;
-	long plateY = (long)roundf(plateXY.x1);
-	ij.x0 = plateX;
-	ij.x1 = plateY;
 	return true;
 }
-unsigned char DrivePlane::transLineToPlate(float scaleFac, s_hexPlate& plate, const s_line* pline)
-{
+bool DrivePlane::fillHex(const s_2pt& plateXY, s_hexPlate& p) {
+	s_2pt_i ij;
+	if (!PlateLocToHexCoord(p, plateXY, ij))
+		return false;
 
+}
+bool DrivePlane::fillPlateHexSpotty(int plate_i, float scaleFac) {
+	s_DrivePlate& dp = plates[plate_i];
+	for (int i = 0; i < dp.n_lines; i++) {
+		s_line* line = dp.lines[i];
+		for (int pt_i = 0; pt_i < line->n; pt_i++) {
+			s_linePoint& pt = line->pts[pt_i];
+			s_2pt plateXY;
+			if (LineLocToPlateLoc(scaleFac, pt.loc, plateXY)) {
+				fillHex(plateXY, dp.p);
+			}
+		}
+	}
+	return true;
 }

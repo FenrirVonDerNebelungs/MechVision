@@ -26,6 +26,7 @@ public:
 		float screen_y_horizion_offset = 0.f,/*offset for horizontal of screen horizion in pix*/
 		float screen_x_center_offset = 0.f /*offset from center of screen in pix of camera center*/
 	);
+	/*h opening angle raspberry pi 0.85172067497, 48.8 degrees for 480 H, 640 62.2degrees*/
 	unsigned char setFocalFromOpeningAngle(float openingAngleH);/*use the vertical opening angle (in rad) of the camera to reset focal lenght in pix*/
 	void release();
 

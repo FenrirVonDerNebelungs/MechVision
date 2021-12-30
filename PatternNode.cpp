@@ -113,11 +113,43 @@ namespace PatStruct {
 		plate.m_Shex = 0.f;
 		for (int i = 0; i < 6; i++)
 			utilStruct::zero2pt(plate.m_hexU[i]);
+		plate.m_RowStart = NULL;
+		plate.m_RowStart_is = NULL;
+		plate.m_Row_N = 0;
+		plate.m_Col_d = 0.f;
+		plate.m_Row_d = 0.f;
 	}
 	void zeroPlateLayer(s_PlateLayer& player) {
 		for (int i = 0; i < MAXPLATESPERLAYER; i++)
 			zeroHexPlate(player.p[i]);
 		player.n = 0;
+	}
+	long squarePlate_xyToHexi(const s_hexPlate& p, const s_2pt& xy) {
+		if (xy.x0 < 0.f || xy.x1 < 0.f)
+			return -1;
+		if (xy.x1 >= p.m_height || xy.x0 >= p.m_width)
+			return -1;
+		//float colH = 0.66666f * p.m_Rhex;
+		//float rowW = 2.f * p.m_RShex;
+		float cnt_y = (xy.x1 - p.m_RowStart[0].x1)/p.m_Row_d;
+		if (cnt_y < 0.f)
+			cnt_y = 0.f;
+		long row_y_i = (long)roundf(cnt_y);
+		if (row_y_i >= p.m_Row_N)
+			return -1;
+
+		/*find how far the first x_offset is in using the known row_i*/
+		float offset_x = p.m_RowStart[row_y_i].x0;
+		float cnt_x = (xy.x0 - offset_x) / p.m_Col_d;
+		if (cnt_x < 0.f)
+			cnt_x = 0.f;
+		long col_x_i = (long)roundf(cnt_x);
+		if (col_x_i >= p.m_RowStart_is[row_y_i].x1)
+			return -1;
+		return p.m_RowStart_is[row_y_i].x0 + col_x_i;
+	}
+	void initHexPlateRowColStart(s_hexPlate& p) {
+
 	}
 	void hexPlateConnectWeb(s_hexPlate& plate) {
 		for (long i = 0; i < plate.m_nHex; i++) {
