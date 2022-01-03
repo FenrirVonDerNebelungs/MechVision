@@ -149,7 +149,35 @@ namespace PatStruct {
 		return p.m_RowStart_is[row_y_i].x0 + col_x_i;
 	}
 	void initHexPlateRowColStart(s_hexPlate& p) {
-
+		p.m_Row_N = 0;
+		p.m_Col_d = 2.f / 3.f * p.m_Rhex;
+		p.m_Row_d = 2.f * p.m_RShex;
+		for (long i = 0; i < p.m_nHex; i++) {
+			if (p.m_fhex[i].web[3] < 0) {
+				p.m_Row_N++;
+			}
+		}
+		p.m_RowStart = new s_2pt[p.m_Row_N];
+		p.m_RowStart_is = new s_2pt_i[p.m_Row_N];
+		long rowCnt = 0;
+		for (long i = 0; i < p.m_nHex; i++) {
+			if (p.m_fhex[i].web[3] < 0) {
+				p.m_RowStart[rowCnt].x0 = p.m_fhex[i].x;
+				p.m_RowStart[rowCnt].x1 = p.m_fhex[i].y;
+				p.m_RowStart_is[rowCnt].x0 = i;
+				p.m_RowStart_is[rowCnt].x1 = 0;
+				while (p.m_fhex[i + p.m_RowStart_is[rowCnt].x1].web[0] >= 0) {
+					p.m_RowStart_is[rowCnt].x1 += 1;
+				};
+			}
+		}
+	}
+	void releaseHexPlateRowColStart(s_hexPlate& p) {
+		if (p.m_RowStart_is != NULL)
+			delete[] p.m_RowStart_is;
+		if (p.m_RowStart != NULL)
+			delete[] p.m_RowStart;
+		p.m_Row_N = 0;
 	}
 	void hexPlateConnectWeb(s_hexPlate& plate) {
 		for (long i = 0; i < plate.m_nHex; i++) {

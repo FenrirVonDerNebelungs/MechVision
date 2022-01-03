@@ -121,6 +121,7 @@ namespace PatStruct{
 	long squarePlate_xyToHexi(const s_hexPlate& p, const s_2pt& xy);
 
 	void initHexPlateRowColStart(s_hexPlate& p);
+	void releaseHexPlateRowColStart(s_hexPlate& p);
 
 	void hexPlateConnectWeb(s_hexPlate& plate);/*assumes the hexes in the plates' s_fNodes have already been filled
 											    connects the splayed s_fnode that attached directly to the plate

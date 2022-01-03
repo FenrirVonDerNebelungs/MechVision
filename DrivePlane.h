@@ -44,56 +44,23 @@ protected:
 							the plane seen by the camera */
 
 
-	unsigned char convertLines();
+	unsigned char convertLines(s_DrivePlate& dp);
 	inline bool screenLineCoordToPlaneCoord(const s_2pt& screenXY, s_2pt& planeXY) { return m_cameraTrans->drivePlaneCoordFast(screenXY, planeXY); }
 
 
-
+	bool fillPlateHexSpotty(int plate_i, float scaleFac);/*assume the lines have already been converted to drive coord*/
 	bool LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& plateXY);
+	bool fillHex(const s_2pt& plateXY, float line_o, s_hexPlate& p);
 
 
-	bool PlateLocToHexCoord(const s_hexPlate& p, const s_2pt& plateXY, s_2pt_i& ij);
-	bool fillHex(const s_2pt& plateXY, s_hexPlate& p);
-
-	bool fillPlateHexSpotty(int plate_i, float scaleFac);
 
 	/*utility*/
-	void copyLinePts(const s_linePoint& p1, s_linePoint& p2);
+	void copyLinePts(const s_linePoint& p1, s_linePoint& p2);/*copies everything except loc*/
 };
 
 #endif
 
-void copyLinePts(const s_linePoint& p1, s_linePoint& p2) {
-	p2.o = p1.o;
-	p2.lunai = p1.lunai;
-	p2.hexi = p1.hexi;
-	p2.linei = p1.linei;
-	p2.v = p1.v;
-	p2.perp = p1.perp;
-}
-unsigned char DrivePlane::convertLines() {
-	m_n_planelines = 0;
-	for (int i = 0; i < m_n_lines; i++) {
-		s_line* linep = m_lines[i];
-		s_line& planeLine = m_planelines[m_n_planelines];
-		bool lineAdded = false;
-		int j_planeLine = 0;
-		for (int j = 0; j < linep->n; j++) {
-			if (screenLineCoordToPlaneCoord(linep->pts[j].loc, planeLine.pts[j_planeLine].loc)) {
-				lineAdded = true;
-				copyLinePts(linep->pts[j], planeLine[j_planeLine]);
-				j_planeLine++;
-				if (j_planeLine >= m_maxLinePts)
-					break;
-			}
-			else if (lineAdded) /*if line exits allowed range it is not allowed to enter again*/
-				break;
-		}
-		if (lineAdded) {
-			m_n_planelines++;
-		}
-	}
-}
+
 
 bool DrivePlane::LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& plateXY) {
 	plateXY.x1 = lineXY.x1 - m_screenClosestY_Unit_d;
@@ -103,32 +70,23 @@ bool DrivePlane::LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& p
 	plateXY.x1 *=scaleFac;
 	return true;
 }
-bool DrivePlane::PlateLocToHexCoord(const s_hexPlate& p, const s_2pt& plateXY, s_2pt_i& ij) {
-	/*plateXY.x1 will be >= 0*/
-	ij.x1 = roundf(plateXY.x1);
-	if (ij.x1 >= p.m_height)
+bool DrivePlane::fillHex(const s_2pt& plateXY, float line_o, s_hexPlate& p) {
+	/*find which hex*/
+	long hex_i = PatStruct::squarePlate_xyToHexi(p, plateXY);
+	if (hex_i < 0)
 		return false;
-	ij.x1 = p.m_height - 1 - ij.x1;
-	ij.x0 = roundf(plateXY.x0) + p.m_width / 2;
-	if (ij.x0 < 0 || ij.x0 >= p.m_width)
-		return false;
+	p.m_fhex[hex_i].o = line_o;
 	return true;
-}
-bool DrivePlane::fillHex(const s_2pt& plateXY, s_hexPlate& p) {
-	s_2pt_i ij;
-	if (!PlateLocToHexCoord(p, plateXY, ij))
-		return false;
-
 }
 bool DrivePlane::fillPlateHexSpotty(int plate_i, float scaleFac) {
 	s_DrivePlate& dp = plates[plate_i];
 	for (int i = 0; i < dp.n_lines; i++) {
-		s_line* line = dp.lines[i];
-		for (int pt_i = 0; pt_i < line->n; pt_i++) {
-			s_linePoint& pt = line->pts[pt_i];
+		s_line& line = dp.lines[i];
+		for (int pt_i = 0; pt_i < line.n; pt_i++) {
+			s_linePoint& pt = line.pts[pt_i];
 			s_2pt plateXY;
 			if (LineLocToPlateLoc(scaleFac, pt.loc, plateXY)) {
-				fillHex(plateXY, dp.p);
+				fillHex(plateXY, dp.o, dp.p);
 			}
 		}
 	}
