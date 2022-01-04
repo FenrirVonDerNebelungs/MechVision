@@ -7,6 +7,9 @@
 #ifndef LINEFINDER_H
 #include "LineFinder.h"
 #endif
+
+#define DRIVEPLANE_MOREMAXDIM 9999.f
+#define DRIVEPLANE_MAXLOOPCATCH 100
 struct s_DrivePlate {
 	/*not owned input*/
 	s_line** screen_lines; /*not owned, lines in*/
@@ -52,7 +55,13 @@ protected:
 	bool LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& plateXY);
 	bool fillHex(const s_2pt& plateXY, float line_o, s_hexPlate& p);
 
-
+	bool fillPlateHex(int plate_i, float scaleFac);/*fills plate with converted lines extrapolating between line points for continous lines*/
+	bool fillLineBetweenPts(float scaleFac, const s_linePoint& pt1, const s_linePoint& pt2, s_hexPlate& p);
+	float findUsForLinePts(float R, const s_2pt& pt1, const s_2pt& pt2, s_2pt& Uline, s_2pt& Uline_perp);
+	int findWebArcStartForLine(s_hexPlate& p, const s_2pt& Uline);/*Uline is unit vector in direction of line*/
+	long findNextHexToFill(s_hexPlate& p, long hexi, int hexweb_start, const s_2pt& lineStart, const s_2pt& line_perp);/*rotates around the current hex and picks the next hex the line is considered to enter*/
+	float distHexRough(const s_2pt& lineStart, const s_2pt& line_perp, const s_2pt& hexXY);
+	inline bool inHexRough(const s_hexPlate& p, float d) { return d < p.m_Rhex; }
 
 	/*utility*/
 	void copyLinePts(const s_linePoint& p1, s_linePoint& p2);/*copies everything except loc*/
@@ -62,33 +71,3 @@ protected:
 
 
 
-bool DrivePlane::LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& plateXY) {
-	plateXY.x1 = lineXY.x1 - m_screenClosestY_Unit_d;
-	if (plateXY.x1 < 0.f)
-		return false;
-	plateXY.x0 = scaleFac * lineXY.x0;
-	plateXY.x1 *=scaleFac;
-	return true;
-}
-bool DrivePlane::fillHex(const s_2pt& plateXY, float line_o, s_hexPlate& p) {
-	/*find which hex*/
-	long hex_i = PatStruct::squarePlate_xyToHexi(p, plateXY);
-	if (hex_i < 0)
-		return false;
-	p.m_fhex[hex_i].o = line_o;
-	return true;
-}
-bool DrivePlane::fillPlateHexSpotty(int plate_i, float scaleFac) {
-	s_DrivePlate& dp = plates[plate_i];
-	for (int i = 0; i < dp.n_lines; i++) {
-		s_line& line = dp.lines[i];
-		for (int pt_i = 0; pt_i < line.n; pt_i++) {
-			s_linePoint& pt = line.pts[pt_i];
-			s_2pt plateXY;
-			if (LineLocToPlateLoc(scaleFac, pt.loc, plateXY)) {
-				fillHex(plateXY, dp.o, dp.p);
-			}
-		}
-	}
-	return true;
-}

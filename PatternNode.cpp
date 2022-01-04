@@ -148,7 +148,9 @@ namespace PatStruct {
 			return -1;
 		return p.m_RowStart_is[row_y_i].x0 + col_x_i;
 	}
-	void initHexPlateRowColStart(s_hexPlate& p) {
+	unsigned char initHexPlateRowColStart(s_hexPlate& p) {
+		if (p.m_fhex == NULL)
+			return 0x01;
 		p.m_Row_N = 0;
 		p.m_Col_d = 2.f / 3.f * p.m_Rhex;
 		p.m_Row_d = 2.f * p.m_RShex;
@@ -171,6 +173,7 @@ namespace PatStruct {
 				};
 			}
 		}
+		return 0x00;
 	}
 	void releaseHexPlateRowColStart(s_hexPlate& p) {
 		if (p.m_RowStart_is != NULL)
