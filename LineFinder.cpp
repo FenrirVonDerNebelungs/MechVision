@@ -1,6 +1,13 @@
 #include "LineFinder.h"
 
 namespace n_line {
+	void zeroLine(s_line& line) {
+		line.n = 0;
+		line.pts = NULL;
+		line.f = NULL;
+		line.blacked = false;
+		line.lowerHalf = false;
+	}
 	void copyPt(const s_linePoint& p1, s_linePoint& p2)
 	{
 		p2.o = p1.o;

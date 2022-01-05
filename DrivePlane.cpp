@@ -1,5 +1,71 @@
 #include "DrivePlane.h"
 
+unsigned char DrivePlane::init(
+	LineFinder* lineF,
+	float yPinHole_screenLowPt,
+	float camera_d,
+	float camera_y,
+	float screen_y_horizion_offset,
+	float screen_x_center_offset,
+	float screenHYDim
+) 
+{
+	m_cameraTrans = new CameraTrans;
+
+	/*assume that all plates have the same dimension*/
+	if (lineF->getPlateLayer()->n < 1)
+		return ECODE_FAIL;
+	s_hexPlate& dim_plate = lineF->getPlateLayer()->p[0];
+	unsigned char errcode= m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, screen_y_horizion_offset, screen_x_center_offset);
+	if (Err(errcode))
+		return ECODE_FAIL;
+	m_screenClosestY = m_cameraTrans->getScreenLowPt();
+	m_screenClosestY_Unit_d = m_cameraTrans->getCamera_d();
+
+	if (screenHYDim >= 1.f) {
+		m_screenHYDim = screenHYDim;
+	}
+	else
+		m_screenHYDim = 5.f * m_cameraTrans->getCamera_d();
+
+
+	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
+		m_plates[i].screen_lines = new s_line* [LINEFINDERMAXLINES];
+		m_plates[i].screen_lines = 0;
+		m_plates[i].maxLinePts = DRIVEPLANE_MAXPTS_X_HEIGHT_FAC * (int)dim_plate.m_height;
+		for (int j = 0; j < LINEFINDERMAXLINES; j++) {
+			m_plates[i].lines[j].n = 0;
+			m_plates[i].lines[j].pts = new s_linePoint[m_plates[i].maxLinePts];
+			m_plates[i].lines[j].f = new bool[m_plates[i].maxLinePts];
+		}
+		m_plates[i].n_lines = 0;
+		initDrivePlateHexPlate(dim_plate, m_plates[i].p);
+	}
+
+
+}
+unsigned char DrivePlane::initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p) {
+	PatStruct::genPlateWSameWeb(dim_plate, p);
+	for (long i = 0; i < p.m_nHex; i++) {
+		p.m_fhex[i].o = 0.f;
+
+	}
+}
+void DrivePlane::reset() {
+	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
+		m_plates[i].screen_n_lines = 0;
+		
+	}
+}
+unsigned char DrivePlane::setPlateForwardSpan(float plateSpanH) {
+	if (m_plates[0].p.m_height <= 0)
+		return ECODE_FAIL;
+	float spanInNormDim = plateSpanH / m_cameraTrans->getCamera_d();
+	if (spanInNormDim <= 0.f)
+		return ECODE_FAIL;
+	m_plateDimToPix = ((float)m_plates[0].p.m_height)/spanInNormDim;
+	return ECODE_OK;
+}
 unsigned char DrivePlane::convertLines(s_DrivePlate& dp) {
 	dp.n_lines = 0;
 	for (int i = 0; i < dp.screen_n_lines; i++) {
@@ -26,7 +92,7 @@ unsigned char DrivePlane::convertLines(s_DrivePlate& dp) {
 }
 
 bool DrivePlane::fillPlateHexSpotty(int plate_i, float scaleFac) {
-	s_DrivePlate& dp = plates[plate_i];
+	s_DrivePlate& dp = m_plates[plate_i];
 	for (int i = 0; i < dp.n_lines; i++) {
 		s_line& line = dp.lines[i];
 		for (int pt_i = 0; pt_i < line.n; pt_i++) {
@@ -57,7 +123,7 @@ bool DrivePlane::fillHex(const s_2pt& plateXY, float line_o, s_hexPlate& p) {
 }
 
 bool DrivePlane::fillPlateHex(int plate_i, float scaleFac) {
-	s_DrivePlate& dp = plates[plate_i];
+	s_DrivePlate& dp = m_plates[plate_i];
 	for (int i = 0; i < dp.n_lines; i++) {
 		s_line& line = dp.lines[i];
 		int max_pt_i = line.n - 1;

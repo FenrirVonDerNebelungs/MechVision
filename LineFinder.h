@@ -27,6 +27,7 @@ struct s_line {
 };
 
 namespace n_line{
+    void zeroLine(s_line& line);
     inline float dist(const s_linePoint& p1, const s_linePoint& p2) { return vecMath::dist(p1.loc, p2.loc); }
     inline bool isIn(const s_linePoint& p1, const s_linePoint& p2, float d) { return d >= dist(p1, p2); }
     void copyPt(const s_linePoint& p1, s_linePoint& p2);
@@ -55,6 +56,7 @@ public:
 
     unsigned char spawn();
 
+    inline s_PlateLayer* getPlateLayer() { return m_plateLayer; }
     inline s_line* getLine(int i) { return m_lines[i]; }
     inline s_line** getLines() { return m_lines; }
     inline s_line* getSingLunaLines() { return m_singLunaLines; }

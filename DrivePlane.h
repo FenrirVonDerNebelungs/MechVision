@@ -8,6 +8,8 @@
 #include "LineFinder.h"
 #endif
 
+#define DRIVEPLANE_NUMLUNALINE 6
+#define DRIVEPLANE_MAXPTS_X_HEIGHT_FAC 3
 #define DRIVEPLANE_MOREMAXDIM 9999.f
 #define DRIVEPLANE_MAXLOOPCATCH 100
 struct s_DrivePlate {
@@ -28,24 +30,42 @@ struct s_DrivePlate {
  */
 class DrivePlane : public Base {
 public:
+	unsigned char init(
+		LineFinder* lineF,
+		/*variables put into the cameraTrans*/
+		float yPinHole_screenLowPt = 10.f, /*dimmensions in cm distance from camera end of closest plane point*/
+		float camera_d = 7.f, /*distance camera is above drive plane in cm*/
+		float camera_y = 10.f,/*distance end of camera is from center of robot in forward 'y' direction */
+		float screen_y_horizion_offset = 0.f,/*offset for horizontal of screen horizion in pix*/
+		float screen_x_center_offset = 0.f, /*offset from center of screen in pix of camera center*/
+		/*                                  */
+		float screenHYDim = 10.f /*determines zoom
+								   if less than 1 then reset it to 5*the camera dist */
+	);
+	unsigned char setPlateForwardSpan(float plateSpanH);/*sets how far in robot coordinates the plate 
+											   projects from its closest visible dist forward of the robot.
+											   or how forward tall the plate is in robot coordinates*/
 
 	unsigned char update();
 protected:
 	float m_screenClosestY;/*distance from camera center in y to point closest viewable to the camera on the plane*/
 	float m_screenClosestY_Unit_d;/*same as above but with the distance of the camera above the plane set to the unit distance for y
 								    subtract 1 from this for a buffer*/
-	float m_plateXcenter;/*center of hex plate that image is being projected onto*/
 	float m_screenHYDim;/*determines zoom of image, how far in outer robot coord the top of the proj region is from the bottom, in this case used to scale all plates*/
 	/*plates are assumed to start at closest visible distance */
 	/*mixed, owned/not owned*/
-	s_DrivePlate plates[MAXPLATESPERLAYER];
+	s_DrivePlate m_plates[DRIVEPLANE_NUMLUNALINE];/*plates will correspond to each single luna collection of lines*/
 	/*owned    */
 	CameraTrans* m_cameraTrans;
 	float m_plateDimToPix;    /*scale factor that scale the dimension of the
-							real distance on the drive plane to the pix dim of
+							real distance (normalized so that camera_d =1)
+							on the drive plane to the pix dim of
 							the plate representing
 							the plane seen by the camera */
-
+	unsigned char initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p);/*plate dim will be robot coord, shifted so that coord start at base of view, and normalized so that camera_d is 1*/
+	bool plate_ij_toPlateCoord(const s_2pt_i& ij, s_2pt& pXY);
+	void reset();
+	
 
 	unsigned char convertLines(s_DrivePlate& dp);
 	inline bool screenLineCoordToPlaneCoord(const s_2pt& screenXY, s_2pt& planeXY) { return m_cameraTrans->drivePlaneCoordFast(screenXY, planeXY); }
