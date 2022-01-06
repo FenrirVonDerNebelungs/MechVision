@@ -21,6 +21,7 @@ struct s_DrivePlate {
 	int      maxLinePts;/*max allowed points for a plane line in memory*/
 	s_line   lines[LINEFINDERMAXLINES];/*the lines coverted to almost robot coord on plane but 
 									    camera centerd coordinates with camera_d as the unit distance */
+	s_line   lines_itp[LINEFINDERMAXLINES];/*lines on plate that are interpolated to make them continuous after distortion*/
 	int      n_lines;/*number of converted lines on the plate*/
 	s_hexPlate p;/*hex plate of the drive plane with the converted lines on it*/
 };
@@ -45,6 +46,7 @@ public:
 	unsigned char setPlateForwardSpan(float plateSpanH);/*sets how far in robot coordinates the plate 
 											   projects from its closest visible dist forward of the robot.
 											   or how forward tall the plate is in robot coordinates*/
+	void release();
 
 	unsigned char update();
 protected:
@@ -62,8 +64,9 @@ protected:
 							on the drive plane to the pix dim of
 							the plate representing
 							the plane seen by the camera */
-	unsigned char initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p);/*plate dim will be robot coord, shifted so that coord start at base of view, and normalized so that camera_d is 1*/
-	bool plate_ij_toPlateCoord(const s_2pt_i& ij, s_2pt& pXY);
+	float m_XcenterPix;/*center of x in pixel coordinates*/
+	unsigned char initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p);/*plate dim will be the pixel dim of the plate*/
+	void releaseDrivePlateHexPlate(s_hexPlate& p);
 	void reset();
 	
 

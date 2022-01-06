@@ -27,7 +27,11 @@ unsigned char DrivePlane::init(
 	}
 	else
 		m_screenHYDim = 5.f * m_cameraTrans->getCamera_d();
-
+	float plateSpanIn_Unit_d = (m_screenHYDim - m_screenClosestY) / m_cameraTrans->getCamera_d();
+	if (plateSpanIn_Unit_d <= 0.f) {
+		m_cameraTrans->release();
+		return ECODE_FAIL;
+	}
 
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
 		m_plates[i].screen_lines = new s_line* [LINEFINDERMAXLINES];
@@ -37,25 +41,17 @@ unsigned char DrivePlane::init(
 			m_plates[i].lines[j].n = 0;
 			m_plates[i].lines[j].pts = new s_linePoint[m_plates[i].maxLinePts];
 			m_plates[i].lines[j].f = new bool[m_plates[i].maxLinePts];
+			m_plates[i].lines_itp[j].n = 0;
+			m_plates[i].lines_itp[j].pts = new s_linePoint[m_plates[i].maxLinePts];
+			m_plates[i].lines_itp[j].f = new bool[m_plates[i].maxLinePts];
 		}
 		m_plates[i].n_lines = 0;
 		initDrivePlateHexPlate(dim_plate, m_plates[i].p);
 	}
 
-
-}
-unsigned char DrivePlane::initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p) {
-	PatStruct::genPlateWSameWeb(dim_plate, p);
-	for (long i = 0; i < p.m_nHex; i++) {
-		p.m_fhex[i].o = 0.f;
-
-	}
-}
-void DrivePlane::reset() {
-	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
-		m_plates[i].screen_n_lines = 0;
-		
-	}
+	m_plateDimToPix = ((float)m_plates[0].p.m_height) / plateSpanIn_Unit_d;
+	m_XcenterPix = ((float)m_plates[0].p.m_width) / 2.f;
+	return ECODE_OK;
 }
 unsigned char DrivePlane::setPlateForwardSpan(float plateSpanH) {
 	if (m_plates[0].p.m_height <= 0)
@@ -63,9 +59,56 @@ unsigned char DrivePlane::setPlateForwardSpan(float plateSpanH) {
 	float spanInNormDim = plateSpanH / m_cameraTrans->getCamera_d();
 	if (spanInNormDim <= 0.f)
 		return ECODE_FAIL;
-	m_plateDimToPix = ((float)m_plates[0].p.m_height)/spanInNormDim;
+	m_plateDimToPix = ((float)m_plates[0].p.m_height) / spanInNormDim;
 	return ECODE_OK;
 }
+void DrivePlane::release() {
+	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
+		releaseDrivePlateHexPlate(m_plates[i].p);
+		for (int j = 0; j < LINEFINDERMAXLINES; j++) {
+			if (m_plates[i].lines_itp[j].f != NULL)
+				delete[] m_plates[i].lines_itp[j].f;
+			m_plates[i].lines_itp[j].f = NULL;
+			if (m_plates[i].lines_itp[j].pts != NULL)
+				delete[] m_plates[i].lines_itp[j].pts;
+			m_plates[i].lines_itp[j].pts = NULL;
+			if (m_plates[i].lines[j].f != NULL)
+				delete [] m_plates[i].lines[j].f;
+			m_plates[i].lines[j].f = NULL;
+			if (m_plates[i].lines[j].pts != NULL)
+				delete[] m_plates[i].lines[j].pts;
+			m_plates[i].lines[j].pts = NULL;
+		}
+		if (m_plates[i].screen_lines != NULL)
+			delete[] m_plates[i].screen_lines;
+		m_plates[i].screen_lines = NULL;
+	}
+	if (m_cameraTrans != NULL) {
+		m_cameraTrans->release();
+		delete m_cameraTrans;
+	}
+	m_cameraTrans = NULL;
+}
+unsigned char DrivePlane::initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p) {
+	PatStruct::genPlateWSameWeb(dim_plate, p);
+	for (long i = 0; i < p.m_nHex; i++) {
+		p.m_fhex[i].o = 0.f;
+	}
+	PatStruct::initHexPlateRowColStart(p);
+	return ECODE_OK;
+}
+void DrivePlane::releaseDrivePlateHexPlate(s_hexPlate& p) {
+	PatStruct::releaseHexPlateRowColStart(p);
+	PatStruct::releasePlateWSameWeb(p);
+}
+
+void DrivePlane::reset() {
+	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
+		m_plates[i].screen_n_lines = 0;
+		
+	}
+}
+
 unsigned char DrivePlane::convertLines(s_DrivePlate& dp) {
 	dp.n_lines = 0;
 	for (int i = 0; i < dp.screen_n_lines; i++) {
@@ -107,11 +150,10 @@ bool DrivePlane::fillPlateHexSpotty(int plate_i, float scaleFac) {
 }
 bool DrivePlane::LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& plateXY) {
 	plateXY.x1 = lineXY.x1 - m_screenClosestY_Unit_d;
-	if (plateXY.x1 < 0.f)
-		return false;
-	plateXY.x0 = scaleFac * lineXY.x0;
 	plateXY.x1 *= scaleFac;
-	return true;
+	plateXY.x0 = scaleFac * lineXY.x0;
+	plateXY.x0 += m_XcenterPix;
+	return true;/*don't check for overflow since this will be checked when coversion to plate index is done*/
 }
 bool DrivePlane::fillHex(const s_2pt& plateXY, float line_o, s_hexPlate& p) {
 	/*find which hex*/
