@@ -33,7 +33,7 @@ namespace n_line{
     void copyPt(const s_linePoint& p1, s_linePoint& p2);
     void copyLines(const s_line& l1, s_line& l2);
 }
-
+/*lunas are in the indexes from 0 to 5 */
 class LineFinder : public Base 
 {
 public:

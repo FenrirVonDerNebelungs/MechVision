@@ -1,4 +1,15 @@
 #include "DrivePlane.h"
+namespace n_DrivePlate {
+	void zeroPlate(s_DrivePlate& p) {
+		p.screen_lines = NULL;
+		p.screen_n_lines = 0;
+		p.maxLinePts = 0;
+		for (int i = 0; i < LINEFINDERMAXLINES; i++)
+			n_line::zeroLine(p.lines[i]);
+		p.n_lines = 0;
+		PatStruct::zeroHexPlate(p.p);
+	}
+}
 
 unsigned char DrivePlane::init(
 	LineFinder* lineF,
@@ -10,6 +21,7 @@ unsigned char DrivePlane::init(
 	float screenHYDim
 ) 
 {
+	m_lineFinder = lineF;
 	m_cameraTrans = new CameraTrans;
 
 	/*assume that all plates have the same dimension*/
@@ -41,9 +53,6 @@ unsigned char DrivePlane::init(
 			m_plates[i].lines[j].n = 0;
 			m_plates[i].lines[j].pts = new s_linePoint[m_plates[i].maxLinePts];
 			m_plates[i].lines[j].f = new bool[m_plates[i].maxLinePts];
-			m_plates[i].lines_itp[j].n = 0;
-			m_plates[i].lines_itp[j].pts = new s_linePoint[m_plates[i].maxLinePts];
-			m_plates[i].lines_itp[j].f = new bool[m_plates[i].maxLinePts];
 		}
 		m_plates[i].n_lines = 0;
 		initDrivePlateHexPlate(dim_plate, m_plates[i].p);
@@ -66,12 +75,6 @@ void DrivePlane::release() {
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
 		releaseDrivePlateHexPlate(m_plates[i].p);
 		for (int j = 0; j < LINEFINDERMAXLINES; j++) {
-			if (m_plates[i].lines_itp[j].f != NULL)
-				delete[] m_plates[i].lines_itp[j].f;
-			m_plates[i].lines_itp[j].f = NULL;
-			if (m_plates[i].lines_itp[j].pts != NULL)
-				delete[] m_plates[i].lines_itp[j].pts;
-			m_plates[i].lines_itp[j].pts = NULL;
 			if (m_plates[i].lines[j].f != NULL)
 				delete [] m_plates[i].lines[j].f;
 			m_plates[i].lines[j].f = NULL;
@@ -88,29 +91,59 @@ void DrivePlane::release() {
 		delete m_cameraTrans;
 	}
 	m_cameraTrans = NULL;
+	m_lineFinder = NULL;
 }
+unsigned char DrivePlane::update() {
+	reset();
+	loadLinesByLuna();
+	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
+		m_plates[i].n_lines = 0;
+		convertLines(m_plates[i]);
+		//fillPlateHex(i, m_plateDimToPix);
+		fillPlateHexSpotty(i, m_plateDimToPix);
+	}
+	return ECODE_OK;
+}
+
 unsigned char DrivePlane::initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p) {
 	PatStruct::genPlateWSameWeb(dim_plate, p);
-	for (long i = 0; i < p.m_nHex; i++) {
-		p.m_fhex[i].o = 0.f;
-	}
 	PatStruct::initHexPlateRowColStart(p);
+	resetDriveHexPlate(p);
 	return ECODE_OK;
 }
 void DrivePlane::releaseDrivePlateHexPlate(s_hexPlate& p) {
 	PatStruct::releaseHexPlateRowColStart(p);
 	PatStruct::releasePlateWSameWeb(p);
 }
-
 void DrivePlane::reset() {
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
 		m_plates[i].screen_n_lines = 0;
-		
+		resetDriveHexPlate(m_plates[i].p);
 	}
+}
+void DrivePlane::resetDriveHexPlate(s_hexPlate& p) {
+	for (long i = 0; i < p.m_nHex; i++) {
+		p.m_fhex[i].o = DRIVEPLANE_NOLINEHEXVALUE;
+	}
+}
+bool DrivePlane::loadLinesByLuna() {
+	s_line* singLunaLines = m_lineFinder->getSingLunaLines();
+	int n_singLunaLines = m_lineFinder->getNSingLunaLines();
+	for (int ln_i = 0; ln_i < n_singLunaLines; ln_i++) {
+		if (singLunaLines[ln_i].n > 0) {
+			int luna_i = singLunaLines[ln_i].pts[0].lunai;
+			if (luna_i < DRIVEPLANE_NUMLUNALINE) {
+				m_plates[luna_i].screen_lines[m_plates[luna_i].screen_n_lines] = &(singLunaLines[ln_i]);
+				m_plates[luna_i].screen_n_lines += 1;/*the max number of screen line ptrs is the same as the 
+													 max number of lines that could possible be in singLunaLines*/
+			}
+		}
+	}
+	return true;
 }
 
 unsigned char DrivePlane::convertLines(s_DrivePlate& dp) {
-	dp.n_lines = 0;
+	//dp.n_lines = 0;
 	for (int i = 0; i < dp.screen_n_lines; i++) {
 		s_line* linep = dp.screen_lines[i];
 		s_line& planeLine = dp.lines[dp.n_lines];

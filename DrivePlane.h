@@ -9,28 +9,34 @@
 #endif
 
 #define DRIVEPLANE_NUMLUNALINE 6
-#define DRIVEPLANE_MAXPTS_X_HEIGHT_FAC 3
+#define DRIVEPLANE_MAXPTS_X_HEIGHT_FAC 1
 #define DRIVEPLANE_MOREMAXDIM 9999.f
 #define DRIVEPLANE_MAXLOOPCATCH 100
+#define DRIVEPLANE_NOLINEHEXVALUE 0.f
 struct s_DrivePlate {
 	/*not owned input*/
-	s_line** screen_lines; /*not owned, lines in*/
+	s_line** screen_lines; /*line pointers are owned but not the lines*/
 	int      screen_n_lines;/*number of lines on screen*/
 
 	/*output*/
 	int      maxLinePts;/*max allowed points for a plane line in memory*/
 	s_line   lines[LINEFINDERMAXLINES];/*the lines coverted to almost robot coord on plane but 
 									    camera centerd coordinates with camera_d as the unit distance */
-	s_line   lines_itp[LINEFINDERMAXLINES];/*lines on plate that are interpolated to make them continuous after distortion*/
 	int      n_lines;/*number of converted lines on the plate*/
 	s_hexPlate p;/*hex plate of the drive plane with the converted lines on it*/
 };
+namespace n_DrivePlate {
+	void zeroPlate(s_DrivePlate& p);
+}
 /* Drive plane is designed to take the lines from lineFinder and project them onto
  a plate (or set of plates) that represent the flat area the 'drive plane' in front
  of the robot 
  */
 class DrivePlane : public Base {
 public:
+	DrivePlane();
+	~DrivePlane();
+
 	unsigned char init(
 		LineFinder* lineF,
 		/*variables put into the cameraTrans*/
@@ -57,6 +63,8 @@ protected:
 	/*plates are assumed to start at closest visible distance */
 	/*mixed, owned/not owned*/
 	s_DrivePlate m_plates[DRIVEPLANE_NUMLUNALINE];/*plates will correspond to each single luna collection of lines*/
+	/*not owned*/
+	LineFinder* m_lineFinder;
 	/*owned    */
 	CameraTrans* m_cameraTrans;
 	float m_plateDimToPix;    /*scale factor that scale the dimension of the
@@ -68,8 +76,9 @@ protected:
 	unsigned char initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p);/*plate dim will be the pixel dim of the plate*/
 	void releaseDrivePlateHexPlate(s_hexPlate& p);
 	void reset();
-	
+	void resetDriveHexPlate(s_hexPlate& p);
 
+	bool loadLinesByLuna();/*split up lines by luna and load them into the drive plates*/
 	unsigned char convertLines(s_DrivePlate& dp);
 	inline bool screenLineCoordToPlaneCoord(const s_2pt& screenXY, s_2pt& planeXY) { return m_cameraTrans->drivePlaneCoordFast(screenXY, planeXY); }
 
