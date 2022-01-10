@@ -40,7 +40,9 @@ public:
 	unsigned char init(
 		LineFinder* lineF,
 		/*variables put into the cameraTrans*/
-		float yPinHole_screenLowPt = 10.f, /*dimmensions in cm distance from camera end of closest plane point*/
+		float yPinHole_screenLowPt = -1.f, /*dimmensions in cm distance from camera end of closest plane point
+										    if -1 compute from camera opening angle */
+		float camera_openingAngle = 0.85172067497f,/*if not zero or less use this to compute camera dim, otherwise use scree low point*/
 		float camera_d = 7.f, /*distance camera is above drive plane in cm*/
 		float camera_y = 10.f,/*distance end of camera is from center of robot in forward 'y' direction */
 		float screen_y_horizion_offset = 0.f,/*offset for horizontal of screen horizion in pix*/
@@ -55,6 +57,8 @@ public:
 	void release();
 
 	unsigned char update();
+
+	inline s_hexPlate* getHexPlate(int i) { return &(m_plates[i].p); }
 protected:
 	float m_screenClosestY;/*distance from camera center in y to point closest viewable to the camera on the plane*/
 	float m_screenClosestY_Unit_d;/*same as above but with the distance of the camera above the plane set to the unit distance for y

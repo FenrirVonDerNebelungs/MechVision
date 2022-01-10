@@ -52,6 +52,14 @@ unsigned char DrawHexImg::Init(HexBase* hbase, s_hexPlate* plate) {
 	m_defOCol.b = 0xFF;
 	return ECODE_OK;
 }
+unsigned char DrawHexImg::Init(s_hexPlate* plate, Img* hexMask) {
+	Init(plate->m_width, plate->m_height, 3L, NULL, plate->m_nHex, hexMask, hexMask);
+	m_nodes = plate->m_fhex;
+	m_defOCol.r = 0xFF;
+	m_defOCol.g = 0xFF;
+	m_defOCol.b = 0xFF;
+	return ECODE_OK;
+}
 void DrawHexImg::Release()
 {
 	m_hex = NULL;

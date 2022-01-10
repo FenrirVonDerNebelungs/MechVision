@@ -1,4 +1,5 @@
 #include "DrivePlane.h"
+
 namespace n_DrivePlate {
 	void zeroPlate(s_DrivePlate& p) {
 		p.screen_lines = NULL;
@@ -10,10 +11,19 @@ namespace n_DrivePlate {
 		PatStruct::zeroHexPlate(p.p);
 	}
 }
-
+DrivePlane::DrivePlane() : m_screenClosestY(0.f), m_screenClosestY_Unit_d(0.f), m_screenHYDim(0.f), 
+m_lineFinder(NULL), m_cameraTrans(NULL), m_plateDimToPix(0.f), m_XcenterPix(0.f)
+{
+	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++)
+		n_DrivePlate::zeroPlate(m_plates[i]);
+}
+DrivePlane::~DrivePlane() {
+	;
+}
 unsigned char DrivePlane::init(
 	LineFinder* lineF,
 	float yPinHole_screenLowPt,
+	float camera_openingAngle,
 	float camera_d,
 	float camera_y,
 	float screen_y_horizion_offset,
@@ -28,11 +38,20 @@ unsigned char DrivePlane::init(
 	if (lineF->getPlateLayer()->n < 1)
 		return ECODE_FAIL;
 	s_hexPlate& dim_plate = lineF->getPlateLayer()->p[0];
-	unsigned char errcode= m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, screen_y_horizion_offset, screen_x_center_offset);
-	if (Err(errcode))
+	unsigned char err_code = ECODE_FAIL;
+	if(yPinHole_screenLowPt>=0.f)
+		err_code= m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, screen_y_horizion_offset, screen_x_center_offset);
+	else if(camera_openingAngle>0.f){
+		yPinHole_screenLowPt = 1.f;
+		err_code = m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, screen_y_horizion_offset, screen_x_center_offset);
+		m_cameraTrans->setFocalFromOpeningAngle(camera_openingAngle);
+	}
+	else
+		return err_code;
+	if (Err(err_code))
 		return ECODE_FAIL;
 	m_screenClosestY = m_cameraTrans->getScreenLowPt();
-	m_screenClosestY_Unit_d = m_cameraTrans->getCamera_d();
+	m_screenClosestY_Unit_d = m_screenClosestY/m_cameraTrans->getCamera_d();
 
 	if (screenHYDim >= 1.f) {
 		m_screenHYDim = screenHYDim;
@@ -292,7 +311,7 @@ int DrivePlane::findWebArcStartForLine(s_hexPlate& p, const s_2pt& Uline) {
 	float max_dotp = 0.f;
 	int max_i=-1;
 	for (int i = 0; i < 6; i++) {
-		float dot_p = vecMath::(Uline, p.m_hexU[i]);
+		float dot_p = vecMath::dot(Uline, p.m_hexU[i]);
 		if (dot_p > max_dotp) {
 			max_dotp = dot_p;
 			max_i = i;

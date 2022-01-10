@@ -27,6 +27,7 @@ public:
 	unsigned char Init(HexBase* hbase);
 	unsigned char Init(HexBase* hBase, HexBase* lowerHBase);
 	unsigned char Init(HexBase* hbase, s_hexPlate* plate);
+	unsigned char Init(s_hexPlate* plate, Img* hexMask);
 	void Release();
 	unsigned char Run();
 	unsigned char renderHexImg();

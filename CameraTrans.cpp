@@ -90,7 +90,7 @@ bool CameraTrans::screenToDriveplane_Unit_d(const s_2pt& screenXY, s_2pt& XY) {
 	return true;
 }
 bool CameraTrans::screenToDriveplane(const s_2pt& screenXY, s_2pt& XY) {
-	if (!screenToDriveplane_Unit_d)
+	if (!screenToDriveplane_Unit_d(screenXY, XY))
 		return false;
 	convFastCoordToCoord(XY);
 	return true;

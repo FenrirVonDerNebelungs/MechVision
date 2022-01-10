@@ -6,6 +6,9 @@
 #ifndef PATLUNALAYER_H
 #include "PatLunaLayer.h"
 #endif
+#ifndef DRIVEPLANE_H
+#include "DrivePlane.h"
+#endif
 #ifndef DRAWHEXIMG_H
 #include "DrawHexImg.h"
 #endif
@@ -73,6 +76,8 @@ int runTest0() {
 	patLunLay.init(&HexLow);
 	LineFinder findLines;
 	findLines.init(&patLunLay.getPlateLayer(0));
+	DrivePlane driveP;
+	driveP.init(&findLines);
 
 	DrawHexImg hexDraw;
 	hexDraw.Init((HexBase*)&HexLow, &(patLunLay.getPlate(0, 2))); //patLunLay.getColPlate(0));//&(patLunLay.getPlate(0,0)));//((HexBase*)&HexLow);
@@ -80,6 +85,8 @@ int runTest0() {
 	hexBaseDraw.Init((HexBase*)&HexLow, (patLunLay.getColPlate(0)));
 	DrawHexImg hexDrawLines;
 	hexDrawLines.Init((HexBase*)&HexLow);
+	DrawHexImg hexDrawDriveP;
+	hexDrawDriveP.Init(driveP.getHexPlate(0), HexLow.getHexMask());
 
 	/*debug*/
 	//hexDraw.setHexes(colLay.getBaseHexes());
@@ -87,7 +94,7 @@ int runTest0() {
 
 	int cnt = 0;
 	bool doCol = false;
-	while (cnt<100){//000) {
+	while (cnt<2){//000) {
 		Mat frame0;
 		cap >> frame0;
 		if (frame0.empty())
@@ -100,11 +107,13 @@ int runTest0() {
 
 		patLunLay.Update();
 		findLines.spawn();
+		driveP.update();
 		hexDraw.Run();
 		hexBaseDraw.Run();// renderHexImg();
 		hexDrawLines.renderLineImg(&findLines);
+		hexDrawDriveP.Run();
 
-		unsigned char* MVImgdat = hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
@@ -117,9 +126,11 @@ int runTest0() {
 		
 		cnt++;
 	}
+	hexDrawDriveP.Release();
 	hexDrawLines.Release();
 	hexBaseDraw.Release();
 	hexDraw.Release();
+	driveP.release();
 	findLines.release();
 	patLunLay.release();
 	//colLay.release();
