@@ -60,6 +60,7 @@ public:
     inline s_line* getLine(int i) { return m_lines[i]; }
     inline s_line** getLines() { return m_lines; }
     inline s_line* getSingLunaLines() { return m_singLunaLines; }
+    inline s_line* getSingLunaLinePtr(int i) { return &(m_singLunaLines[i]); }
     inline int getNSingLunaLines() { return m_n; }
     inline int getNLines() { return m_n_lines; }
 

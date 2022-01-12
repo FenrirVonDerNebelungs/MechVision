@@ -66,7 +66,7 @@ unsigned char DrivePlane::init(
 
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
 		m_plates[i].screen_lines = new s_line* [LINEFINDERMAXLINES];
-		m_plates[i].screen_lines = 0;
+		m_plates[i].screen_n_lines = 0;
 		m_plates[i].maxLinePts = DRIVEPLANE_MAXPTS_X_HEIGHT_FAC * (int)dim_plate.m_height;
 		for (int j = 0; j < LINEFINDERMAXLINES; j++) {
 			m_plates[i].lines[j].n = 0;
@@ -146,13 +146,14 @@ void DrivePlane::resetDriveHexPlate(s_hexPlate& p) {
 	}
 }
 bool DrivePlane::loadLinesByLuna() {
-	s_line* singLunaLines = m_lineFinder->getSingLunaLines();
 	int n_singLunaLines = m_lineFinder->getNSingLunaLines();
 	for (int ln_i = 0; ln_i < n_singLunaLines; ln_i++) {
-		if (singLunaLines[ln_i].n > 0) {
-			int luna_i = singLunaLines[ln_i].pts[0].lunai;
+		s_line* lunaLinePtr = m_lineFinder->getSingLunaLinePtr(ln_i);
+		if (lunaLinePtr->n > 0) {
+			int luna_i = lunaLinePtr->pts[0].lunai;
 			if (luna_i < DRIVEPLANE_NUMLUNALINE) {
-				m_plates[luna_i].screen_lines[m_plates[luna_i].screen_n_lines] = &(singLunaLines[ln_i]);
+				int cur_line_index = m_plates[luna_i].screen_n_lines;
+				m_plates[luna_i].screen_lines[cur_line_index] = lunaLinePtr;
 				m_plates[luna_i].screen_n_lines += 1;/*the max number of screen line ptrs is the same as the 
 													 max number of lines that could possible be in singLunaLines*/
 			}

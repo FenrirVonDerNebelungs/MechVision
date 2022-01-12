@@ -152,10 +152,10 @@ namespace PatStruct {
 		if (p.m_fhex == NULL)
 			return 0x01;
 		p.m_Row_N = 0;
-		p.m_Col_d = 2.f / 3.f * p.m_Rhex;
-		p.m_Row_d = 2.f * p.m_RShex;
+		p.m_Row_d = 3.f*p.m_Rhex/2.f;
+		p.m_Col_d = 2.f * p.m_RShex;
 		for (long i = 0; i < p.m_nHex; i++) {
-			if (p.m_fhex[i].web[3] == NULL) {
+			if (p.m_fhex[i].web[3] == NULL && p.m_fhex[i].x>=0) {/* at the end of each row is an extra hex that is not connected or filled*/
 				p.m_Row_N++;
 			}
 		}
@@ -163,7 +163,7 @@ namespace PatStruct {
 		p.m_RowStart_is = new s_2pt_i[p.m_Row_N];
 		long rowCnt = 0;
 		for (long i = 0; i < p.m_nHex; i++) {
-			if (p.m_fhex[i].web[3] ==NULL) {
+			if (p.m_fhex[i].web[3] ==NULL && p.m_fhex[i].x>=0) {
 				p.m_RowStart[rowCnt].x0 = p.m_fhex[i].x;
 				p.m_RowStart[rowCnt].x1 = p.m_fhex[i].y;
 				p.m_RowStart_is[rowCnt].x0 = i;
