@@ -20,7 +20,7 @@ unsigned char CameraTrans::init(
 	float screen_x_center_offset
 )
 {
-	if (m_camera_d <= 0.f)
+	if (camera_d <= 0.f)
 		return ECODE_ABORT;
 
 	m_yPinHole_screenLowPt = yPinHole_screenLowPt;
@@ -45,11 +45,14 @@ unsigned char CameraTrans::setFocalFromOpeningAngle(float openingAngleH) {
 		return ECODE_ABORT;
 	if (openingAngleH <= 0.f)
 		return ECODE_ABORT;
+	if (m_y_pixH <= 0.f)
+		return ECODE_ABORT;
 	/* tan ang = d/y = pix_y/f */
 	float ang = openingAngleH / 2.f;
-	float angPerPix = m_y_pixH / openingAngleH;
+	float PixPerAng = m_y_pixH / openingAngleH;
 	float screen_half = m_y_pixH / 2.f;
-	float angOffset = angPerPix + (screen_half - m_screen_y_horizion);
+	float angPerPix = openingAngleH / m_y_pixH;
+	float angOffset = (screen_half - m_screen_y_horizion)*angPerPix;
 	ang += angOffset;
 	if (ang <= 0.f)
 		return ECODE_ABORT;
@@ -70,7 +73,7 @@ bool CameraTrans::drivePlaneCoord(const s_2pt& screenCoord, s_2pt& planeCoord) {
 }
 bool CameraTrans::screenToDriveplane_Unit_d(const s_2pt& screenXY, s_2pt& XY) {
 	/*y starts at top so angle from top of screen*/
-	float yScdown = m_screen_y_horizion - screenXY.x1;
+	float yScdown = screenXY.x1 - m_screen_y_horizion;
 	if (yScdown <= 0.f)
 		return false;
 	/*assume the camer is oriented so that the plane it is projecting on is at right angles

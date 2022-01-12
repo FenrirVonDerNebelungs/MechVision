@@ -88,7 +88,7 @@ unsigned char DrawHexImg::renderHexImg()
 	return ECODE_OK;
 }
 unsigned char DrawHexImg::renderLineImg(LineFinder* lineFinder) {
-	return genLineImg(lineFinder);//genSingLunaLineImg(lineFinder);
+	return genSingLunaLineImg(lineFinder);//genLineImg(lineFinder);//genSingLunaLineImg(lineFinder);
 }
 unsigned char DrawHexImg::renderEyeImg(s_hexEye& eye) {
 	return genEyeImgDebug(eye);

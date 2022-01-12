@@ -55,6 +55,19 @@ unsigned char PatLunaLayer::Update() {
 	return ECODE_OK;
 }
 void PatLunaLayer::initHexPlate(s_hexPlate& o, s_hexPlate& n, s_fNode* patNode) {
+	PatStruct::genPlateWSameWeb(o, n);
+	for (int i = 0; i < o.m_nHex; i++) {
+		n.m_fhex[i].shex = o.m_fhex[i].shex;
+		n.m_fhex[i].initNodePtrs(7);
+		n.m_fhex[i].nodes[6] = &o.m_fhex[i];
+		n.m_fhex[i].w[6] = patNode->w[6];
+		for (int j = 0; j < 6; j++) {
+			n.m_fhex[i].nodes[j] = o.m_fhex[i].web[j];
+			n.m_fhex[i].w[j] = patNode->w[j];
+		}
+		n.m_fhex[i].N = 7;
+	}
+	/*
 	n.m_height = o.m_height;
 	n.m_width = o.m_width;
 	n.m_Rhex = 2.f * o.m_Rhex;
@@ -79,6 +92,7 @@ void PatLunaLayer::initHexPlate(s_hexPlate& o, s_hexPlate& n, s_fNode* patNode) 
 		n.m_fhex[i].N = 7;
 	}
 	n.m_nHex = o.m_nHex;
+	*/
 }
 void PatLunaLayer::releaseHexPlate(s_hexPlate& p) {
 	if (p.m_fhex != NULL) {

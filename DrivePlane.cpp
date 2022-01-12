@@ -53,11 +53,11 @@ unsigned char DrivePlane::init(
 	m_screenClosestY = m_cameraTrans->getScreenLowPt();
 	m_screenClosestY_Unit_d = m_screenClosestY/m_cameraTrans->getCamera_d();
 
-	if (screenHYDim >= 1.f) {
+	if (screenHYDim >= 1.f && screenHYDim>m_screenClosestY) {
 		m_screenHYDim = screenHYDim;
 	}
 	else
-		m_screenHYDim = 5.f * m_cameraTrans->getCamera_d();
+		m_screenHYDim = 3.f * m_cameraTrans->getCamera_d() + m_screenClosestY;
 	float plateSpanIn_Unit_d = (m_screenHYDim - m_screenClosestY) / m_cameraTrans->getCamera_d();
 	if (plateSpanIn_Unit_d <= 0.f) {
 		m_cameraTrans->release();

@@ -113,7 +113,7 @@ int runTest0() {
 		hexDrawLines.renderLineImg(&findLines);
 		hexDrawDriveP.Run();
 
-		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		unsigned char* MVImgdat = hexDrawLines.getHexedImg()->getImg(); //hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);

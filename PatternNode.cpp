@@ -155,7 +155,7 @@ namespace PatStruct {
 		p.m_Col_d = 2.f / 3.f * p.m_Rhex;
 		p.m_Row_d = 2.f * p.m_RShex;
 		for (long i = 0; i < p.m_nHex; i++) {
-			if (p.m_fhex[i].web[3] < 0) {
+			if (p.m_fhex[i].web[3] == NULL) {
 				p.m_Row_N++;
 			}
 		}
@@ -163,14 +163,15 @@ namespace PatStruct {
 		p.m_RowStart_is = new s_2pt_i[p.m_Row_N];
 		long rowCnt = 0;
 		for (long i = 0; i < p.m_nHex; i++) {
-			if (p.m_fhex[i].web[3] < 0) {
+			if (p.m_fhex[i].web[3] ==NULL) {
 				p.m_RowStart[rowCnt].x0 = p.m_fhex[i].x;
 				p.m_RowStart[rowCnt].x1 = p.m_fhex[i].y;
 				p.m_RowStart_is[rowCnt].x0 = i;
 				p.m_RowStart_is[rowCnt].x1 = 0;
-				while (p.m_fhex[i + p.m_RowStart_is[rowCnt].x1].web[0] >= 0) {
+				while (p.m_fhex[i + p.m_RowStart_is[rowCnt].x1].web[0] !=NULL) {
 					p.m_RowStart_is[rowCnt].x1 += 1;
 				};
+				rowCnt++;
 			}
 		}
 		return 0x00;
@@ -421,6 +422,8 @@ namespace PatStruct {
 	}
 
 	void genPlateWSameWeb(const s_hexPlate& plate0, s_hexPlate& plate1) {
+		plate1.m_width = plate0.m_width;
+		plate1.m_height = plate0.m_height;
 		plate1.m_nHex = plate0.m_nHex;
 		plate1.m_Rhex = plate0.m_Rhex;
 		plate1.m_RShex = plate0.m_RShex;
@@ -444,8 +447,13 @@ namespace PatStruct {
 			plate1.m_fhex[i].web = new s_bNode * [plate1.m_fhex[i].Nweb];
 			for (int j = 0; j < plate0.m_fhex[i].Nweb; j++) {
 				/*the web must be the equivalent nodes in the new plate*/
-				long webmaster_i = plate0.m_fhex[i].web[j]->thislink;
-				plate1.m_fhex[i].web[j] = (s_bNode*)&(plate1.m_fhex[webmaster_i]);
+				s_bNode* ptr_on_orig_plate = plate0.m_fhex[i].web[j];
+				if (ptr_on_orig_plate != NULL) {
+					long webmaster_i = ptr_on_orig_plate->thislink;
+					plate1.m_fhex[i].web[j] = (s_bNode*)&(plate1.m_fhex[webmaster_i]);
+				}
+				else
+					plate1.m_fhex[i].web[j] = NULL;
 			}
 		}
 	}
