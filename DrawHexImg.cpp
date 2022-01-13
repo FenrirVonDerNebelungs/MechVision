@@ -124,7 +124,9 @@ unsigned char DrawHexImg::renderHexOuput() {
 		/*debug*/
 		if (m_nodes[i].o < 0.0)
 			hexCol = imgMath::convToRGB(0, 0, 0);
-		m_hexedImg->PrintMaskedImg(m_nodes[i].shex->i, m_nodes[i].shex->j, *m_hexMaskPlus, hexCol);
+		long img_i = (long)roundf(m_nodes[i].x);
+		long img_j = (long)roundf(m_nodes[i].y);
+		m_hexedImg->PrintMaskedImg(img_i, img_j, *m_hexMaskPlus, hexCol);
 	}
 	return ECODE_OK;
 }

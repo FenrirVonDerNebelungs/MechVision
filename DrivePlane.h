@@ -48,8 +48,8 @@ public:
 		float screen_y_horizion_offset = 0.f,/*offset for horizontal of screen horizion in pix*/
 		float screen_x_center_offset = 0.f, /*offset from center of screen in pix of camera center*/
 		/*                                  */
-		float screenHYDim = 20.f /*determines zoom
-								   if less than 1 then reset it to 5*the camera dist */
+		float screenHYDim = 40.f//20.f   
+		/*determines zoom if less than 1 then reset it to 5*the camera dist */
 	);
 	unsigned char setPlateForwardSpan(float plateSpanH);/*sets how far in robot coordinates the plate 
 											   projects from its closest visible dist forward of the robot.
@@ -64,6 +64,8 @@ protected:
 	float m_screenClosestY_Unit_d;/*same as above but with the distance of the camera above the plane set to the unit distance for y
 								    subtract 1 from this for a buffer*/
 	float m_screenHYDim;/*determines zoom of image, how far in outer robot coord the top of the proj region is from the bottom, in this case used to scale all plates*/
+	float m_plateClippingDist;/*computed from the size of plate in camera_d norm drive plane coord*/
+	long  m_plateClippingPix;/*computed from m_plateClippingDist, line pixels below this number are ignored*/
 	/*plates are assumed to start at closest visible distance */
 	/*mixed, owned/not owned*/
 	s_DrivePlate m_plates[DRIVEPLANE_NUMLUNALINE];/*plates will correspond to each single luna collection of lines*/
@@ -77,6 +79,7 @@ protected:
 							the plate representing
 							the plane seen by the camera */
 	float m_XcenterPix;/*center of x in pixel coordinates*/
+	float m_YbotPix;/*height of plate or pix coord of y of bottom of plate*/
 	unsigned char initDrivePlateHexPlate(const s_hexPlate& dim_plate, s_hexPlate& p);/*plate dim will be the pixel dim of the plate*/
 	void releaseDrivePlateHexPlate(s_hexPlate& p);
 	void reset();
@@ -84,7 +87,7 @@ protected:
 
 	bool loadLinesByLuna();/*split up lines by luna and load them into the drive plates*/
 	unsigned char convertLines(s_DrivePlate& dp);
-	inline bool screenLineCoordToPlaneCoord(const s_2pt& screenXY, s_2pt& planeXY) { return m_cameraTrans->drivePlaneCoordFast(screenXY, planeXY); }
+	bool screenLineCoordToPlaneCoord(const s_2pt& screenXY, s_2pt& planeXY);
 
 
 	bool fillPlateHexSpotty(int plate_i, float scaleFac);/*assume the lines have already been converted to drive coord*/

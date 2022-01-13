@@ -11,8 +11,9 @@ namespace n_DrivePlate {
 		PatStruct::zeroHexPlate(p.p);
 	}
 }
-DrivePlane::DrivePlane() : m_screenClosestY(0.f), m_screenClosestY_Unit_d(0.f), m_screenHYDim(0.f), 
-m_lineFinder(NULL), m_cameraTrans(NULL), m_plateDimToPix(0.f), m_XcenterPix(0.f)
+DrivePlane::DrivePlane() : m_screenClosestY(0.f), m_screenClosestY_Unit_d(0.f), m_screenHYDim(0.f),
+m_plateClippingDist(0.f), m_plateClippingPix(0.f),
+m_lineFinder(NULL), m_cameraTrans(NULL), m_plateDimToPix(0.f), m_XcenterPix(0.f), m_YbotPix(0.f)
 {
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++)
 		n_DrivePlate::zeroPlate(m_plates[i]);
@@ -79,6 +80,14 @@ unsigned char DrivePlane::init(
 
 	m_plateDimToPix = ((float)m_plates[0].p.m_height) / plateSpanIn_Unit_d;
 	m_XcenterPix = ((float)m_plates[0].p.m_width) / 2.f;
+	m_YbotPix = ((float)m_plates[0].p.m_height);
+	m_plateClippingDist = m_screenHYDim / m_cameraTrans->getCamera_d();
+	/*plateClippingDist/camera_d = f_pix/plateClippingPix_diff
+	* camera_d is these coord = 1
+	* plateClippingPix_diff = f_pix/plateClippingDist
+	*/
+	float ClippingPix_diff = m_cameraTrans->getfPix() / m_plateClippingDist;
+	m_plateClippingPix = ClippingPix_diff + m_cameraTrans->getScreen_y_horizion();
 	return ECODE_OK;
 }
 unsigned char DrivePlane::setPlateForwardSpan(float plateSpanH) {
@@ -118,8 +127,8 @@ unsigned char DrivePlane::update() {
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
 		m_plates[i].n_lines = 0;
 		convertLines(m_plates[i]);
-		//fillPlateHex(i, m_plateDimToPix);
-		fillPlateHexSpotty(i, m_plateDimToPix);
+		fillPlateHex(i, m_plateDimToPix);
+		//fillPlateHexSpotty(i, m_plateDimToPix);
 	}
 	return ECODE_OK;
 }
@@ -186,7 +195,11 @@ unsigned char DrivePlane::convertLines(s_DrivePlate& dp) {
 	}
 	return ECODE_OK;
 }
-
+bool DrivePlane::screenLineCoordToPlaneCoord(const s_2pt& screenXY, s_2pt& planeXY) {
+	if (screenXY.x1 < m_plateClippingPix)
+		return false;
+	return m_cameraTrans->drivePlaneCoordFast(screenXY, planeXY);
+}
 bool DrivePlane::fillPlateHexSpotty(int plate_i, float scaleFac) {
 	s_DrivePlate& dp = m_plates[plate_i];
 	for (int i = 0; i < dp.n_lines; i++) {
@@ -204,6 +217,9 @@ bool DrivePlane::fillPlateHexSpotty(int plate_i, float scaleFac) {
 bool DrivePlane::LineLocToPlateLoc(float scaleFac, const s_2pt& lineXY, s_2pt& plateXY) {
 	plateXY.x1 = lineXY.x1 - m_screenClosestY_Unit_d;
 	plateXY.x1 *= scaleFac;
+	/*the farther out the nearer zero since y starts at top*/
+	plateXY.x1 = m_YbotPix - plateXY.x1;
+
 	plateXY.x0 = scaleFac * lineXY.x0;
 	plateXY.x0 += m_XcenterPix;
 	return true;/*don't check for overflow since this will be checked when coversion to plate index is done*/

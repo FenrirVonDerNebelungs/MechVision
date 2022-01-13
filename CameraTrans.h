@@ -36,6 +36,8 @@ public:
 	inline void convFastCoordToCoord(s_2pt& XY) { XY.x0 *= m_camera_d; XY.x1 *= m_camera_d; }
 	inline float getScreenLowPt() { return m_yPinHole_screenLowPt; }
 	inline float getCamera_d() { return m_camera_d; }
+	inline float getfPix() { return m_f_pix; }/*focal length in pixels*/
+	inline float getScreen_y_horizion() { return m_screen_y_horizion; }
 protected:
 	float m_yPinHole_screenLowPt;/*dist in y from pin hole camera of closest point viewable by camera in drive plane*/
 	float m_camera_d;/*height of camera off the drive plane*/
