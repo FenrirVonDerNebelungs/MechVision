@@ -259,7 +259,9 @@ bool DrivePlane::fillLineBetweenPts(float scaleFac, const s_linePoint& pt1, cons
 	long hex_end_i = PatStruct::squarePlate_xyToHexi(p, pt2XY);
 	if (hex_end_i < 0)
 		return false;
-	float dist = findUsForLinePts(p.m_Rhex, pt1XY, pt2XY, U, perp);
+	s_2pt hex1_center = { p.m_fhex[hex_start_i].x, p.m_fhex[hex_start_i].y };
+	s_2pt hex2_center = { p.m_fhex[hex_end_i].x, p.m_fhex[hex_end_i].y };
+	float dist = findUsForLinePts(p.m_Rhex, hex1_center, hex2_center, U, perp);
 	if (dist < 0.f) {
 		p.m_fhex[hex_start_i].o = pt1.o;
 		p.m_fhex[hex_end_i].o = pt2.o;
@@ -269,7 +271,7 @@ bool DrivePlane::fillLineBetweenPts(float scaleFac, const s_linePoint& pt1, cons
 		long hex_i = hex_start_i;
 		for (int cnt = 0; cnt < DRIVEPLANE_MAXLOOPCATCH; cnt++) {
 			p.m_fhex[hex_i].o = pt1.o;/*might change this to an average later*/
-			long next_hex_i = findNextHexToFill(p, hex_i, web_start_i, pt1XY, perp);
+			long next_hex_i = findNextHexToFill(p, hex_i, web_start_i, hex1_center, perp);
 			if (next_hex_i < 0)
 				break;
 			if (next_hex_i == hex_end_i) {
@@ -319,6 +321,7 @@ long DrivePlane::findNextHexToFill(s_hexPlate& p, long hexi, int hexweb_start, c
 				}
 				else
 					next_hex_i = adj_hex->thislink;
+				break;
 			}
 		}
 	}

@@ -77,7 +77,7 @@ unsigned char HexBase::genStructuredPlate(s_hexPlate& plate) {
 	plate.m_Shex = m_Shex;
 	for (int i = 0; i < 6; i++) {
 		plate.m_hexU[i].x0 = m_hexU[i].x0;
-		plate.m_hexU[i].x1 = m_hexU[i].x1;
+		plate.m_hexU[i].x1 = -m_hexU[i].x1;/*web rot was set up so that index 1,2 point up on screen towards lower y*/
 	}
 	PatStruct::hexPlateConnectWeb(plate);
 	return ECODE_OK;
