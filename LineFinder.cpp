@@ -27,7 +27,7 @@ namespace n_line {
 }
 
 LineFinder::LineFinder() : m_spawn_start_hexi(0), m_min_scan_hexi(0), m_minTrigo(0.f), m_mino(0.f), m_minLineSegPts(0), m_dLine(0),
-m_maxNebDist(0.f), m_minMergeOverlap(0), m_mergeOverlap(0.f), m_numHex(0),
+m_numHex(0),
 m_in_line(NULL), m_covered(NULL),
 m_n(0), m_n_lines(0),
 m_lineSegR(NULL), m_numLineSegR(0), m_lineSegL(NULL), m_numLineSegL(0),
@@ -49,11 +49,6 @@ m_plateLayer(NULL)
 		m_singLunaLines[i].f = NULL;
 		m_singLunaLines[i].blacked = false;
 		m_singLunaLines[i].lowerHalf = false;
-		m_mergedLines[i].n = 0;
-		m_mergedLines[i].pts = NULL;
-		m_mergedLines[i].f = NULL;
-		m_mergedLines[i].blacked = false;
-		m_mergedLines[i].lowerHalf = false;
 		
 		m_lines[i] = NULL;
 	}
@@ -71,10 +66,7 @@ unsigned char LineFinder::init(
 	float minTrigo,
 	float mino,
 	int minLineSegPts,
-	int dLine,
-	float maxNebDistFac,
-	long minMergeOverlap,
-	float mergeOverlap
+	int dLine
 ) {
 	m_spawn_start_hexi = spawn_start_hexi;
 	m_min_scan_hexi = min_scan_hexi;
@@ -83,8 +75,6 @@ unsigned char LineFinder::init(
 	m_minLineSegPts = minLineSegPts;
 	m_dLine = dLine;
 
-	m_minMergeOverlap = minMergeOverlap;
-	m_mergeOverlap = mergeOverlap;
 
 	if (plateLayer == NULL)
 		return ECODE_FAIL;
@@ -93,8 +83,6 @@ unsigned char LineFinder::init(
 
 	/*all plate layers should have same structure as far as web*/
 	s_hexPlate& plate = m_plateLayer->p[0];
-	float Rs = plate.m_RShex;
-	m_maxNebDist = maxNebDistFac * Rs;
 
 	/*owned*/
 	m_covered = new bool[m_numHex];
@@ -108,8 +96,6 @@ unsigned char LineFinder::init(
 	for (int i = 0; i < LINEFINDERMAXLINES; i++) {
 		m_singLunaLines[i].n = 0;
 		m_singLunaLines[i].pts = new s_linePoint[m_numHex];
-		m_mergedLines[i].n = 0;
-		m_mergedLines[i].pts = new s_linePoint[m_numHex];
 	}
 	m_lineSegR = new s_linePoint[m_numHex];
 	m_numLineSegR = 0;
@@ -143,11 +129,6 @@ void LineFinder::release() {
 		}
 		m_singLunaLines[i].pts = NULL;
 		m_singLunaLines[i].n = 0;
-		if (m_mergedLines[i].pts != NULL) {
-			delete[] m_mergedLines[i].pts;
-		}
-		m_mergedLines[i].pts = NULL;
-		m_mergedLines[i].n = 0;
 
 		m_lines[i] = NULL;
 	}
@@ -167,9 +148,6 @@ void LineFinder::reset() {
 	for (int i = 0; i < m_n; i++) {
 		m_singLunaLines[i].n = 0;
 		m_singLunaLines[i].blacked = false;
-		m_mergedLines[i].n = 0;
-		m_mergedLines[i].blacked = false;
-		m_mergedLines[i].lowerHalf = false;
 		m_lines[i] = NULL;
 	}
 	m_n = 0;
@@ -188,7 +166,7 @@ unsigned char LineFinder::spawn() {
 		retCode = spawnLine(curhexi, nextHexi);
 		curhexi = nextHexi;
 	} while (RetOk(retCode));
-	return mergeLunaLines();
+	return fillLinePtrs();
 }
 
 void LineFinder::setConstVectors() {
@@ -248,14 +226,6 @@ unsigned char LineFinder::spawnLine(int start_hexi, int& ret_hexi) {
 	if (m_numLineSegR + m_numLineSegL < m_minLineSegPts)
 		return ECODE_OK;/*ok line attempted was too short*/
 
-	/*
-	if (RetOk(mergeSegs(m_lineSegR, m_numLineSegR, m_lineSegL, m_numLineSegL, m_scratchLine))) {
-		retCode = formLine(m_scratchLine, m_lines[m_n]);
-		m_n++;
-	}
-		else
-		retCode = ECODE_FAIL;this shouldn't happen
-	*/
 	if (Err(mergeSegs(m_lineSegR, m_numLineSegR, m_lineSegL, m_numLineSegL, m_singLunaLines[m_n])))
 		retCode = ECODE_FAIL;
 	m_n++;
@@ -337,24 +307,7 @@ unsigned char LineFinder::mergeSegs(s_linePoint lineR[], int nlineR, s_linePoint
 	}
 	return ECODE_OK;
 }
-/*
-unsigned char LineFinder::formLine(s_line& denseLine, s_line& newLine) {
-	newLine.n = 0;
-	for (int i = 1; i < (denseLine.n - 1); i += m_dLine) {
-		setVectors(denseLine.pts[i - 1], denseLine.pts[i + 1], denseLine.pts[i]);
-		newLine.pts[newLine.n].o = denseLine.pts[i].o;
-		newLine.pts[newLine.n].lunai = denseLine.pts[i].lunai;
-		newLine.pts[newLine.n].hexi = denseLine.pts[i].hexi;
-		newLine.pts[newLine.n].linei = m_n;
-		newLine.pts[newLine.n].loc.x0 = m_plateLayer->p[0].m_fhex[denseLine.pts[i].hexi].x;//m_hexes[denseLine.pts[i].hexi].x;
-		newLine.pts[newLine.n].loc.x1 = m_plateLayer->p[0].m_fhex[denseLine.pts[i].hexi].y;// m_hexes[denseLine.pts[i].hexi].y;
-		newLine.pts[newLine.n].perp = denseLine.pts[i].perp;
-		newLine.pts[newLine.n].v = denseLine.pts[i].v;
-		(newLine.n)++;
-	}
-	return ECODE_OK;
-}
-*/
+
 unsigned char LineFinder::setVectorsForLine(s_line* lineptr) {
 	for (int i = 0; i < lineptr->n; i++)
 		setVectors(lineptr->pts[i]);
@@ -365,144 +318,8 @@ unsigned char LineFinder::setVectors(s_linePoint& pt) {
 	pt.v = vecMath::perpUL(pt.perp);
 	return ECODE_OK;
 }
-unsigned char LineFinder::mergeLunaLines() {
-	for (int i = 0; i < m_n; i++) {
-		bool wasMerged = false;
-		s_line* firstLine = &(m_singLunaLines[i]);
-		for (int j = i + 1; j < m_n; j++) {
-			s_line* secondLine = (m_singLunaLines[j].blacked) ? &(m_mergedLines[j]) :&(m_singLunaLines[j]);
-			long cur_l_i = 0;
-			long cur_c_i = 0;
-			if (doMergeLunaLines(*firstLine, *secondLine, cur_l_i, cur_c_i)) {
-				bool selFirst = false;
-				unsigned char err = mergeLunaLinesForward(cur_l_i, cur_c_i, *firstLine, *secondLine, m_scratchLine, selFirst);
-				err = mergeLunaLineToTail(m_scratchLine, *firstLine, cur_l_i, m_mergedLines[j]);/*really this should merge which ever line is stronger instead of always selecting the 1st line in the array, however this is faster since it avoids a copy of the line*/
-				m_singLunaLines[j].blacked = true;
-				wasMerged = true;
-				firstLine = &(m_mergedLines[j]);
-			}
-		}
-		if(!wasMerged && m_mergedLines[i].n<=0)
-			n_line::copyLines(m_singLunaLines[i], m_mergedLines[i]);
-	}
-	m_n_lines = 0;
-	for (int i = 0; i < m_n; i++) {
-		if (m_mergedLines[i].n>0) {
-			m_lines[m_n_lines] = &(m_mergedLines[i]);
-			setVectorsForLine(m_lines[m_n_lines]);
-			m_n_lines++;
-		}
-	}
+unsigned char LineFinder::fillLinePtrs() {
+	for (int i = 0; i < m_n; i++)
+		m_lines[i] = &(m_singLunaLines[i]);
 	return ECODE_OK;
-}
-bool LineFinder::doMergeLunaLines(const s_line& l, const s_line& c, long& cur_l_i, long& cur_c_i) {
-	int cnt_found = 0;
-	bool inc_prev = false;
-	bool cur_found=false;
-	cur_c_i = -1;
-	cur_l_i = -1;
-	bool isFound = false;
-	/*lines have only one luna*/
-	if (!lunaNeb(l.pts[0], c.pts[0]))/*check to make sure that merging line to line with similar luna*/
-		return false;
-	for (long l_i = 0; l_i < l.n-m_minMergeOverlap; l_i++) {
-		int c_i = 0;
-		for (; c_i < c.n-m_minMergeOverlap; c_i++) {
-			if (overlapPts(l.pts[l_i], c.pts[c_i])) {
-				/*check if a few more overlap*/
-				bool cur_found = true;
-				for (long i_cnt = 0; i_cnt < m_minMergeOverlap; i_cnt++) {
-					if (!overlapPts(l.pts[l_i + i_cnt], c.pts[c_i + i_cnt]))
-						cur_found = false;
-				}
-				if (cur_found) {
-					cur_c_i = c_i;
-					cur_l_i = l_i;
-					isFound = true;
-					break;
-				}
-			}
-		}
-		if (isFound) 
-			break;
-	}
-	return isFound;
-}
-unsigned char LineFinder::mergeLunaLinesForward(int l_i, int c_i, const s_line& l, const s_line& c, s_line& m, bool& selFirst) {
-	int cur_c_i = c_i;
-	int cur_m_i = 0;
-	float c_val_sum = 0.f;
-	float l_val_sum = 0.f;
-	int i=0;
-	for (i = l_i; i < l.n; i++) {
-		c_val_sum += c.pts[cur_c_i].o;
-		l_val_sum += l.pts[l_i].o;
-		/*since lines have only one lunai per line it is not necessary to check again for luna match*/
-		if (neb(l.pts[i], c.pts[cur_c_i])) {
-			if (l.pts[i].o >= c.pts[cur_c_i].o) {
-				n_line::copyPt(l.pts[i], m.pts[cur_m_i]);
-			}
-			else
-				n_line::copyPt(c.pts[cur_c_i], m.pts[cur_m_i]);
-			cur_m_i++;
-			cur_c_i++;
-			if (cur_c_i >= c.n) {
-				i++;
-				break;
-			}
-		}
-		else {
-			break;
-		}
-	}
-	/*neb will be less restricted than mergeOverlap, therefore at least the min number for a merge overlap have been selected*/
-	selFirst = (l_val_sum >= c_val_sum);
-	if (cur_c_i >= c.n && cur_m_i >= l.n) {
-		/*went all the way to the end for both lines*/
-		m.n = cur_m_i;
-		return ECODE_OK;
-	}
-	if (selFirst) {
-		/*complete the merge line with points from the first 'l' line*/
-		/*for loop ends before inc*/
-		for (; i < l.n; i++) {
-			n_line::copyPt(l.pts[i], m.pts[cur_m_i]);
-			cur_m_i++;
-			i++;
-		}
-	}
-	else {
-		for (; cur_c_i < c.n; cur_c_i++) {
-			n_line::copyPt(c.pts[cur_c_i], m.pts[cur_m_i]);
-			cur_m_i++;
-		}
-	}
-	m.n = cur_m_i;
-	return ECODE_OK;
-}
-unsigned char LineFinder::mergeLunaLineToTail(const s_line& m, const s_line& c, long c_i, s_line& mm) {
-	long cur_mm_i = 0;
-	for (long i = 0; i < c_i; i++) {
-		n_line::copyPt(c.pts[i], mm.pts[cur_mm_i]);
-		cur_mm_i++;
-	}
-	for (long i = 0; i < m.n; i++) {
-		n_line::copyPt(m.pts[i], mm.pts[cur_mm_i]);
-		cur_mm_i++;
-	}
-	mm.n = cur_mm_i;
-	return ECODE_OK;
-}
-bool LineFinder::lunaNeb(const s_linePoint& p1, const s_linePoint& p2) {
-	int lunaDiff = abs(p1.lunai - p2.lunai);
-	if (lunaDiff > 3)
-		lunaDiff = 6 - lunaDiff;
-	return lunaDiff <= LINEFINDERMAXLUNADIFF;
-}
-bool LineFinder::neb(const s_linePoint& p1, const s_linePoint& p2) {
-	return n_line::isIn(p1, p2, m_maxNebDist);
-}
-bool LineFinder::overlapPts(const s_linePoint& p1, const s_linePoint& p2) {
-	float Rs = m_plateLayer->p[0].m_RShex;
-	return n_line::isIn(p1, p2, Rs);
 }

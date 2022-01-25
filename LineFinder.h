@@ -7,7 +7,6 @@
 #endif
 
 #define LINEFINDERMAXLINES 50
-#define LINEFINDERMAXLUNADIFF 1
 struct s_linePoint {
     float o;
     int lunai;/*dominate maski at this point*/
@@ -47,11 +46,8 @@ public:
         float minTrigo = 0.3f,//0.3f,
         float mino = 0.1f,
         int minLineSegPts = 8,//6,
-        int dLine = 1,//3,
-        float maxNebDistFac = 3.f,
-        long minMergeOverlap = 6,
-        float mergeOverlap = 0.6 /*how much merge overlap before one of the lines is removed*/
-    );
+        int dLine = 1//3,
+     );
     void release();
 
     unsigned char spawn();
@@ -72,17 +68,12 @@ protected:
     int   m_minLineSegPts;/*should be set to greater than three*/
     int   m_dLine;/*spacing between hexes for actual line saved needs to be at least 1*/
 
-    float  m_maxNebDist;/*max distance points may be apart to be considered for merge neighbors*/
-    long   m_minMergeOverlap;/*min number of points that lines must overlap to try to merge*/
-    float  m_mergeOverlap;/*merge overlap needed to consider both lines the same*/
-
     long  m_numHex;/*Number of hexes on plate, maximum number of line points*/
 
     /*owned*/
     bool* m_in_line;/*points are in line and should not be added to line during search along line*/
     bool* m_covered;/*mask over hexes line & surrounding that should not be used to start line search again*/
     s_line       m_singLunaLines[LINEFINDERMAXLINES];
-    s_line       m_mergedLines[LINEFINDERMAXLINES];
     s_line*      m_lines[LINEFINDERMAXLINES];/*these pointers point to lines in singLunaLines*/
     int          m_n;
     int          m_n_lines;
@@ -122,17 +113,8 @@ protected:
     unsigned char setVectorsForLine(s_line* lineptr);
     unsigned char setVectors(s_linePoint& pt);/*set vectors for point using pre & post info*/
 
-    /*merge functions for lines that may change luna*/
-    unsigned char mergeLunaLines();/*this should be run on the lines before they are spaced out*/
-    bool doMergeLunaLines(const s_line& l, const s_line& c, long& l_i, long& c_i);
-
-    unsigned char mergeLunaLinesForward(int l_i, int c_i, const s_line& l, const s_line& c, s_line& m, bool& selFirst);
-    unsigned char mergeLunaLineToTail(const s_line& m, const s_line& c, long c_i, s_line& mm);
-
-    bool lunaNeb(const s_linePoint& p1, const s_linePoint& p2);
-    bool neb(const s_linePoint& p1, const s_linePoint& p2);
-    bool overlapPts(const s_linePoint& p1, const s_linePoint& p2);
-
+    /*final func*/
+    unsigned char fillLinePtrs();
 };
 
 #endif
