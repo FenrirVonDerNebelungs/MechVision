@@ -6,7 +6,7 @@
 #include "Math.h"
 #endif
 
-#define MAXPLATESPERLAYER 100
+#define MAXPLATESPERLAYER 20
 #define PATTERNNODE_MAXTPTS 10
 
 struct s_hex {

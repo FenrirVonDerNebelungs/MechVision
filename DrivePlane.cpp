@@ -12,7 +12,7 @@ namespace n_DrivePlate {
 	}
 }
 DrivePlane::DrivePlane() : m_screenClosestY(0.f), m_screenClosestY_Unit_d(0.f), m_screenHYDim(0.f),
-m_plateClippingDist(0.f), m_plateClippingPix(0.f),
+m_plateClippingDist(0.f), m_plateClippingPix(0),
 m_lineFinder(NULL), m_cameraTrans(NULL), m_plateDimToPix(0.f), m_XcenterPix(0.f), m_YbotPix(0.f)
 {
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++)
@@ -87,7 +87,7 @@ unsigned char DrivePlane::init(
 	* plateClippingPix_diff = f_pix/plateClippingDist
 	*/
 	float ClippingPix_diff = m_cameraTrans->getfPix() / m_plateClippingDist;
-	m_plateClippingPix = ClippingPix_diff + m_cameraTrans->getScreen_y_horizion();
+	m_plateClippingPix = (long)roundf(ClippingPix_diff + m_cameraTrans->getScreen_y_horizion());
 	return ECODE_OK;
 }
 unsigned char DrivePlane::setPlateForwardSpan(float plateSpanH) {

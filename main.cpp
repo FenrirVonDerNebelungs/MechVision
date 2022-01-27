@@ -18,43 +18,90 @@ using namespace std;
 using namespace cv;
 
 int runTest0();
-int runTestEye();
+int testPi();
 int main() {
+	int dummyMarker0;
+	int* pdummyMark0 = &dummyMarker0;
 
-	return runTest0();
+	return testPi();
 }
 
-int runTestEye() {
+int testPi() {
+	int dummyMarker0;
+	int* pdummyMark0 = &dummyMarker0;
+	VideoCapture cap("IOFiles/messylines.avi");
+	if (!cap.isOpened()) {
+		cout << "Error\n";
+		return -1;
+	}
+	int frame_width = cap.get(CAP_PROP_FRAME_WIDTH);
+	int frame_height = cap.get(CAP_PROP_FRAME_HEIGHT);
+
+	Img MVImg;
+
 	Hex HexLow;
 	Img dummyImg;/*dummy image is just used to set dimensions for the first pass generation of the hexes*/
-	dummyImg.init(640, 480, 3L);
+	dummyImg.init(frame_width, frame_height, 3L);
 	HexLow.Init(&dummyImg);
-	HexEye hEye;
-	hEye.init(&HexLow);
-	hEye.spawn();
-	DrawHexImg drawEye;
-	drawEye.Init(&HexLow);
-	drawEye.renderEyeImg(hEye.getEye(0));
+	PatLunaLayer patLunLay;
+	patLunLay.init(&HexLow);
+	LineFinder* findLines = new LineFinder;
+	findLines->init(&patLunLay.getPlateLayer(0));
+	DrivePlane* driveP = new DrivePlane;
+	driveP->init(findLines);
 
-	unsigned char* Imgdat = drawEye.getHexedImg()->getImg();
-	Size frameSize(640, 480);
-	Mat rendFrame(frameSize, CV_8UC3, (void*)Imgdat);
+	DrawHexImg hexDrawDriveP;
+	hexDrawDriveP.Init(driveP->getHexPlate(0), HexLow.getHexMaskPlus());
+	int dummyMarker1;
+	int* pdummyMark1 = &dummyMarker1;
 
 	int cnt = 0;
-	do {
+	bool doCol = false;
+	while (cnt < 2000) {//000) {
+		Mat frame0;
+		cap >> frame0;
+		if (frame0.empty())
+			break;
+
+		unsigned char* frmdat = frame0.data;
+		MVImg.initNoOwn(frmdat, frame_width, frame_height, 3L);
+		HexLow.Update(&MVImg);
+		//colLay.Update();
+
+		patLunLay.Update();
+		findLines->spawn();
+		driveP->update();
+		hexDrawDriveP.Run();
+
+		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		Size frameSize(frame_width, frame_height);
+		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
+
 		imshow("TestVid", rendFrame);
 		char c = (char)waitKey(25);
 		if (c == 27)
 			break;
+		MVImg.release();
+
 		cnt++;
-	} while (cnt < 1000);
+	}
+
+	driveP->release();
+	findLines->release();
+	patLunLay.release();
+	HexLow.Release();
+	dummyImg.release();
+	delete driveP;
+	delete findLines;
+
 	cout << "Hello with OpenCV\n";
 	destroyAllWindows();
-
 	return 0;
 }
-
 int runTest0() {
+	int dummyMarker0;
+	int* pdummyMark0 = &dummyMarker0;
 
 	VideoCapture cap("IOFiles/messylines.avi");
 	if (!cap.isOpened()) {
@@ -72,12 +119,16 @@ int runTest0() {
 	//ColLayer colLay;
 	//colLay.init((HexBase*)&HexLow);
 	//colLay.addColPlate();
+	int dummyMarker1;
+	int* pdummyMark1 = &dummyMarker1;
+
 	PatLunaLayer patLunLay;
 	patLunLay.init(&HexLow);
 	LineFinder findLines;
 	findLines.init(&patLunLay.getPlateLayer(0));
 	DrivePlane driveP;
 	driveP.init(&findLines);
+
 
 	DrawHexImg hexDraw;
 	hexDraw.Init((HexBase*)&HexLow, &(patLunLay.getPlate(0, 2))); //patLunLay.getColPlate(0));//&(patLunLay.getPlate(0,0)));//((HexBase*)&HexLow);
@@ -87,6 +138,7 @@ int runTest0() {
 	hexDrawLines.Init((HexBase*)&HexLow);
 	DrawHexImg hexDrawDriveP;
 	hexDrawDriveP.Init(driveP.getHexPlate(0), HexLow.getHexMaskPlus());
+
 
 	/*debug*/
 	//hexDraw.setHexes(colLay.getBaseHexes());
