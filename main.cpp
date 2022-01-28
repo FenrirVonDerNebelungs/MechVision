@@ -23,7 +23,7 @@ int main() {
 	int dummyMarker0;
 	int* pdummyMark0 = &dummyMarker0;
 
-	return testPi();
+	return runTest0();
 }
 
 int testPi() {
@@ -160,10 +160,10 @@ int runTest0() {
 		patLunLay.Update();
 		findLines.spawn();
 		driveP.update();
-		hexDraw.Run();
-		hexBaseDraw.Run();// renderHexImg();
-		hexDrawLines.renderLineImg(&findLines);
-		hexDrawDriveP.Run();
+		//hexDraw.Run();
+		//hexBaseDraw.Run();// renderHexImg();
+		//hexDrawLines.renderLineImg(&findLines);
+		hexDrawDriveP.drawDrivePlates(driveP.getPlates(), DRIVEPLANE_NUMLUNALINE);
 
 		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();

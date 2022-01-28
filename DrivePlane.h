@@ -58,6 +58,7 @@ public:
 
 	unsigned char update();
 
+	inline s_DrivePlate* getPlates() { return m_plates; }
 	inline s_hexPlate* getHexPlate(int i) { return &(m_plates[i].p); }
 protected:
 	float m_screenClosestY;/*distance from camera center in y to point closest viewable to the camera on the plane*/

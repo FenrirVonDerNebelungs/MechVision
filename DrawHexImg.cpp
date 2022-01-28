@@ -117,9 +117,9 @@ unsigned char DrawHexImg::genHexImgDebug()
 }
 unsigned char DrawHexImg::renderHexOuput() {
 	for (int i = 0; i < m_nHex; i++) {
-		float r = m_nodes[i].o * 0xff;// (float)m_defOCol.r;
-		float g = m_nodes[i].o * 0xff;// (float)m_defOCol.g;
-		float b = m_nodes[i].o * 0xff;// (float)m_defOCol.b;
+		float r = m_nodes[i].o * (float)m_defOCol.r;
+		float g = m_nodes[i].o * (float)m_defOCol.g;
+		float b = m_nodes[i].o * (float)m_defOCol.b;
 		s_rgb hexCol = imgMath::convToRGB(r, g, b);
 		/*debug*/
 		if (m_nodes[i].o < 0.0)
@@ -127,6 +127,37 @@ unsigned char DrawHexImg::renderHexOuput() {
 		long img_i = (long)roundf(m_nodes[i].x);
 		long img_j = (long)roundf(m_nodes[i].y);
 		m_hexedImg->PrintMaskedImg(img_i, img_j, *m_hexMaskPlus, hexCol);
+	}
+	return ECODE_OK;
+}
+unsigned char DrawHexImg::renderAdditiveHexOuput() {
+	float thresh = 0.3f;
+	for (int i = 0; i < m_nHex; i++) {
+		if (m_nodes[i].o >= thresh) {
+			float r = m_nodes[i].o * (float)m_defOCol.r;
+			float g = m_nodes[i].o * (float)m_defOCol.g;
+			float b = m_nodes[i].o * (float)m_defOCol.b;
+			s_rgb hexCol = imgMath::convToRGB(r, g, b);
+			/*debug*/
+			if (m_nodes[i].o < 0.0)
+				hexCol = imgMath::convToRGB(0, 0, 0);
+			long img_i = (long)roundf(m_nodes[i].x);
+			long img_j = (long)roundf(m_nodes[i].y);
+			m_hexedImg->PrintMaskedImg(img_i, img_j, *m_hexMaskPlus, hexCol);
+		}
+	}
+	return ECODE_OK;
+}
+unsigned char DrawHexImg::drawDrivePlates(s_DrivePlate plates[], int numPlates) {
+	m_defOCol = genLineCol(0);
+	m_nodes = plates[0].p.m_fhex;
+	m_nHex = plates[0].p.m_nHex;
+	renderHexOuput();
+	for (int i = 1; i < numPlates; i++) {
+		m_defOCol = genLineCol(i);
+		m_nodes = plates[i].p.m_fhex;
+		m_nHex = plates[i].p.m_nHex;
+		renderAdditiveHexOuput();
 	}
 	return ECODE_OK;
 }

@@ -4,8 +4,8 @@
 #ifndef HEXBASE_H
 #include "HexBase.h"
 #endif
-#ifndef LINEFINDER_H
-#include "LineFinder.h"
+#ifndef DRIVEPLANE_H
+#include "DrivePlane.h"
 #endif
 #ifndef HEXEYE_H
 #include "HexEye.h"
@@ -33,6 +33,7 @@ public:
 	unsigned char renderHexImg();
 	unsigned char renderLineImg(LineFinder* lineFinder);
 	unsigned char renderEyeImg(s_hexEye& eye);
+	unsigned char drawDrivePlates(s_DrivePlate plates[], int numPlates);/*should be initialized with the s_hexPlate, img initialializer*/
 
 	inline void setHexes(s_hex* hex) { m_hex = hex; }
 	inline void setNodes(s_fNode* nodes) { m_nodes = nodes; }
@@ -55,6 +56,8 @@ protected:
 
 	unsigned char genHexImgDebug();
 	unsigned char renderHexOuput();/*renders monoscale in col of hex o variable*/
+	unsigned char renderAdditiveHexOuput();
+
 	unsigned char genSingLunaLineImg(LineFinder* lineFinder);
 	unsigned char genLineImg(LineFinder* lineFinder);
 	s_rgb genLineCol(int lunai);
