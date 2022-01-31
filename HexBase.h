@@ -4,9 +4,6 @@
 #ifndef IMG_H
 #include "Img.h"
 #endif
-#ifndef BASE_H
-#include "Base.h"
-#endif
 
 #define HEX_MAXDOWNLINK 36
 #define HEX_THRESHOLDFRAC 0.4f

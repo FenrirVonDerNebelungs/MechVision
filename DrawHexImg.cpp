@@ -90,9 +90,9 @@ unsigned char DrawHexImg::renderHexImg()
 unsigned char DrawHexImg::renderLineImg(LineFinder* lineFinder) {
 	return genSingLunaLineImg(lineFinder);//genLineImg(lineFinder);//genSingLunaLineImg(lineFinder);
 }
-unsigned char DrawHexImg::renderEyeImg(s_hexEye& eye) {
+/*unsigned char DrawHexImg::renderEyeImg(s_hexEye& eye) {
 	return genEyeImgDebug(eye);
-}
+}*/
 unsigned char DrawHexImg::genHexImgDebug()
 {
 	unsigned char err_code = ECODE_OK;
@@ -210,6 +210,7 @@ s_rgb DrawHexImg::genLineCol(int lunai) {
 	}
 	return rgb;
 }
+/*
 unsigned char DrawHexImg::genEyeImgDebug(s_hexEye& eye) {
 	s_hexPlate& botPlate = eye.lev[eye.n - 1];
 	s_hexPlate& topPlate = eye.lev[0];
@@ -226,7 +227,7 @@ unsigned char DrawHexImg::genEyeImgDebug(s_hexEye& eye) {
 	drawLowerNodes(midNode, m_hexMask, offset, col);
 	//drawWebHexPlate(botPlate, offset, 5);
 	return ECODE_OK;
-}
+}*/
 unsigned char DrawHexImg::drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset) {
 	s_rgb col = { 0x00, 0x00, 0x22 };
 	//float width = (float)m_hexedImg->getWidth();

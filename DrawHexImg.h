@@ -7,9 +7,6 @@
 #ifndef DRIVEPLANE_H
 #include "DrivePlane.h"
 #endif
-#ifndef HEXEYE_H
-#include "HexEye.h"
-#endif
 
 class DrawHexImg {
 public:
@@ -32,7 +29,7 @@ public:
 	unsigned char Run();
 	unsigned char renderHexImg();
 	unsigned char renderLineImg(LineFinder* lineFinder);
-	unsigned char renderEyeImg(s_hexEye& eye);
+//	unsigned char renderEyeImg(s_hexEye& eye);
 	unsigned char drawDrivePlates(s_DrivePlate plates[], int numPlates);/*should be initialized with the s_hexPlate, img initialializer*/
 
 	inline void setHexes(s_hex* hex) { m_hex = hex; }
@@ -61,7 +58,7 @@ protected:
 	unsigned char genSingLunaLineImg(LineFinder* lineFinder);
 	unsigned char genLineImg(LineFinder* lineFinder);
 	s_rgb genLineCol(int lunai);
-	unsigned char genEyeImgDebug(s_hexEye& eye);
+//	unsigned char genEyeImgDebug(s_hexEye& eye);
 	unsigned char drawWebHexPlate(s_hexPlate& plate, s_2pt& offset, int web_i);
 	unsigned char drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);
 	unsigned char drawLowerNodes(s_fNode* hiNode, Img* hexMask, s_2pt& offset, s_rgb& col);
