@@ -1,5 +1,5 @@
 PROG = MechV
-OBJS = Tuples.o Math.o Img.o Base.o HexBase.o ConvolHex.o Hex.o DrawHexImg.o main.o
+OBJS = Tuples.o Math.o Img.o Base.o PatternNode.o HexBase.o ConvolHex.o Hex.o ColWheel.o ColLayer.o PatternLuna.o PatLunaLayer.o LineFinder.o CameraTrans.o DrivePlane.o DrawHexImg.o main.o
 
 $(PROG) : $(OBJS)
 	g++ -pthread -lopencv_core -lopencv_videoio -lopencv_highgui -o $(PROG) $(OBJS)
