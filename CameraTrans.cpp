@@ -16,6 +16,7 @@ unsigned char CameraTrans::init(
 	float yPinHole_screenLowPt,
 	float camera_d,
 	float camera_y,
+	float camera_ang,
 	float screen_y_horizion_offset,
 	float screen_x_center_offset
 )
@@ -32,6 +33,12 @@ unsigned char CameraTrans::init(
 	screen_half = m_x_pixW / 2.f;
 	m_screen_x_center = screen_half + screen_x_center_offset;
 	m_camera_y = camera_y;
+	m_camera_ang = camera_ang;
+	float _camAng = PI / 2.f - m_camera_ang;
+	float t_camAng = tanf(_camAng);
+	m_cot_90_camAng = (t_camAng>=0.f) ? 1.f /t_camAng : 0.f;
+	m_sin_camAng = sinf(m_camera_ang);
+	m_cos_camAng = cosf(m_camera_ang);
 
 	screen_half = m_y_pixH - m_screen_y_horizion;
 	/* pix_y/f = d/y
@@ -72,6 +79,29 @@ bool CameraTrans::drivePlaneCoord(const s_2pt& screenCoord, s_2pt& planeCoord) {
 	return true;
 }
 bool CameraTrans::screenToDriveplane_Unit_d(const s_2pt& screenXY, s_2pt& XY) {
+	/*
+	*{1+(y_pix/f_pix)*cot(theta_cd)} / {cot(theta_cd) - (y_pix/f_pix)} = y (in units of d a.k.a y/d)
+	*/
+	float yScdown = screenXY.x1 - m_screen_y_horizion;
+	float y_f_pix = yScdown / m_f_pix;
+	float cot_y_f_pix = m_cot_90_camAng - y_f_pix;
+	if (cot_y_f_pix <= 0.f)
+		return false;
+	float sum_1_y_f_pixCot = 1 + y_f_pix * m_cot_90_camAng;
+	XY.x1 = sum_1_y_f_pixCot / cot_y_f_pix;
+
+	/*
+	* y *{ [x_pix/f_pix]/[ cos(theta_ca) + (y_pix/f_pix)*sin(theta_ca)] = x
+	*/
+	float xScAccross = screenXY.x0 - m_screen_x_center;
+	float x_f_pix = xScAccross / m_f_pix;
+	float cos_plus_sin = m_cos_camAng + y_f_pix * m_sin_camAng;
+	if (cos_plus_sin <= 0.f)
+		return false;
+	XY.x0 = XY.x1 * x_f_pix / cos_plus_sin;
+	return true;
+}
+bool CameraTrans::screenToDriveplane_Unit_d_Horiz(const s_2pt& screenXY, s_2pt& XY) {
 	/*y starts at top so angle from top of screen*/
 	float yScdown = screenXY.x1 - m_screen_y_horizion;
 	if (yScdown <= 0.f)

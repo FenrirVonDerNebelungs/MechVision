@@ -6,7 +6,7 @@
 #include "PatternLuna.h"
 #endif
 
-#define LINEFINDERMAXLINES 50
+#define LINEFINDERMAXLINES 500
 struct s_linePoint {
     float o;
     int lunai;/*dominate maski at this point*/

@@ -24,7 +24,7 @@ int main() {
 	int dummyMarker0;
 	int* pdummyMark0 = &dummyMarker0;
 
-	return testPi();
+	return runTest0();
 }
 int testLive() {
 	VideoCapture cap;
@@ -93,8 +93,6 @@ int testLive() {
 	return 0;
 }
 int testPi() {
-	int dummyMarker0;
-	int* pdummyMark0 = &dummyMarker0;
 	VideoCapture cap("IOFiles/linesV.avi");
 	if (!cap.isOpened()) {
 		cout << "Error\n";
@@ -120,8 +118,6 @@ int testPi() {
 	hexDrawLines.Init((HexBase*)&HexLow);
 	DrawHexImg hexDrawDriveP;
 	hexDrawDriveP.Init(driveP->getHexPlate(0), HexLow.getHexMaskPlus());
-	int dummyMarker1;
-	int* pdummyMark1 = &dummyMarker1;
 
 	int cnt = 0;
 	bool doCol = false;
@@ -139,9 +135,9 @@ int testPi() {
 		findLines->spawn();
 		driveP->update();
 		hexDrawLines.renderLineImg(findLines);
-		//hexDrawDriveP.Run();
+		hexDrawDriveP.Run();
 
-		unsigned char* MVImgdat = hexDrawLines.getHexedImg()->getImg();//hexDrawDriveP.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();////doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
@@ -169,9 +165,6 @@ int testPi() {
 	return 0;
 }
 int runTest0() {
-	int dummyMarker0;
-	int* pdummyMark0 = &dummyMarker0;
-
 	VideoCapture cap("IOFiles/linesV.avi");
 	if (!cap.isOpened()) {
 		cout << "Error\n";
@@ -185,11 +178,6 @@ int runTest0() {
 	Img dummyImg;/*dummy image is just used to set dimensions for the first pass generation of the hexes*/
 	dummyImg.init(frame_width, frame_height, 3L);
 	HexLow.Init(&dummyImg);
-	//ColLayer colLay;
-	//colLay.init((HexBase*)&HexLow);
-	//colLay.addColPlate();
-	int dummyMarker1;
-	int* pdummyMark1 = &dummyMarker1;
 
 	PatLunaLayer patLunLay;
 	patLunLay.init(&HexLow);
@@ -229,13 +217,12 @@ int runTest0() {
 		patLunLay.Update();
 		findLines.spawn();
 		driveP.update();
-		//hexDraw.Run();
-		//hexBaseDraw.Run();// renderHexImg();
-		//hexDrawLines.renderLineImg(&findLines);
+		hexDraw.Run();
+		hexBaseDraw.Run();// renderHexImg();
+		hexDrawLines.renderLineImg(&findLines);
 		hexDrawDriveP.drawDrivePlates(driveP.getPlates(), DRIVEPLANE_NUMLUNALINE);
 
-		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
-		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
 
@@ -254,7 +241,7 @@ int runTest0() {
 	driveP.release();
 	findLines.release();
 	patLunLay.release();
-	//colLay.release();
+
 	HexLow.Release();
 	dummyImg.release();
 

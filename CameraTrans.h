@@ -23,6 +23,7 @@ public:
 		float yPinHole_screenLowPt = 10.f, /*dimmensions in cm distance from camera end of closest plane point*/
 		float camera_d = 7.f, /*distance camera is above drive plane in cm*/
 		float camera_y = 10.f,/*distance end of camera is from center of robot in forward 'y' direction */
+		float camera_ang=0.785398,/*angle the camera is deflected downwards*/
 		float screen_y_horizion_offset = 0.f,/*offset for horizontal of screen horizion in pix*/
 		float screen_x_center_offset = 0.f /*offset from center of screen in pix of camera center*/
 	);
@@ -45,9 +46,13 @@ protected:
 	float m_x_pixW;/*max x coordinate in pix accross screen*/
 	float m_ang_openingH;/*camera vertical opening max angle in radians for entire screen*/
 	float m_ang_openingW;/* "     horizontal "                                        "  */
-	
-	float m_screen_y_horizion;/* y coord in pix of screen where horizion should be*/
+	float m_camera_ang;/*angle camera is deflected from horizontal not used if using small angle aprox*/
+
+	float m_screen_y_horizion;/* y coord in pix of screen where horizion should be ***set at middle if not using fast aprox*/
 	float m_screen_x_center;/*x  coord in pix of center of screen */
+	float m_cot_90_camAng;/*cot of 90-ang_camera*/
+	float m_cos_camAng;
+	float m_sin_camAng;
 
 	float m_camera_y;/*distance of pin hole camera center in y from what is considered the 
 					   center of the robot
@@ -64,6 +69,7 @@ protected:
 																	  by d to get the correct distances, 
 																	  camera_d is effectively set to the unit distance by this
 																	  function */
+	bool screenToDriveplane_Unit_d_Horiz(const s_2pt& screenXY, s_2pt& XY);
 };
 
 #endif
