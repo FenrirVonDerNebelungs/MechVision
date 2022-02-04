@@ -27,7 +27,7 @@ unsigned char DrivePlane::init(
 	float camera_openingAngle,
 	float camera_d,
 	float camera_y,
-	float screen_y_horizion_offset,
+	float camera_ang,
 	float screen_x_center_offset,
 	float screenHYDim
 ) 
@@ -41,10 +41,10 @@ unsigned char DrivePlane::init(
 	s_hexPlate& dim_plate = lineF->getPlateLayer()->p[0];
 	unsigned char err_code = ECODE_FAIL;
 	if(yPinHole_screenLowPt>=0.f)
-		err_code= m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, screen_y_horizion_offset, screen_x_center_offset);
+		err_code= m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, camera_ang, 0.f/*screen_y_horiz_off*/, screen_x_center_offset);
 	else if(camera_openingAngle>0.f){
 		yPinHole_screenLowPt = 1.f;
-		err_code = m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, screen_y_horizion_offset, screen_x_center_offset);
+		err_code = m_cameraTrans->init(dim_plate, yPinHole_screenLowPt, camera_d, camera_y, camera_ang, 0.f/*screen_y_horix_off*/, screen_x_center_offset);
 		m_cameraTrans->setFocalFromOpeningAngle(camera_openingAngle);
 	}
 	else
@@ -59,8 +59,7 @@ unsigned char DrivePlane::init(
 	}
 	else
 		m_screenHYDim = 3.f * m_cameraTrans->getCamera_d() + m_screenClosestY;
-	float plateSpanIn_Unit_d = (m_screenHYDim - m_screenClosestY) / m_cameraTrans->getCamera_d();
-	if (plateSpanIn_Unit_d <= 0.f) {
+	if (m_screenHYDim <= 0.f) {
 		m_cameraTrans->release();
 		return ECODE_FAIL;
 	}
@@ -78,16 +77,16 @@ unsigned char DrivePlane::init(
 		initDrivePlateHexPlate(dim_plate, m_plates[i].p);
 	}
 
-	m_plateDimToPix = ((float)m_plates[0].p.m_height) / plateSpanIn_Unit_d;
 	m_XcenterPix = ((float)m_plates[0].p.m_width) / 2.f;
 	m_YbotPix = ((float)m_plates[0].p.m_height);
-	m_plateClippingDist = m_screenHYDim / m_cameraTrans->getCamera_d();
-	/*plateClippingDist/camera_d = f_pix/plateClippingPix_diff
-	* camera_d is these coord = 1
-	* plateClippingPix_diff = f_pix/plateClippingDist
-	*/
-	float ClippingPix_diff = m_cameraTrans->getfPix() / m_plateClippingDist;
-	m_plateClippingPix = (long)roundf(ClippingPix_diff + m_cameraTrans->getScreen_y_horizion());
+	s_2pt screenTopRobCam = { 0.f, m_screenHYDim + m_screenClosestY };
+	m_plateClippingDist = screenTopRobCam.x1 / m_cameraTrans->getCamera_d();/*y robot camera centered top of plate, norm to camera_d*/
+	s_2pt pixOfTopOfPlate;
+	if (m_cameraTrans->DriveplaneToScreenCameraCent(screenTopRobCam, pixOfTopOfPlate))
+		m_plateClippingPix = (long)roundf(pixOfTopOfPlate.x1);
+	else
+		m_plateClippingPix = 0.f;
+	setPlateForwardSpan(m_screenHYDim);
 	return ECODE_OK;
 }
 unsigned char DrivePlane::setPlateForwardSpan(float plateSpanH) {

@@ -43,12 +43,12 @@ public:
 		float yPinHole_screenLowPt = -1.f, /*dimmensions in cm distance from camera end of closest plane point
 										    if -1 compute from camera opening angle */
 		float camera_openingAngle = 0.85172067497f,/*if not zero or less use this to compute camera dim, otherwise use scree low point*/
-		float camera_d = 3.f, /*distance camera is above drive plane in cm*/
-		float camera_y = 10.f,/*distance end of camera is from center of robot in forward 'y' direction */
-		float screen_y_horizion_offset = 0.f,/*offset for horizontal of screen horizion in pix*/
+		float camera_d = 4.5f, /*distance camera is above drive plane in cm*/
+		float camera_y = 5.f,/*distance end of camera is from center of robot in forward 'y' direction */
+		float camera_ang = 0.46f,//0.52f,/*camera angle in rad for displacement downwards*/
 		float screen_x_center_offset = 0.f, /*offset from center of screen in pix of camera center*/
 		/*                                  */
-		float screenHYDim = 40.f//20.f   
+		float screenHYDim = 10.f//20.f height of the screen in y robot dim
 		/*determines zoom if less than 1 then reset it to 5*the camera dist */
 	);
 	unsigned char setPlateForwardSpan(float plateSpanH);/*sets how far in robot coordinates the plate 

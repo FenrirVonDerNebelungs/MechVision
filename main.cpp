@@ -24,7 +24,7 @@ int main() {
 	int dummyMarker0;
 	int* pdummyMark0 = &dummyMarker0;
 
-	return runTest0();
+	return testPi();
 }
 int testLive() {
 	VideoCapture cap;
@@ -69,6 +69,7 @@ int testLive() {
 		findLines->spawn();
 		driveP->update();
 		hexDrawLines.renderLineImg(findLines);
+		//hexDrawDriveP.drawDrivePlates(driveP->getPlates(), DRIVEPLANE_NUMLUNALINE);
 
 		unsigned char* MVImgdat = hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
@@ -135,9 +136,9 @@ int testPi() {
 		findLines->spawn();
 		driveP->update();
 		hexDrawLines.renderLineImg(findLines);
-		hexDrawDriveP.Run();
+		//hexDrawDriveP.drawDrivePlates(driveP->getPlates(), DRIVEPLANE_NUMLUNALINE);
 
-		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();////doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		unsigned char* MVImgdat = hexDrawLines.getHexedImg()->getImg(); //hexDrawDriveP.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
@@ -222,7 +223,7 @@ int runTest0() {
 		hexDrawLines.renderLineImg(&findLines);
 		hexDrawDriveP.drawDrivePlates(driveP.getPlates(), DRIVEPLANE_NUMLUNALINE);
 
-		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg(); //MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
 
