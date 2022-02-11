@@ -6,8 +6,8 @@
 #ifndef PATLUNALAYER_H
 #include "PatLunaLayer.h"
 #endif
-#ifndef DRIVEPLANE_H
-#include "DrivePlane.h"
+#ifndef DRIVELINES_H
+#include "DriveLines.h"
 #endif
 #ifndef DRAWHEXIMG_H
 #include "DrawHexImg.h"
@@ -18,13 +18,14 @@ using namespace std;
 using namespace cv;
 
 int runTest0();
+int testSteer0();
 int testPi();
 int testLive();
 int main() {
 	int dummyMarker0;
 	int* pdummyMark0 = &dummyMarker0;
 
-	return testPi();
+	return testSteer0();//testPi();
 }
 int testLive() {
 	VideoCapture cap;
@@ -93,6 +94,88 @@ int testLive() {
 	destroyAllWindows();
 	return 0;
 }
+int testSteer0() {
+	VideoCapture cap;
+	Mat frame0;
+	int deviceID = 0;
+	int apiID = cv::CAP_ANY;
+	cap.open(deviceID, apiID);
+	/**/
+	/*
+	VideoCapture cap("IOFiles/linesV.avi");
+	if (!cap.isOpened()) {
+		cout << "Error\n";
+		return -1;
+	}*/
+	/**/
+	int frame_width = cap.get(CAP_PROP_FRAME_WIDTH);
+	int frame_height = cap.get(CAP_PROP_FRAME_HEIGHT);
+
+	Img MVImg;
+
+	Hex HexLow;
+	Img dummyImg;/*dummy image is just used to set dimensions for the first pass generation of the hexes*/
+	dummyImg.init(frame_width, frame_height, 3L);
+	HexLow.Init(&dummyImg);
+	PatLunaLayer patLunLay;
+	patLunLay.init(&HexLow);
+	LineFinder* findLines = new LineFinder;
+	findLines->init(&patLunLay.getPlateLayer(0));
+	DrivePlane* driveP = new DrivePlane;
+	driveP->init(findLines);
+	DriveLines* driveL = new DriveLines;
+	driveL->init(driveP);
+
+
+	int cnt = 0;
+	bool doCol = false;
+	while (cnt < 2000) {//000) {
+		
+		cap.read(frame0);
+		
+		/**/
+		/*
+		Mat frame0;
+		cap >> frame0;
+		*/
+		/**/
+		if (frame0.empty())
+			break;
+
+		unsigned char* frmdat = frame0.data;
+		MVImg.initNoOwn(frmdat, frame_width, frame_height, 3L);
+		HexLow.Update(&MVImg);
+
+		patLunLay.Update();
+		findLines->spawn();
+		driveP->update();
+		float dist, ang;
+		if (driveL->steerTargetDistAng(dist, ang))
+			std::cout << "dist:" << dist << "ang:" << ang << "\n";
+		else
+			std::cout << "dist:--  ang:--\n";
+
+		char c = (char)waitKey(25);
+		if (c == 27)
+			break;
+		MVImg.release();
+
+		cnt++;
+	}
+	driveL->release();
+	driveP->release();
+	findLines->release();
+	patLunLay.release();
+	HexLow.Release();
+	dummyImg.release();
+	delete driveL;
+	delete driveP;
+	delete findLines;
+
+	cout << "Hello with OpenCV\n";
+	destroyAllWindows();
+	return 0;
+}
 int testPi() {
 	VideoCapture cap("IOFiles/linesV.avi");
 	if (!cap.isOpened()) {
@@ -114,6 +197,8 @@ int testPi() {
 	findLines->init(&patLunLay.getPlateLayer(0));
 	DrivePlane* driveP = new DrivePlane;
 	driveP->init(findLines);
+	DriveLines* driveL = new DriveLines;
+	driveL->init(driveP);
 
 	DrawHexImg hexDrawLines;
 	hexDrawLines.Init((HexBase*)&HexLow);
@@ -135,10 +220,15 @@ int testPi() {
 		patLunLay.Update();
 		findLines->spawn();
 		driveP->update();
+		float dist, ang;
+		if (driveL->steerTargetDistAng(dist, ang))
+			std::cout << "dist:" << dist << "ang:" << ang << "\n";
+		else
+			std::cout << "dist:--  ang:--\n";
 		hexDrawLines.renderLineImg(findLines);
-		//hexDrawDriveP.drawDrivePlates(driveP->getPlates(), DRIVEPLANE_NUMLUNALINE);
+		hexDrawDriveP.drawDrivePlates(driveP->getPlates(), DRIVEPLANE_NUMLUNALINE);
 
-		unsigned char* MVImgdat = hexDrawLines.getHexedImg()->getImg(); //hexDrawDriveP.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
+		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg(); //doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		//unsigned char* MVImgdat = doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg();//MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
@@ -153,6 +243,7 @@ int testPi() {
 	}
 	hexDrawDriveP.Release();
 	hexDrawLines.Release();
+	driveL->release();
 	driveP->release();
 	findLines->release();
 	patLunLay.release();
@@ -197,7 +288,14 @@ int runTest0() {
 	DrawHexImg hexDrawDriveP;
 	hexDrawDriveP.Init(driveP.getHexPlate(0), HexLow.getHexMaskPlus());
 
-
+	Hex HexEyeDum;
+	HexEyeDum.Init(&dummyImg, 12);
+	DrawHexImg hexDrawEye;
+	hexDrawEye.Init((HexBase*)&HexEyeDum);
+	HexEye eye;
+	eye.init(HexEyeDum.getRhex(), 3);
+	eye.spawn();
+	hexDrawEye.renderEyeImg(eye.getEye(0));
 	/*debug*/
 	//hexDraw.setHexes(colLay.getBaseHexes());
 	/*     */
@@ -223,7 +321,8 @@ int runTest0() {
 		hexDrawLines.renderLineImg(&findLines);
 		hexDrawDriveP.drawDrivePlates(driveP.getPlates(), DRIVEPLANE_NUMLUNALINE);
 
-		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg(); //MVImg.getImg();
+
+		unsigned char* MVImgdat = hexDrawDriveP.getHexedImg()->getImg();//hexDrawEye.getHexedImg()->getImg();// hexDrawLines.getHexedImg()->getImg();//doCol ? hexBaseDraw.getHexedImg()->getImg() : hexDraw.getHexedImg()->getImg(); //MVImg.getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)MVImgdat);
 

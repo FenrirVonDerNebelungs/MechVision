@@ -45,7 +45,7 @@ public:
 		float camera_openingAngle = 0.85172067497f,/*if not zero or less use this to compute camera dim, otherwise use scree low point*/
 		float camera_d = 4.5f, /*distance camera is above drive plane in cm*/
 		float camera_y = 5.f,/*distance end of camera is from center of robot in forward 'y' direction */
-		float camera_ang = 0.46f,//0.52f,/*camera angle in rad for displacement downwards*/
+		float camera_ang = 0.69,//0.46f,//0.52f,/*camera angle in rad for displacement downwards*/
 		float screen_x_center_offset = 0.f, /*offset from center of screen in pix of camera center*/
 		/*                                  */
 		float screenHYDim = 10.f//20.f height of the screen in y robot dim
@@ -59,7 +59,9 @@ public:
 	unsigned char update();
 
 	inline s_DrivePlate* getPlates() { return m_plates; }
+	inline s_DrivePlate& getPlate(int i) { return m_plates[i]; }
 	inline s_hexPlate* getHexPlate(int i) { return &(m_plates[i].p); }
+	inline float getCamera_d() { return m_cameraTrans->getCamera_d(); }
 protected:
 	float m_screenClosestY;/*distance from camera center in y to point closest viewable to the camera on the plane*/
 	float m_screenClosestY_Unit_d;/*same as above but with the distance of the camera above the plane set to the unit distance for y

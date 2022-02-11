@@ -4,9 +4,6 @@
 #ifndef HEXBASE_H
 #include "HexBase.h"
 #endif
-#ifndef PATTERNNODE_H
-#include "PatternNode.h"
-#endif
 
 #define HEXEYE_MAXLEVELS 10
 #define HEXEYE_MAXEYES 100

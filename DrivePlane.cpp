@@ -85,7 +85,7 @@ unsigned char DrivePlane::init(
 	if (m_cameraTrans->DriveplaneToScreenCameraCent(screenTopRobCam, pixOfTopOfPlate))
 		m_plateClippingPix = (long)roundf(pixOfTopOfPlate.x1);
 	else
-		m_plateClippingPix = 0.f;
+		m_plateClippingPix = 0;
 	setPlateForwardSpan(m_screenHYDim);
 	return ECODE_OK;
 }

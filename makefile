@@ -1,12 +1,14 @@
 PROG = MechV
-OBJS = Tuples.o Math.o Base.o Img.o PatternNode.o HexBase.o ConvolHex.o Hex.o ColWheel.o ColLayer.o PatternLuna.o PatLunaLayer.o LineFinder.o CameraTrans.o DrivePlane.o DrawHexImg.o main.o
+OBJS = Tuples.o Math.o Base.o Img.o PatternNode.o HexBase.o HexEye.o ConvolHex.o Hex.o ColWheel.o ColLayer.o PatternLuna.o PatLunaLayer.o LineFinder.o CameraTrans.o DrivePlane.o DriveLines.o DrawHexImg.o main.o
 
 $(PROG) : $(OBJS)
 	g++ -pthread -lopencv_core -lopencv_videoio -lopencv_highgui -o $(PROG) $(OBJS)
-main.o : Hex.h PatLunaLayer.h DrivePlane.h DrawHexImg.h
+main.o : Hex.h PatLunaLayer.h DriveLines.h DrawHexImg.h
 	g++ -c main.cpp
-DrawHexImg.o : DrawHexImg.h HexBase.h DrivePlane.h
+DrawHexImg.o : DrawHexImg.h HexBase.h HexEye.h DrivePlane.h
 	g++ -c DrawHexImg.cpp
+DriveLines.o : DriveLines.h DrivePlane.h
+	g++ -c DriveLines.cpp
 DrivePlane.o : DrivePlane.h CameraTrans.h LineFinder.h
 	g++ -c DrivePlane.cpp
 CameraTrans.o : CameraTrans.h PatternNode.h Base.h
@@ -25,6 +27,8 @@ Hex.o : Hex.h ConvolHex.h
 	g++ -c Hex.cpp
 ConvolHex.o : ConvolHex.h HexBase.h
 	g++ -c ConvolHex.cpp
+HexEye.o : HexEye.h HexBase.h
+	g++ -c HexEye.cpp
 HexBase.o : HexBase.h Img.h
 	g++ -c HexBase.cpp
 PatternNode.o : PatternNode.h Math.h
