@@ -1,47 +1,31 @@
 #pragma once
-#ifndef COMDRAW_H
-#define COMDRAW_H
-#ifndef DRIVEPLANE_H
-#include "DrivePlane.h"
+#ifndef COM_H
+#define COM_H
+#ifndef DRIVELINES_H
+#include "DriveLines.h"
 #endif
 #ifndef HEX_H
 #include "Hex.h"
 #endif
 const unsigned char com_draw_header[] = { 0xFF, 0xA1, 0x00, 0x00 };
-const unsigned char com_draw_code_wh = 0x01;
-const unsigned char com_draw_code_driveP = 0x02;
+const unsigned char com_code_intro = 0x01;
+const unsigned char com_code_eom = 0x03;
+const unsigned char com_draw_code_driveP = 0x05;
+const unsigned char com_dat_code_steer = 0x06;
 /*class sets up strings that are sent and recived by the bluetooth */
-class ComDraw : public Base {
+class Com : public Base {
 public:
-	ComDraw();
-	~ComDraw();
-	bool init_client(unsigned char msg[], 
-		const Hex* hexScreen, 
-		bool send_drive_txt=true,
-		bool send_line_img=true);                 /*msg is what the client will sends
-												    it should be at least 12 chars long and will be filled with the
-												    header (4 chars), 2 chars for the width and 2 chars for the height,
-												    4 chars for the number of hexes*/
+	Com();
+	~Com();
 
-	bool init_server(const unsigned char msg[], int msg_len);/*msg is what the server recives from the initialized client
-												 it should be at least 12 chars long
-												 the server uses the msg to determine the width/height of the
-												 display and generate the appropriate mesh of hexes and
-												 check that the expected number of hexes matches from server to
-												 client*/
-	void release_server();
 
-	unsigned char sendPlate_client(s_DrivePlate* plates, int Plate_i, unsigned char msg[]); /*returns message length*/
-	bool recvPlate_server(const unsigned char msg[], int msg_len);
-	bool renderPlate_server();
 protected:
-	bool m_send_drive_txt;
-	bool m_send_line_img;
+    /*owned by Server not owned by client*/
+	Hex* m_hexAr;/*reference hex array that is structured the same on the server and the client side*/
 
 	/*used by  the server*/
 	Img* m_img;
-	Hex* m_hexAr;
-	s_DrivePlate m_plates[DRIVEPLANE_NUMLUNALINE];/*full or partially filled plates filled from client side data*/
+
 
 	unsigned char initDrivePlates_server();
 	void releaseDrivePlates_server();
@@ -53,6 +37,17 @@ protected:
 	unsigned char convertFloatRange1ToChar(float f);/*converts a float that is expected to go from 0 to 1 to a char*/
 	unsigned char convertFloatToChar(float f);
 	inline float convertCharToFloat(unsigned char c) { return (float)c; }
+	bool convertFloatTo2CharDec2Char(float f, unsigned char ar[]);/*converts a float into a 4 char array by sending the non decimal
+																  into the 1st 2 chars, and the decimal * 1000 into the
+																  last 2 chars */
+	float convert2CharDec2CharToFloat(unsigned char ar[]);/*undoes the above conversion*/
+	/*helpers to convert char to float*/
+	bool convertFloatTo2shorts(float f, short& hi, short& lo);/*here the sign is just - if the highest bit is 1, however this is not the typicall
+										unsigned number*/
+
+	/*convert back float to char*/
+	float getFloatWholeFromHi(short hi);/*takes hi short part and test for positive*/
+	float getDecFromLow(short low);
 
 	int sendHeaderWithCode(unsigned char head[],
 		unsigned char code0 = 0x00,
@@ -65,18 +60,18 @@ protected:
 	s_rgb convertPlateCharToRGB(int plate_i, const unsigned char ch);
 };
 #endif
-unsigned char ComDraw::initDrivePlates_server() {
+unsigned char Com::initDrivePlates_server() {
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
 		m_hexAr->genStructuredPlate(m_plates[i].p);
 	}
 	return ECODE_OK;
 }
-void ComDraw::releaseDrivePlates_server() {
+void Com::releaseDrivePlates_server() {
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++) {
 		m_hexAr->releaseStructuredPlate(m_plates[i].p);
 	}
 }
-unsigned char ComDraw::convertFloatRange1ToChar(float f) {
+unsigned char Com::convertFloatRange1ToChar(float f) {
 	float ff = f * 255.f;
 	unsigned char cf = 0xFF;
 	if (ff >= 255.f)
@@ -86,7 +81,7 @@ unsigned char ComDraw::convertFloatRange1ToChar(float f) {
 	cf = (unsigned char)ff;
 	return cf;
 }
-unsigned char ComDraw::convertFloatToChar(float f) {
+unsigned char Com::convertFloatToChar(float f) {
 	float fr = roundf(f);
 	if (fr > 255.f)
 		fr = 255.f;
@@ -94,14 +89,14 @@ unsigned char ComDraw::convertFloatToChar(float f) {
 		fr = 0.f;
 	return (unsigned char)fr;
 }
-int ComDraw::sendHeaderWithCode(unsigned char head[], unsigned char code0, unsigned char code1) {
+int Com::sendHeaderWithCode(unsigned char head[], unsigned char code0, unsigned char code1) {
 	for (int i = 0; i < 2; i++)
 		head[i] = com_draw_header[i];
 	head[2] = code0;
 	head[3] = code1;
 	return 4;
 }
-bool ComDraw::isHeaderWithCode(const unsigned char head[], unsigned char code0, unsigned char code1) {
+bool Com::isHeaderWithCode(const unsigned char head[], unsigned char code0, unsigned char code1) {
 	bool isHeader = true;
 	for (int i = 0; i < 2; i++) {
 		if (head[i] != com_draw_header[i])
@@ -113,31 +108,15 @@ bool ComDraw::isHeaderWithCode(const unsigned char head[], unsigned char code0, 
 		isHeader = false;
 	return isHeader;
 }
-unsigned char ComDraw::sendPlate_client(s_DrivePlate* plates, int Plate_i, unsigned char msg[])
-{
-	/*send header identifying as plate*/
-	sendHeaderWithCode(msg, 0x00, com_draw_code_driveP);
-	/*after header send the i of the plate using one char*/
-	msg[4] = (unsigned char)Plate_i;
-	/*plate data will now start at 5*/
-	int msg_start = 5;
-	s_hexPlate& hexP = plates[Plate_i].p;
-	if (hexP.m_nHex != m_hexAr->getNHex())
-		return ECODE_ABORT;
-	for (int i = 0; i < hexP.m_nHex; i++) {
-		unsigned char sendc = convertFloatRange1ToChar(hexP.m_fhex->o);
-		msg[msg_start + i] = sendc;
-	}
-	return ECODE_OK;
-}
-void ComDraw::clearRender_server() {
+
+void Com::clearRender_server() {
 	m_img->clearToChar(0x00);
 	s_hex* hexes = m_hexAr->getHexes();
 	for (int i = 0; i < m_hexAr->getNHex(); i++) {
 		hexes[i].rgb[0] = 0x00;
 	}
 }
-bool ComDraw::recvPlate_server(const unsigned char msg[], int msg_len) {
+bool Com::recvPlate_server(const unsigned char msg[], int msg_len) {
 	bool isPlateHeader = isHeaderWithCode(msg, 0x00, com_draw_code_driveP);
 	if (!isPlateHeader)
 		return false;
@@ -162,7 +141,7 @@ bool ComDraw::recvPlate_server(const unsigned char msg[], int msg_len) {
 	}
 	return true;
 }
-bool ComDraw::init_server(const unsigned char msg[], int msg_len) {
+bool Com::init_server(const unsigned char msg[], int msg_len) {
 	/*check if init has already been done*/
 	if (m_img != NULL)
 		return false;
@@ -191,33 +170,8 @@ bool ComDraw::init_server(const unsigned char msg[], int msg_len) {
 	initDrivePlates_server();
 	return true;
 }
-bool ComDraw::init_client(unsigned char msg[], 
-	const Hex* hexScreen,
-	bool send_drive_txt,
-	bool send_line_img) 
-{
-	m_send_drive_txt = send_drive_txt;
-	m_send_line_img = send_line_img;
 
-	sendHeaderWithCode(msg, 0x00, com_draw_code_wh);
-
-	short width = (short)hexScreen->getWHex();
-	short height = (short)hexScreen->getHHex();
-	unsigned char ar[2];
-	convertShortToCharArray(width, ar);
-	for (int i = 0; i < 2; i++)
-		msg[i + 4] = ar[i];
-	convertShortToCharArray(height, ar);
-	for (int i = 0; i < 2; i++)
-		msg[i + 6] = ar[i];
-	int num_hexes = hexScreen->getNHex();
-	unsigned char ar4[4];
-	convertInt32ToCharArray(num_hexes, ar4);
-	for (int i = 0; i < 4; i++)
-		msg[i + 8] = ar4[i];
-	return true;
-}
-void ComDraw::convertInt32ToCharArray(const int s, unsigned char ar[]) {
+void Com::convertInt32ToCharArray(const int s, unsigned char ar[]) {
 	int hi_ = s & 0xFF000000;
 	int hi = hi_ >> 24;
 	ar[0] = (unsigned char)hi;
@@ -230,7 +184,7 @@ void ComDraw::convertInt32ToCharArray(const int s, unsigned char ar[]) {
 	hi_ = s & 0x000000FF;
 	ar[3] = (unsigned char)hi_;
 }
-int ComDraw::convertCharArrayToInt32(const unsigned char ar[]) {
+int Com::convertCharArrayToInt32(const unsigned char ar[]) {
 	int hi = (int)ar[0];
 	int hi_ = hi << 24;
 	int mer = hi_;
@@ -244,13 +198,13 @@ int ComDraw::convertCharArrayToInt32(const unsigned char ar[]) {
 	mer = mer | hi;
 	return mer;
 }
-short ComDraw::convertCharArrayToShort(const unsigned char ar[]) {
+short Com::convertCharArrayToShort(const unsigned char ar[]) {
 	short hi = (short)ar[0];
 	short hi_m = hi << 8;
 	short lw = (short)ar[1];
 	return hi_m | lw;
 }
-void ComDraw::convertShortToCharArray(const short s, unsigned char ar[]) {
+void Com::convertShortToCharArray(const short s, unsigned char ar[]) {
 	short hi_ = s & 0xFF00;
 	short hi = hi_ >> 8;
 	short lw = s & 0x00FF;
