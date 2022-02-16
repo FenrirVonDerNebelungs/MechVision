@@ -22,8 +22,8 @@ public:
 	unsigned char RunThreaded();
 #endif
 	void Release();
-	inline int getWHex() { return m_wHex; }
-	inline int getHHex() { return m_hHex; }
+	inline int getWHex() const{ return m_wHex; }
+	inline int getHHex() const{ return m_hHex; }
 protected:
 	ConvolHex* m_Convol;
 	s_2pt      m_BR;/*lower right center start*/

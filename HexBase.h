@@ -29,7 +29,7 @@ public:
 	inline Img* getHexMask() { return m_hexMask; }
 	inline Img* getHexMaskPlus() { return m_hexMaskPlus; }
 
-	inline int getNHex() { return m_nHex; }
+	inline int getNHex() const{ return m_nHex; }
 	inline s_hex getHex(int i) { return m_hex[i]; }
 	inline s_hex* getHexes() { return m_hex; }
 
