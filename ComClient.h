@@ -25,9 +25,7 @@ protected:
 	DrivePlane* m_DPlane;/*pointer to drive plane*/
 	s_DrivePlate* m_plates;/*pointer to plates gotten from drive plane*/
 	DriveLines* m_DLines;/*pointer to object that finds drive lines*/
-	/*owned*/
-	int m_num_msgs;/*total number of messages that should be sent excluding the intro*/
-	int m_msg_cnt;/*counts the number of messages that have been transmitted so far*/
+
 
 	void reset();
 	int sendSteering(unsigned char msg[]);/*sends the current steering info 2 chars for non decimal, 2 chars for decimal, and 2 of these four  char sequences making dist and angle*/
