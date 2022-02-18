@@ -33,6 +33,7 @@ protected:
 	s_DrivePlate m_plates[DRIVEPLANE_NUMLUNALINE];/*full or partially filled plates filled from client side data*/
 	s_ComSteer m_steer;
 
+
 	unsigned char initDrivePlates();
 	void releaseDrivePlates();
 

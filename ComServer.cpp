@@ -6,7 +6,7 @@ namespace n_ComSteer {
 		s.ang = 0.f;
 	}
 }
-ComServer::ComServer() :m_img(NULL) {
+ComServer::ComServer() :m_img(NULL){
 	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++)
 		n_DrivePlate::zeroPlate(m_plates[i]);
 	n_ComSteer::zero(m_steer);
@@ -19,7 +19,7 @@ bool ComServer::init(const unsigned char msg[], int msg_len) {
 	if (m_img != NULL)
 		return false;
 	/*if message len is too small this can't be the correct init message*/
-	if (msg_len < 12)
+	if (msg_len < 14)
 		return false;
 	/*check if header matches code for init height width*/
 	bool isHeader = isHeaderWithCode(msg, 0x00, com_code_intro);
@@ -46,8 +46,8 @@ bool ComServer::init(const unsigned char msg[], int msg_len) {
 
 	initDrivePlates();
 	n_ComSteer::zero(m_steer);
-
-	return true;
+	m_dataFull = false;
+	return false;
 }
 void ComServer::release() {
 	releaseDrivePlates();
@@ -76,7 +76,12 @@ void ComServer::releaseDrivePlates() {
 }
 bool ComServer::transNext(const unsigned char msg[], int msg_len) {
 	if (m_msg_cnt >= m_num_msgs) {
-		reset();
+		if (!m_dataFull) {
+			m_dataFull = true;
+		}
+		else {
+			reset();
+		}
 		return false;
 	}
 	if (m_msg_cnt < DRIVEPLANE_NUMLUNALINE) {
@@ -102,6 +107,7 @@ void ComServer::reset() {
 	}
 	m_steer.steerActive = false;
 	m_msg_cnt = 0;
+	false;
 }
 bool ComServer::recvSteering(const unsigned char msg[], int msg_len) {
 	if (msg_len < 13)

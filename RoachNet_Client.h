@@ -1,6 +1,7 @@
 #pragma once
 #ifndef ROACHNET_CLIENT_H
 #define ROACHNET_CLIENT_H
+
 #ifndef ROACHNET_H
 #include "RoachNet.h"
 #endif
@@ -16,7 +17,7 @@ public:
 	void release();
 	bool init_vid(unsigned char msg[]);/*function for tests, runs off of a video on the disk instead of live image*/
 	void release_vid();
-	int exFrame(unsigned char msg[]);/*msg & int are returned msg contains plate data to render & int is the lenght of the message -1 for fail*/
+	int TransNext(unsigned char msg[]);/*msg & int are returned msg contains plate data to render & int is the lenght of the message -1 for fail*/
 protected:
 	VideoCapture* m_vcap;
 	int m_deviceID;

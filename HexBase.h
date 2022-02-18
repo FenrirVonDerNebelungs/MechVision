@@ -25,6 +25,8 @@ public:
 	virtual unsigned char Run();
 	virtual void Release();
 	inline Img* getImg() { return m_img; }
+	inline long getImgWidth() { return m_img->getWidth(); }
+	inline long getImgHeight() { return m_img->getHeight(); }
 
 	inline Img* getHexMask() { return m_hexMask; }
 	inline Img* getHexMaskPlus() { return m_hexMaskPlus; }

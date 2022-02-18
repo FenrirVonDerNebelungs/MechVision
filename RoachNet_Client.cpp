@@ -60,21 +60,34 @@ bool RoachNet_Client::init_vid(unsigned char msg[])
 void RoachNet_Client::release_vid() {
 	release();
 }
-int RoachNet_Client::exFrame(unsigned char msg[]) {
-	m_vcap->read(*m_vframe);
-	if (m_vframe->empty())
-		return false;
-	exFrame_vision();
+int RoachNet_Client::TransNext(unsigned char msg[]) {
+	int msg_len = -1;
+	/*find out if Client is signalling that it is still in a transmission*/
+	if (!((ComClient*)m_comm->dataFlag())) {
+		/*if data flag is not true then the data dump is done and a new frame needs to be rendered*/
+		m_vcap->read(*m_vframe);
+		if (m_vframe->empty())
+			return false;
+		unsigned char* frame_dat = m_vframe->data;
+		m_imgRender->initNoOwn(frame_dat, m_frame_width, m_frame_height, 3L);
+		exFrame_vision();
+		msg_len = ((ComClient*)m_comm)->TransNext(msg);/*reset flags in ComClient*/
+		return msg_len;/*next cycle will start transmitting*/
+	}
 	/*client transmits data but does not show image*/
-	int msg_len = ((ComClient*)m_comm)->TransNext(msg);
-	/*now that message is transmited the img can be released/reset*/
-	m_imgRender->release();
+	msg_len = ((ComClient*)m_comm)->TransNext(msg);
+	if (msg_len < 0) {
+		if (!((ComClient*)m_comm->dataFlag())) {/*when m_msg_cnt has just equaled max number of messages & dataFlag is true, the call to TransNext resets dataFlag to false before returning -1*/
+			/*now that message is transmited the img can be released/reset*/
+			m_imgRender->release();
+		}
+	}
 	return msg_len;
 }
 
 bool RoachNet_Client::init_vision() {
-	m_frame_width = m_vcap->get(CAP_PROP_FRAME_WIDTH);
-	m_frame_height = m_vcap->get(CAP_PROP_FRAME_HEIGHT);
+	m_frame_width = (int)m_vcap->get(CAP_PROP_FRAME_WIDTH);
+	m_frame_height = (int)m_vcap->get(CAP_PROP_FRAME_HEIGHT);
 
 	m_imgFrameBase = new Img;
 	unsigned char err = m_imgFrameBase->init(m_frame_width, m_frame_height, 3L);
@@ -95,6 +108,7 @@ bool RoachNet_Client::init_vision() {
 
 	m_vframe = new Mat;
 	m_imgRender = new Img;/*will be initalized as a "no own" during the loop & released also */
+	return true;
 }
 void RoachNet_Client::release_vision() {
 	if (m_imgRender != NULL) {
@@ -138,13 +152,11 @@ void RoachNet_Client::release_vision() {
 	}
 }
 unsigned char RoachNet_Client::exFrame_vision() {
-	unsigned char* frame_dat = m_vframe->data;
-	m_imgRender->initNoOwn(frame_dat, m_frame_width, m_frame_height, 3L);
-
 	m_hexLow->Update(m_imgRender);
 	/*the rest of the functions are constructed so that they retrieve information from the previous object when updated*/
 	m_lunaLayer->Update();
 	m_lineFinder->spawn();
 	m_drivePlane->update();
+
 	return ECODE_OK;
 }

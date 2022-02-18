@@ -17,12 +17,17 @@ class Com : public Base {
 public:
 	Com();
 	~Com();
-
+	virtual bool init();
 	virtual void release()
 	{
 		;
 	}
+	virtual void reset();
+	inline bool dataFlag() { return m_dataFull; }
 protected:
+	bool m_dataFull;/*false when server data is being sent but has not been completely transmitted
+					 true when client frame has been rendered but is not yet fully transmitted
+					 client frame is assumed to have been just rendered after call signaling end of trans*/
     /*owned by Server not owned by client*/
 	Hex* m_hexAr;/*reference hex array that is structured the same on the server and the client side*/
 

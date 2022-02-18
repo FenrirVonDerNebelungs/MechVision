@@ -16,8 +16,8 @@ bool ComClient::init(unsigned char msg[],
 	m_DLines = DLines;
 	sendHeaderWithCode(msg, 0x00, com_code_intro);
 
-	short width = (short)hexAr->getWHex();
-	short height = (short)hexAr->getHHex();
+	short width = (short)hexAr->getImgWidth();
+	short height = (short)hexAr->getImgHeight();
 	unsigned char ar[2];
 	convertShortToCharArray(width, ar);
 	for (int i = 0; i < 2; i++)
@@ -38,7 +38,8 @@ bool ComClient::init(unsigned char msg[],
 	convertShortToCharArray(msg_num, msgLenar);
 	for (int i = 0; i < 2; i++)
 		msg[i + 12] = msgLenar[i];
-	m_msg_cnt = 0;
+	m_msg_cnt = m_num_msgs;
+	m_dataFull = false;
 	return true;
 }
 void ComClient::release() {
@@ -47,18 +48,25 @@ void ComClient::release() {
 
 int ComClient::TransNext(unsigned char msg[]) {
 	if (m_msg_cnt >= m_num_msgs) {
-		reset();
+		if (m_dataFull) {
+			/*when message count has equaled the number of messages then the data is done transmitting*/
+			m_dataFull = false;
+		}
+		else {
+			reset();
+		}
 		return -1;
 	}
 	int msg_len = 0;
 	if (m_msg_cnt < DRIVEPLANE_NUMLUNALINE)
-		sendPlate(m_plates, m_msg_cnt, msg);
+		msg_len = sendPlate(m_plates, m_msg_cnt, msg);
 	else
 		msg_len = sendSteering(msg);
 	return msg_len;
 }
 void ComClient::reset() {
 	m_msg_cnt = 0;
+	m_dataFull=true;
 }
 int ComClient::sendSteering(unsigned char msg[]) {
 	float dist, ang;
@@ -91,6 +99,10 @@ int ComClient::sendPlate(s_DrivePlate* plates, int Plate_i, unsigned char msg[])
 	if (hexP.m_nHex != m_hexAr->getNHex())
 		return -1;
 	for (int i = 0; i < hexP.m_nHex; i++) {
+		/*debug*/
+		if (hexP.m_fhex->o > 0.f)
+			int ttt = 1;
+		/*     */
 		unsigned char sendc = convertFloatRange1ToChar(hexP.m_fhex->o);
 		msg[msg_start + i] = sendc;
 	}
