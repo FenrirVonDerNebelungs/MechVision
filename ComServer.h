@@ -9,6 +9,9 @@ struct s_ComSteer{
 	float dist;
 	float ang;
 };
+namespace n_ComSteer {
+	void zero(s_ComSteer& s);
+}
 class ComServer : public Com {
 public:
 	ComServer();
@@ -21,14 +24,14 @@ public:
 											 client*/
 	void release();
 
-	bool transNext(unsigned char msg[], int msg_len);
+	bool transNext(const unsigned char msg[], int msg_len);
 	inline Img* getImg() { return m_img; }
-	inline s_ComSteer& getSteer() { return s_steer; }
+	inline s_ComSteer& getSteer() { return m_steer; }
 protected:
 	/*owned*/
 	Img* m_img;
 	s_DrivePlate m_plates[DRIVEPLANE_NUMLUNALINE];/*full or partially filled plates filled from client side data*/
-	s_ComSteer s_steer;
+	s_ComSteer m_steer;
 
 	unsigned char initDrivePlates();
 	void releaseDrivePlates();

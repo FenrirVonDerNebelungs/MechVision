@@ -1,5 +1,8 @@
 #include "ComClient.h"
-
+ComClient::ComClient() :m_DPlane(NULL), m_plates(NULL), m_DLines(NULL) { ; }
+ComClient::~ComClient() {
+	;
+}
 bool ComClient::init(unsigned char msg[],
 	Hex* hexAr,
 	DrivePlane* DPlane,

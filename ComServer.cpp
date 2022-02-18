@@ -1,4 +1,19 @@
 #include "ComServer.h"
+namespace n_ComSteer {
+	void zero(s_ComSteer& s) {
+		s.steerActive = false;
+		s.dist = 0.f;
+		s.ang = 0.f;
+	}
+}
+ComServer::ComServer() :m_img(NULL) {
+	for (int i = 0; i < DRIVEPLANE_NUMLUNALINE; i++)
+		n_DrivePlate::zeroPlate(m_plates[i]);
+	n_ComSteer::zero(m_steer);
+}
+ComServer::~ComServer() {
+	;
+}
 bool ComServer::init(const unsigned char msg[], int msg_len) {
 	/*check if init has already been done*/
 	if (m_img != NULL)
@@ -30,9 +45,8 @@ bool ComServer::init(const unsigned char msg[], int msg_len) {
 	m_num_msgs = (int)snum_msg;
 
 	initDrivePlates();
-	s_steer.steerActive = false;
-	s_steer.dist = 0.f;
-	s_steer.ang = 0.f;
+	n_ComSteer::zero(m_steer);
+
 	return true;
 }
 void ComServer::release() {
@@ -60,7 +74,7 @@ void ComServer::releaseDrivePlates() {
 		m_hexAr->releaseStructuredPlate(m_plates[i].p);
 	}
 }
-bool ComServer::transNext(unsigned char msg[], int msg_len) {
+bool ComServer::transNext(const unsigned char msg[], int msg_len) {
 	if (m_msg_cnt >= m_num_msgs) {
 		reset();
 		return false;
@@ -86,7 +100,7 @@ void ComServer::reset() {
 	for (int i = 0; i < m_hexAr->getNHex(); i++) {
 		hexes[i].rgb[0] = 0x00;
 	}
-	s_steer.steerActive = false;
+	m_steer.steerActive = false;
 	m_msg_cnt = 0;
 }
 bool ComServer::recvSteering(const unsigned char msg[], int msg_len) {
@@ -102,9 +116,9 @@ bool ComServer::recvSteering(const unsigned char msg[], int msg_len) {
 	for (int i = 0; i < 4; i++)
 		ar[i] = msg[9 + i];
 	float ang = convert2CharDec2CharToFloat(ar);
-	s_steer.steerActive = steerActive;
-	s_steer.dist = dist;
-	s_steer.ang = ang;
+	m_steer.steerActive = steerActive;
+	m_steer.dist = dist;
+	m_steer.ang = ang;
 	m_msg_cnt++;
 	return true;
 }

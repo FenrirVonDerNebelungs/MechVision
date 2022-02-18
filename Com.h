@@ -18,7 +18,10 @@ public:
 	Com();
 	~Com();
 
-
+	virtual void release()
+	{
+		;
+	}
 protected:
     /*owned by Server not owned by client*/
 	Hex* m_hexAr;/*reference hex array that is structured the same on the server and the client side*/
