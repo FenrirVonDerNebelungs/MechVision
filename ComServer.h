@@ -24,7 +24,7 @@ public:
 											 client*/
 	void release();
 
-	bool transNext(const unsigned char msg[], int msg_len);
+	bool recvNext(const unsigned char msg[], int msg_len);
 	inline Img* getImg() { return m_img; }
 	inline s_ComSteer& getSteer() { return m_steer; }
 protected:

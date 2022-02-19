@@ -47,7 +47,7 @@ bool ComServer::init(const unsigned char msg[], int msg_len) {
 	initDrivePlates();
 	n_ComSteer::zero(m_steer);
 	m_dataFull = false;
-	return false;
+	return true;
 }
 void ComServer::release() {
 	releaseDrivePlates();
@@ -74,15 +74,18 @@ void ComServer::releaseDrivePlates() {
 		m_hexAr->releaseStructuredPlate(m_plates[i].p);
 	}
 }
-bool ComServer::transNext(const unsigned char msg[], int msg_len) {
+/*need to fix this*/
+bool ComServer::recvNext(const unsigned char msg[], int msg_len) {
+	if (msg_len == 0) {
+		if(m_msg_cnt>0)
+			reset();
+		return false;
+	}
 	if (m_msg_cnt >= m_num_msgs) {
 		if (!m_dataFull) {
 			m_dataFull = true;
 		}
-		else {
-			reset();
-		}
-		return false;
+		return true;
 	}
 	if (m_msg_cnt < DRIVEPLANE_NUMLUNALINE) {
 		if (!recvPlate(msg, msg_len)) {
@@ -107,7 +110,7 @@ void ComServer::reset() {
 	}
 	m_steer.steerActive = false;
 	m_msg_cnt = 0;
-	false;
+	m_dataFull=false;
 }
 bool ComServer::recvSteering(const unsigned char msg[], int msg_len) {
 	if (msg_len < 13)

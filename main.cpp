@@ -30,8 +30,10 @@ int testRoachFeed() {
 		bool server_ret = true;
 		do {
 			int client_ret = rnClient.TransNext(frame_msg);
-			if (client_ret >= 0)
-				server_ret = rnServer.TransNext(frame_msg, frame_msg_len);
+			if (client_ret > 0)
+				server_ret = rnServer.RecvNext(frame_msg, client_ret);
+			else
+				rnServer.update();
 		} while (server_ret);
 	}
 

@@ -5,7 +5,7 @@ Com::Com() :m_dataFull(false), m_hexAr(NULL), m_num_msgs(0), m_msg_cnt(0) {
 Com::~Com() {
 	;
 }
-bool Com::init() { ; }
+bool Com::init() { return true; }
 void Com::reset(){ ; }
 void Com::convertShortToCharArray(const short s, unsigned char ar[]) {
 	short hi_ = s & 0xFF00;

@@ -72,7 +72,7 @@ int RoachNet_Client::TransNext(unsigned char msg[]) {
 		m_imgRender->initNoOwn(frame_dat, m_frame_width, m_frame_height, 3L);
 		exFrame_vision();
 		msg_len = ((ComClient*)m_comm)->TransNext(msg);/*reset flags in ComClient*/
-		return msg_len;/*next cycle will start transmitting*/
+		return 0;/*next cycle will start transmitting*/
 	}
 	/*client transmits data but does not show image*/
 	msg_len = ((ComClient*)m_comm)->TransNext(msg);
@@ -83,6 +83,16 @@ int RoachNet_Client::TransNext(unsigned char msg[]) {
 		}
 	}
 	return msg_len;
+}
+bool RoachNet_Client::update() {
+	m_vcap->read(*m_vframe);
+	if (m_vframe->empty())
+		return false;
+	unsigned char* frame_dat = m_vframe->data;
+	m_imgRender->initNoOwn(frame_dat, m_frame_width, m_frame_height, 3L);
+	exFrame_vision();
+	m_imgRender->release();
+	return true;
 }
 
 bool RoachNet_Client::init_vision() {

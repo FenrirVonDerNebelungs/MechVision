@@ -26,12 +26,15 @@ void RoachNet_Server::release() {
 	}
 }
 
-bool RoachNet_Server::TransNext(const unsigned char msg[], int msg_len) {
-	bool goodmsg = ((ComServer*)m_comm)->transNext(msg, msg_len);
+bool RoachNet_Server::RecvNext(const unsigned char msg[], int msg_len) {
+	bool goodmsg = ((ComServer*)m_comm)->recvNext(msg, msg_len);
 	/* if goodmsg=true then still receiving data do nothing*/
-	if (goodmsg)
-		return true;
-	/*if goodmsg = false then either the call failed or the data is ready to dump*/
+	return goodmsg;/*if this returns false the the transmissions are comming too fast*/
+}
+bool RoachNet_Server::update() {
+	unsigned char msg[1];
+	((ComServer*)m_comm)->recvNext(msg, 0);/*check with dummy message to see if exactly at end of message*/
+	/*if the above call resets the dataFlag to true then all messages were received and the data is ready for dump*/
 	if (((ComServer*)m_comm)->dataFlag()) {
 		/*data is ready to be dumped/rendered*/
 		/*render the data*/
@@ -41,13 +44,12 @@ bool RoachNet_Server::TransNext(const unsigned char msg[], int msg_len) {
 		imshow("RoachNet", frame);
 		float dist = getSteerDist();
 		float Ang = getSteerAng();
-		if(getSteerActive())
+		if (getSteerActive())
 			std::cout << "d " << dist << " : " << "a " << Ang << "\n";
 		else
 			std::cout << "---------- : --------- \n";
 		/* return true at end of cycle */
 		return true;
 	}
-	/*either the code is between cycles, the messages have ended, or the messages were not readable*/
-	return false;/*typically returned after all data has been transmitted & the client msg is reseting for next frame*/
+	return false;
 }

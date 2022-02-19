@@ -41,6 +41,7 @@ unsigned char DriveLines::init(
 	m_boxCorner.x1 = boxCorner_Y_cm / camera_d;
 	m_robotDriveCenter.x1 = robotDriveCenter_cm / camera_d;
 	m_robotDriveCenter.x0 = 0.f;
+	return ECODE_OK;
 }
 void DriveLines::release() {
 	m_drivePlane = NULL;

@@ -17,7 +17,12 @@ public:
 	void release();
 	bool init_vid(unsigned char msg[]);/*function for tests, runs off of a video on the disk instead of live image*/
 	void release_vid();
-	int TransNext(unsigned char msg[]);/*msg & int are returned msg contains plate data to render & int is the lenght of the message -1 for fail*/
+	int TransNext(unsigned char msg[]);/*msg & int are returned msg contains plate data to render
+									   returns 0 right after frame rendered and ready to start
+									   returns length of message when transmitting the plate & steer msgs
+									   return -1 after frame reset and at end of transmission block*/
+	bool update();/*just executes a frame without transmitting data, used if transmission was going to fast for server
+				    this way the robot continues to run but the transmission is paused*/
 protected:
 	VideoCapture* m_vcap;
 	int m_deviceID;
