@@ -35,7 +35,7 @@ bool RoachNet_Server::RecvNext(const unsigned char msg[], int msg_len) {
 		/*either transmission has failed, or the transmssion is over*/
 		/*when the steering info is recived the data flag of the comm is set to true and 'false' is returned for the final message*/
 		if (((ComServer*)m_comm)->dataFlag()) {
-			/*if the data flag is true then render*/
+			/*if the data flag is true then render*/ 
 			render();
 			/*after the image is rendered the com server no longer needs to hold on to the data*/
 			((ComServer*)m_comm)->reset();
@@ -48,8 +48,9 @@ bool RoachNet_Server::render() {
 /*render the data*/
 	unsigned char* img_dat = m_imgFrameBase->getImg();
 	Size frameSize(m_frame_width, m_frame_height);
-	Mat frame(frameSize, CV_8UC3, (void*)img_dat);
-	imshow("RoachNet", frame);
+	Mat rendframe(frameSize, CV_8UC3, (void*)img_dat);
+	imshow("RoachNet", rendframe);
+
 	float dist = getSteerDist();
 	float Ang = getSteerAng();
 	if (getSteerActive())

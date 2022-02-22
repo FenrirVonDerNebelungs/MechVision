@@ -96,7 +96,7 @@ bool ComServer::recvNext(const unsigned char msg[], int msg_len) {
 }
 
 void ComServer::reset() {
-	m_img->clearToChar(0x00);
+	//m_img->clearToChar(0x00);
 	s_hex* hexes = m_hexAr->getHexes();
 	for (int i = 0; i < m_hexAr->getNHex(); i++) {
 		hexes[i].rgb[0] = 0x00;
@@ -139,16 +139,20 @@ bool ComServer::recvPlate(const unsigned char msg[], int msg_len) {
 		if (msg_i >= msg_len)
 			break;
 		float msg_val = convertCharToFloat(msg[msg_i]);
-		if (baseHexes[i].rgb[0] <= msg_val) {
+		s_rgb hexCol = { 0x00, 0x00, 0x00 };
+		if (msg_val < COMCLIENT_min_hex_fill) {
+			if (baseHexes[i].rgb[0] < COMCLIENT_min_hex_fill) {
+				long x_i = baseHexes[i].i;
+				long y_j = baseHexes[i].j;
+				baseHexes[i].rgb[0] = COMCLIENT_min_hex_fill;
+				m_img->PrintMaskedImg(x_i, y_j, *(m_hexAr->getHexMaskPlus()), hexCol);
+			}
+		}else if (baseHexes[i].rgb[0] <= msg_val) {
 			long x_i = baseHexes[i].i;
 			long y_j = baseHexes[i].j;
-			/*debug*/
-			if (msg_val > 0.f)
-				int ttt=01;
-			/*     */
-			s_rgb hexCol = convertPlateCharToRGB(Plate_i, msg[msg_i]);
-			m_img->PrintMaskedImg(x_i, y_j, *(m_hexAr->getHexMaskPlus()), hexCol);
+			hexCol = convertPlateCharToRGB(Plate_i, msg[msg_i]);
 			baseHexes[i].rgb[0] = msg_val;
+			m_img->PrintMaskedImg(x_i, y_j, *(m_hexAr->getHexMaskPlus()), hexCol);
 		}
 	}
 	m_msg_cnt++;
@@ -156,7 +160,9 @@ bool ComServer::recvPlate(const unsigned char msg[], int msg_len) {
 }
 
 s_rgb ComServer::convertPlateCharToRGB(int plate_i, const unsigned char ch) {
-	s_rgb lunCol = genLunaCol(plate_i);
+	s_rgb lunCol = { 0x00, 0x00, 0x00 };
+	if(ch>0x00)
+		lunCol = genLunaCol(plate_i);
 	return lunCol;/*not going to scale yet*/
 }
 s_rgb ComServer::genLunaCol(int lunai) {

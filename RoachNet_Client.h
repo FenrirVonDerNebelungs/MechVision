@@ -23,6 +23,7 @@ public:
 									   return -1 after frame reset and at end of transmission block*/
 	bool update();/*just executes a frame without transmitting data, used if transmission was going to fast for server
 				    this way the robot continues to run but the transmission is paused*/
+	void end_transmission();/*ends transmission, releasing the imgRender */
 protected:
 	VideoCapture* m_vcap;
 	int m_deviceID;

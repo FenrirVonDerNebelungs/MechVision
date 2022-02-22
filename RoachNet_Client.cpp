@@ -78,12 +78,8 @@ int RoachNet_Client::TransNext(unsigned char msg[]) {
 	/*client transmits data but does not show image*/
 	msg_len = ((ComClient*)m_comm)->TransNext(msg);
 	if (msg_len < 0) {/*check to see if have just hit a blank transmission, caused by all data being transmitted*/
-		if ((ComClient*)m_comm->dataFlag()) {
-			/*now that message is transmited the img can be released/reset*/
-			m_imgRender->release();
-			/*the old render image has been released and the com client should also be reset for next transmission*/
-			((ComClient*)m_comm)->reset();
-		}
+		end_transmission();/*if m_comm data flag is true then, 
+						   releases imgRender, resets m_comm and sets the data_ex_flag to false*/
 	}
 	return msg_len;
 }
@@ -96,6 +92,15 @@ bool RoachNet_Client::update() {
 	exFrame_vision();
 	m_imgRender->release();
 	return true;
+}
+void RoachNet_Client::end_transmission() {
+	if ((ComClient*)m_comm->dataFlag()) {
+		/*now that message is transmited the img can be released/reset*/
+		m_imgRender->release();
+		/*the old render image has been released and the com client should also be reset for next transmission*/
+		((ComClient*)m_comm)->reset();
+		m_data_ex_flag = false;/*data exchange(transmission) has stopped*/
+	}
 }
 
 bool RoachNet_Client::init_vision() {

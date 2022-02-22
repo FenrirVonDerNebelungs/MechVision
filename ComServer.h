@@ -4,6 +4,7 @@
 #ifndef COMCLIENT_H
 #include "ComClient.h"
 #endif
+const float COMCLIENT_min_hex_fill = 0.001;
 struct s_ComSteer{
 	bool steerActive;
 	float dist;
