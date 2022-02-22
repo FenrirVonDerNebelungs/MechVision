@@ -9,7 +9,7 @@ bool Com::init() { return true; }
 void Com::reset(){ ; }
 void Com::convertShortToCharArray(const short s, unsigned char ar[]) {
 	short hi_ = s & 0xFF00;
-	short hi = hi_ >> 8;
+	short hi = (hi_ >> 8) & 0x00FF; /*bitwise shift actually drags sign bit*/
 	short lw = s & 0x00FF;
 	ar[0] = (unsigned char)hi;
 	ar[1] = (unsigned char)lw;
@@ -22,7 +22,7 @@ short Com::convertCharArrayToShort(const unsigned char ar[]) {
 }
 void Com::convertInt32ToCharArray(const int s, unsigned char ar[]) {
 	int hi_ = s & 0xFF000000;
-	int hi = hi_ >> 24;
+	int hi = (hi_ >> 24) & 0x00FF;
 	ar[0] = (unsigned char)hi;
 	hi_ = s & 0x00FF0000;
 	hi = hi_ >> 16;
@@ -48,7 +48,7 @@ int Com::convertCharArrayToInt32(const unsigned char ar[]) {
 	return mer;
 }
 unsigned char Com::convertFloatRange1ToChar(float f) {
-	float ff = f * 255.f;
+	float ff = roundf(f * 255.f);
 	unsigned char cf = 0xFF;
 	if (ff >= 255.f)
 		return cf;
@@ -86,11 +86,14 @@ float Com::convert2CharDec2CharToFloat(unsigned char ar[]) {
 	ar2char[1] = ar[1];
 	short hi = convertCharArrayToShort(ar2char);
 	ar2char[0] = ar[2];
-	ar2char[0] = ar[3];
+	ar2char[1] = ar[3];
 	short lo = convertCharArrayToShort(ar2char);
 	float fwhole = getFloatWholeFromHi(hi);
 	float fdec = getDecFromLow(lo);
-	return fwhole + fdec;
+	float f = fwhole + fdec;
+	if (!isPosFromHi(hi))
+		f = -f;
+	return f;
 }
 
 bool Com::convertFloatTo2shorts(float f, short& hi, short& lo) {
@@ -108,12 +111,13 @@ bool Com::convertFloatTo2shorts(float f, short& hi, short& lo) {
 	lo = idec;
 	return true;
 }
-float Com::getFloatWholeFromHi(short hi) {
+bool Com::isPosFromHi(short hi) {
 	short hbit = 0x8000 & hi;
-	bool isPos = (hbit < 0x01);
+	bool isPos = (hbit == 0x00);
+	return isPos;
+}
+float Com::getFloatWholeFromHi(short hi) {
 	short iwhole = 0x7FFF & hi;
-	if (!isPos)
-		iwhole = -iwhole;
 	return (float)iwhole;
 }
 float Com::getDecFromLow(short low) {

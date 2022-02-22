@@ -27,6 +27,7 @@ public:
 	bool recvNext(const unsigned char msg[], int msg_len);
 	inline Img* getImg() { return m_img; }
 	inline s_ComSteer& getSteer() { return m_steer; }
+	void reset();
 protected:
 	/*owned*/
 	Img* m_img;
@@ -37,7 +38,7 @@ protected:
 	unsigned char initDrivePlates();
 	void releaseDrivePlates();
 
-	void reset();
+
 	bool recvSteering(const unsigned char msg[], int msg_len);
 	bool recvPlate(const unsigned char msg[], int msg_len);
 

@@ -52,6 +52,7 @@ protected:
 										unsigned number*/
 
 	/*convert back float to char*/
+	bool isPosFromHi(short hi);
 	float getFloatWholeFromHi(short hi);/*takes hi short part and test for positive*/
 	float getDecFromLow(short low);
 

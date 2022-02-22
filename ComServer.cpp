@@ -46,7 +46,7 @@ bool ComServer::init(const unsigned char msg[], int msg_len) {
 
 	initDrivePlates();
 	n_ComSteer::zero(m_steer);
-	m_dataFull = false;
+	reset();
 	return true;
 }
 void ComServer::release() {
@@ -76,17 +76,6 @@ void ComServer::releaseDrivePlates() {
 }
 /*need to fix this*/
 bool ComServer::recvNext(const unsigned char msg[], int msg_len) {
-	if (msg_len == 0) {
-		if(m_msg_cnt>0)
-			reset();
-		return false;
-	}
-	if (m_msg_cnt >= m_num_msgs) {
-		if (!m_dataFull) {
-			m_dataFull = true;
-		}
-		return true;
-	}
 	if (m_msg_cnt < DRIVEPLANE_NUMLUNALINE) {
 		if (!recvPlate(msg, msg_len)) {
 			reset();
@@ -98,6 +87,10 @@ bool ComServer::recvNext(const unsigned char msg[], int msg_len) {
 			reset();
 			return false;
 		}
+	}
+	if (m_msg_cnt >= m_num_msgs) {
+		m_dataFull = true;
+		return false;
 	}
 	return true;
 }
@@ -149,6 +142,10 @@ bool ComServer::recvPlate(const unsigned char msg[], int msg_len) {
 		if (baseHexes[i].rgb[0] <= msg_val) {
 			long x_i = baseHexes[i].i;
 			long y_j = baseHexes[i].j;
+			/*debug*/
+			if (msg_val > 0.f)
+				int ttt=01;
+			/*     */
 			s_rgb hexCol = convertPlateCharToRGB(Plate_i, msg[msg_i]);
 			m_img->PrintMaskedImg(x_i, y_j, *(m_hexAr->getHexMaskPlus()), hexCol);
 			baseHexes[i].rgb[0] = msg_val;

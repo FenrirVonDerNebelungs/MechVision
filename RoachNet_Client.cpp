@@ -26,6 +26,7 @@ bool RoachNet_Client::init(unsigned char msg[],
 		release();
 		return false;
 	}
+	m_data_ex_flag = false;/*set flag to indicate that the data is not ready to transmit*/
 	return true;
 }
 void RoachNet_Client::release() {
@@ -62,24 +63,26 @@ void RoachNet_Client::release_vid() {
 }
 int RoachNet_Client::TransNext(unsigned char msg[]) {
 	int msg_len = -1;
-	/*find out if Client is signalling that it is still in a transmission*/
-	if (!((ComClient*)m_comm->dataFlag())) {
-		/*if data flag is not true then the data dump is done and a new frame needs to be rendered*/
+	/*find if transmission is taking place*/
+	if (!m_data_ex_flag) {
+		/*if transmission is not currently taking place, read in a new frame to transmit*/
 		m_vcap->read(*m_vframe);
 		if (m_vframe->empty())
 			return false;
 		unsigned char* frame_dat = m_vframe->data;
 		m_imgRender->initNoOwn(frame_dat, m_frame_width, m_frame_height, 3L);
 		exFrame_vision();
-		msg_len = ((ComClient*)m_comm)->TransNext(msg);/*reset flags in ComClient*/
+		m_data_ex_flag = true;
 		return 0;/*next cycle will start transmitting*/
 	}
 	/*client transmits data but does not show image*/
 	msg_len = ((ComClient*)m_comm)->TransNext(msg);
-	if (msg_len < 0) {
-		if (!((ComClient*)m_comm->dataFlag())) {/*when m_msg_cnt has just equaled max number of messages & dataFlag is true, the call to TransNext resets dataFlag to false before returning -1*/
+	if (msg_len < 0) {/*check to see if have just hit a blank transmission, caused by all data being transmitted*/
+		if ((ComClient*)m_comm->dataFlag()) {
 			/*now that message is transmited the img can be released/reset*/
 			m_imgRender->release();
+			/*the old render image has been released and the com client should also be reset for next transmission*/
+			((ComClient*)m_comm)->reset();
 		}
 	}
 	return msg_len;

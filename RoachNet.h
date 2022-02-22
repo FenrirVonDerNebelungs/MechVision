@@ -26,6 +26,7 @@ public:
 	   run by the python script that calls this program*/
 	virtual bool exFrame() { return false; }
 protected:
+	bool m_data_ex_flag;/*transmission is happening don't input video or render*/
 	int m_frame_width;
 	int m_frame_height;
 	/*the image is owned by RoachNet_Client, but part of the ComClient for RoachNet_Server*/

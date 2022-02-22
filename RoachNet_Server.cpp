@@ -28,28 +28,34 @@ void RoachNet_Server::release() {
 
 bool RoachNet_Server::RecvNext(const unsigned char msg[], int msg_len) {
 	bool goodmsg = ((ComServer*)m_comm)->recvNext(msg, msg_len);
-	/* if goodmsg=true then still receiving data do nothing*/
-	return goodmsg;/*if this returns false the the transmissions are comming too fast*/
-}
-bool RoachNet_Server::update() {
-	unsigned char msg[1];
-	((ComServer*)m_comm)->recvNext(msg, 0);/*check with dummy message to see if exactly at end of message*/
-	/*if the above call resets the dataFlag to true then all messages were received and the data is ready for dump*/
-	if (((ComServer*)m_comm)->dataFlag()) {
-		/*data is ready to be dumped/rendered*/
-		/*render the data*/
-		unsigned char* img_dat = m_imgFrameBase->getImg();
-		Size frameSize(m_frame_width, m_frame_height);
-		Mat frame(frameSize, CV_8UC3, (void*)img_dat);
-		imshow("RoachNet", frame);
-		float dist = getSteerDist();
-		float Ang = getSteerAng();
-		if (getSteerActive())
-			std::cout << "d " << dist << " : " << "a " << Ang << "\n";
-		else
-			std::cout << "---------- : --------- \n";
-		/* return true at end of cycle */
-		return true;
+	if (goodmsg) {
+		return true;/*just receive message and go on*/
 	}
-	return false;
+	else {
+		/*either transmission has failed, or the transmssion is over*/
+		/*when the steering info is recived the data flag of the comm is set to true and 'false' is returned for the final message*/
+		if (((ComServer*)m_comm)->dataFlag()) {
+			/*if the data flag is true then render*/
+			render();
+			/*after the image is rendered the com server no longer needs to hold on to the data*/
+			((ComServer*)m_comm)->reset();
+		}
+	}		
+	return false;/*returns false to flag end of transmission beginning of new*/
+}
+bool RoachNet_Server::render() {
+	/*data is ready to be dumped/rendered*/
+/*render the data*/
+	unsigned char* img_dat = m_imgFrameBase->getImg();
+	Size frameSize(m_frame_width, m_frame_height);
+	Mat frame(frameSize, CV_8UC3, (void*)img_dat);
+	imshow("RoachNet", frame);
+	float dist = getSteerDist();
+	float Ang = getSteerAng();
+	if (getSteerActive())
+		std::cout << "d " << dist << " : " << "a " << Ang << "\n";
+	else
+		std::cout << "---------- : --------- \n";
+	/* return true at end of cycle */
+	return true;
 }

@@ -38,8 +38,7 @@ bool ComClient::init(unsigned char msg[],
 	convertShortToCharArray(msg_num, msgLenar);
 	for (int i = 0; i < 2; i++)
 		msg[i + 12] = msgLenar[i];
-	m_msg_cnt = m_num_msgs;
-	m_dataFull = false;
+	reset();
 	return true;
 }
 void ComClient::release() {
@@ -48,13 +47,7 @@ void ComClient::release() {
 
 int ComClient::TransNext(unsigned char msg[]) {
 	if (m_msg_cnt >= m_num_msgs) {
-		if (m_dataFull) {
-			/*when message count has equaled the number of messages then the data is done transmitting*/
-			m_dataFull = false;
-		}
-		else {
-			reset();
-		}
+		m_dataFull = true;
 		return -1;
 	}
 	int msg_len = 0;
@@ -66,7 +59,7 @@ int ComClient::TransNext(unsigned char msg[]) {
 }
 void ComClient::reset() {
 	m_msg_cnt = 0;
-	m_dataFull=true;
+	m_dataFull=false;
 }
 int ComClient::sendSteering(unsigned char msg[]) {
 	float dist, ang;
@@ -79,7 +72,7 @@ int ComClient::sendSteering(unsigned char msg[]) {
 	unsigned char wholear[4];
 	convertFloatTo2CharDec2Char(dist, wholear);
 	unsigned char decar[4];
-	convertFloatTo2CharDec2Char(ang, wholear);
+	convertFloatTo2CharDec2Char(ang, decar);
 	for (int i = 0; i < 4; i++) {
 		msg[5 + i] = wholear[i];
 		msg[9 + i] = decar[i];
@@ -100,10 +93,10 @@ int ComClient::sendPlate(s_DrivePlate* plates, int Plate_i, unsigned char msg[])
 		return -1;
 	for (int i = 0; i < hexP.m_nHex; i++) {
 		/*debug*/
-		if (hexP.m_fhex->o > 0.f)
+		if (hexP.m_fhex[i].o > 0.f)
 			int ttt = 1;
 		/*     */
-		unsigned char sendc = convertFloatRange1ToChar(hexP.m_fhex->o);
+		unsigned char sendc = convertFloatRange1ToChar(hexP.m_fhex[i].o);
 		msg[msg_start + i] = sendc;
 	}
 	m_msg_cnt++;
