@@ -29,8 +29,8 @@ protected:
 	s_hexEye* m_net;   
 	StampEye* m_stampEye; /*Master function array of eye stamps that will act as the 'q' data set*/
 	s_hexEye* m_dataStamps[NNETTRAINMAXDATAN];/*broken out from stampEye */
-	/* owned   */
 
+	/* owned   */
 	float      m_y[NNETTRAINMAXDATAN];
 	int        m_QN;/*total number of data stamps in the training set*/
 	float*     m_steps;
@@ -44,9 +44,9 @@ protected:
 	unsigned char trainNet();
 
 	bool          updateWs(s_hexPlate& netBot);
-	unsigned char findDeltaEs(s_hexPlate& netBot);
+	unsigned char findDeltaEs(s_hexPlate& netBot, int level_num);
 
-	unsigned char connNetToQthStamp(s_hexPlate& netBot, int q);/*q is the index of the currently selected stamp*/
+	unsigned char connNetToQthStamp(s_hexPlate& netBot, int q, int level_num);/*q is the index of the currently selected stamp*/
 
 	float evalEForQth_j(float y, s_fNode& n);
 

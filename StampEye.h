@@ -44,6 +44,7 @@ public:
 
 	unsigned char init(
 		PatternLuna* patLuna,
+		int lowestStampLev=1,
 		float numAngDiv = 12.f,
 		int smudgeNum = 10,
 		float r=3.f,
@@ -68,6 +69,7 @@ protected:
 	s_eyeStamp m_stamps[STAMPEYENUM];/*lowest level of 3 total levels has square averaged o hexes corresponding to pattern*/
 	s_eyeStamp m_lunaStamps[STAMPEYENUM]; /*these are the stamp eyes but with 2 levels, lowest nodes (beneath luna 2) are for the luna o values*/
 	int   m_eyes_stamped;
+	int   m_lowestStampLev;
 
 	s_2pt m_circle_center;
 	float m_circle_radius;

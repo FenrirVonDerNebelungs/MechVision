@@ -57,14 +57,15 @@ void NNetTrain::release() {
 	m_steps = NULL;
 }
 unsigned char NNetTrain::trainNet() {
-	s_hexPlate& netBot = m_net->lev[1];
+	int level_num = m_net->n - 1;/*should be 1*/
+	s_hexPlate& netBot = m_net->lev[level_num];
 	//int totalWs = netBot.m_nHex * netBot.m_fhex[0].N all cells should have the same number of inputs from the base
 	//float* Ws = new float[totalWs];
 
 	bool converged = false;
 	long loop_cnt = 0;
 	do {
-		findDeltaEs(netBot);
+		findDeltaEs(netBot, level_num);
 		converged = updateWs(netBot);
 	} while (!converged && loop_cnt < m_max_loop_cnt);
 	return converged ? ECODE_OK : ECODE_ABORT;
@@ -94,7 +95,7 @@ bool NNetTrain::updateWs(s_hexPlate& netBot) {
 	}
 	return converged;
 }
-unsigned char NNetTrain::findDeltaEs(s_hexPlate& netBot) {
+unsigned char NNetTrain::findDeltaEs(s_hexPlate& netBot, int level_num) {
 	/**
 
 	*/
@@ -104,7 +105,7 @@ unsigned char NNetTrain::findDeltaEs(s_hexPlate& netBot) {
 	}
 
 	for (int q = 0; q < m_QN; q++) {
-		connNetToQthStamp(netBot, q);
+		connNetToQthStamp(netBot, q, level_num);
 		float y = m_y[q];/*each cell cluster (an therefor cell output node) in the stamp is going to have the same target,
 						 although in a general sense a NNet could have different target for each
 						 a.k.a. ignoring the 'j' on the y*/
@@ -118,8 +119,8 @@ unsigned char NNetTrain::findDeltaEs(s_hexPlate& netBot) {
 	}
 	return ECODE_OK;
 }
-unsigned char NNetTrain::connNetToQthStamp(s_hexPlate& netBot, int q) {
-	s_hexPlate& stampBot = m_dataStamps[q]->lev[1];
+unsigned char NNetTrain::connNetToQthStamp(s_hexPlate& netBot, int q, int level_num) {
+	s_hexPlate& stampBot = m_dataStamps[q]->lev[level_num];
 	for (int i = 0; i < netBot.m_nHex; i++) {
 		s_fNode& net_nd = netBot.m_fhex[i];
 		s_fNode& stamp_nd = stampBot.m_fhex[i];
