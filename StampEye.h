@@ -16,6 +16,7 @@
 struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
 	s_hexEye* eyes[STAMPEYEMAXNUM];/*hex eyes that have been stamped, generally the eyes are NOT OWNED by the s_eyeStamp*/
+	s_hexEye* mask;/*mask is zero where values are considered not to matter to the nnet */
 	int n;/*number of eyes in stamp*/
 	float o;/*target value for NNet*/
 };
@@ -46,7 +47,9 @@ public:
 		PatternLuna* patLuna,
 		int lowestStampLev=1,
 		float numAngDiv = 12.f,
-		int smudgeNum = 10,
+		int smudgeNum = 1,/*number of smudges, along the r direction */
+		int smudgeAngNum=6,/*number of angle variants inside of each of the 12 main angles counted towards a single nnet trained node*/
+		float maskdim=6.,/*mask dim as a multiple of the smallest r dim*/
 		float r=3.f,
 		HexBase* hexBase = NULL
 	);
@@ -61,6 +64,8 @@ public:
 protected:
 	float  m_numAngDiv;
 	int    m_smudgeNum;/*number of division over which the corner is smudged*/
+	int    m_smudgeAngNum;/*number of smudge off angle stamps that still count towards the same 12 division*/
+	float  m_maskdim;/*max dim away from mask before values no longer matter for NNet*/
 	/*not owned*/
 	PatternLuna* m_patternLuna;
 	/*owned*/

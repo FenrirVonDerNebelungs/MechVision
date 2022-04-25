@@ -1,6 +1,6 @@
 #include "StampEye.h"
 #include "PatternL1.h"
-StampEye::StampEye() : m_numAngDiv(0.f), m_smudgeNum(0), m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f) {
+StampEye::StampEye() : m_numAngDiv(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_maskdim(0.), m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f) {
 	clearEyeStamps();
 	m_circle_center.x0 = 0.f;
 	m_circle_center.x1 = 0.f;
@@ -29,6 +29,8 @@ unsigned char StampEye::init(
 	int lowestStampLev,
 	float numAngDiv,
 	int smudgeNum,
+	int smudgeAngNum,
+	float maskdim,
 	float r,
 	HexBase* hexBase
 ) {
@@ -36,19 +38,21 @@ unsigned char StampEye::init(
 	m_patternLuna = patLuna;
 	m_numAngDiv = numAngDiv;
 	m_smudgeNum = smudgeNum;
+	m_smudgeAngNum = smudgeAngNum;
+	m_maskdim = maskdim;
 	m_eyeGen = new HexEye;
 	m_lunaEyeGen = new HexEye;
 
 	float targr = (hexBase == NULL) ? r : hexBase->getRhex();
-	if (RetOk(m_eyeGen->init(targr, 2))) {
-		int numSmudgeArray = smudgeNum * smudgeNum;
+	if (RetOk(m_eyeGen->init(targr, m_lowestStampLev+1))) {
+		int numSmudgeArray = smudgeNum * smudgeAngNum;
 		int totalNumEyes = numSmudgeArray * STAMPEYENUM;
 		for (int i = 0; i < totalNumEyes; i++) {
 			m_eyeGen->spawn();
 		}
 	}
 	else return ECODE_FAIL;
-	if (RetOk(m_lunaEyeGen->init(2 * targr, m_lowestStampLev, PATTERNLUNA_NUM))) {
+	if (RetOk(m_lunaEyeGen->init(2 * targr, m_lowestStampLev, PATTERNLUNA_NUM))) {/*patternluna_num means this generates 8 node pointers at the lowest level*/
 		for (int i = 0; i < m_eyeGen->getNEyes(); i++) {
 			m_lunaEyeGen->spawn();
 			/*this is an unusual case where the lowest of nodes of the hexEyes will be owned by the eye*/
@@ -127,6 +131,7 @@ unsigned char StampEye::calcLunaStampEye(const s_hexEye& seye, s_hexEye& slunaey
 			for (int l_i = 0; l_i < curLunaStampEye->lev[m_lowestStampLev].m_nHex; l_i++) {
 				/*the nodes hanging from lev 1of the stamp eye are already generated and owned by the stamp eye
 				  the number of these nodes corresponds to the number of luna's */
+
 				for (int lun_i = 0; lun_i < curLunaStampEye->lev[m_lowestStampLev].m_fhex[l_i].N; lun_i++) {
 					s_fNode& lunaPatNode = *(m_patternLuna->getPatNode(lun_i));
 					s_fNode& curStampNode = *(s_fNode*)(curLunaStampEye->lev[m_lowestStampLev].m_fhex[l_i].nodes[lun_i]);
