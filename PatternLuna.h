@@ -36,5 +36,6 @@ protected:
 namespace PatternLunaThreaded {
 	void runPlate(s_fNode& lev0, s_hexPlate& baseplate, s_hexPlate& plate);
 	void evalAtPlateNode(s_fNode& lev0, s_fNode& plateNode);
+	void evalLowerNode(s_fNode& lev0, s_fNode& colNode);
 }
 #endif

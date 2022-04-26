@@ -128,14 +128,16 @@ unsigned char StampEye::calcLunaStampEye(const s_hexEye& seye, s_hexEye& slunaey
 			s_hexEye* curLunaStampEye = m_lunaStamps[s_i].eyes[e_i];
 			s_hexEye* curStampEye = m_stamps[s_i].eyes[e_i];
 			/*loop over the lowest level of the lunaeyestamps and the 2nd lowest of eyestamps to fill luna value for each hex in the luna eye stamp*/
+			/*this curLunaStampEye->lev[m_lowestStampLev].m_nHex == curStampEye->lev[m_lowestStampLev].m_nHex should be true*/
 			for (int l_i = 0; l_i < curLunaStampEye->lev[m_lowestStampLev].m_nHex; l_i++) {
 				/*the nodes hanging from lev 1of the stamp eye are already generated and owned by the stamp eye
 				  the number of these nodes corresponds to the number of luna's */
-
+				s_fNode& curStampNode = (curStampEye->lev[m_lowestStampLev].m_fhex[l_i]);
 				for (int lun_i = 0; lun_i < curLunaStampEye->lev[m_lowestStampLev].m_fhex[l_i].N; lun_i++) {
 					s_fNode& lunaPatNode = *(m_patternLuna->getPatNode(lun_i));
-					s_fNode& curStampNode = *(s_fNode*)(curLunaStampEye->lev[m_lowestStampLev].m_fhex[l_i].nodes[lun_i]);
-					PatternLunaThreaded::evalAtPlateNode(lunaPatNode, curStampNode);/*this fills the o of the curStampNode so that it returns the luna value from evaluating in the center of the hex*/
+					s_fNode& curLunaStampNode = *(s_fNode*)(curLunaStampEye->lev[m_lowestStampLev].m_fhex[l_i].nodes[lun_i]);
+					PatternLunaThreaded::evalLowerNode(lunaPatNode, curStampNode);/*this fills the o of the curStampNode so that it returns the luna value from evaluating in the center of the hex*/
+					curLunaStampNode.o = lunaPatNode.o;
 				}
 			}
 		}

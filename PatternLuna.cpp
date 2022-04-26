@@ -97,4 +97,13 @@ namespace PatternLunaThreaded {
 		sumN += plateNode.o * lev0.w[6];
 		lev0.o = Math::StepFunc(sumN-0.5f);
 	}
+	void evalLowerNode(s_fNode& lev0, s_fNode& colNode) {
+		float sumN = 0.f;
+		for (int i = 0; i < 7; i++) {
+			s_bNode* lowLinkPtr = colNode.nodes[i];
+			if (lowLinkPtr != NULL)
+				sumN += lowLinkPtr->o * lev0.w[i];
+		}
+		lev0.o = Math::StepFunc(sumN - 0.5f);
+	}
 }
