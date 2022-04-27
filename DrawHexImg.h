@@ -4,14 +4,14 @@
 #ifndef HEXBASE_H
 #include "HexBase.h"
 #endif
-#ifndef HEXEYE_H
-#include "HexEye.h"
+#ifndef STAMPEYE_H
+#include "StampEye.h"
 #endif
 #ifndef DRIVEPLANE_H
 #include "DrivePlane.h"
 #endif
 
-class DrawHexImg {
+class DrawHexImg : public Base{
 public:
 	DrawHexImg();
 	~DrawHexImg();
@@ -28,6 +28,7 @@ public:
 	unsigned char Init(HexBase* hBase, HexBase* lowerHBase);
 	unsigned char Init(HexBase* hbase, s_hexPlate* plate);
 	unsigned char Init(s_hexPlate* plate, Img* hexMask);
+	unsigned char Init(HexBase* hbase, StampEye* stampEyep);
 	void Release();
 	unsigned char Run();
 	unsigned char renderHexImg();
@@ -49,6 +50,8 @@ protected:
 	Img* m_hexMask;
 	Img* m_hexMaskPlus;
 	Img* m_lowerHexMask;
+	StampEye* m_stampEye;
+	int m_cur_stampEye_i;
 	/*owned*/
 	Img* m_hexedImg;
 	s_rgb m_defOCol;
@@ -57,6 +60,7 @@ protected:
 	unsigned char genHexImgDebug();
 	unsigned char renderHexOuput();/*renders monoscale in col of hex o variable*/
 	unsigned char renderAdditiveHexOuput();
+	unsigned char renderIncStamp();/*renders a stamp then inc so that next stamp is rendered next call, loops over raw indexted eye stamps*/
 
 	unsigned char genSingLunaLineImg(LineFinder* lineFinder);
 	unsigned char genLineImg(LineFinder* lineFinder);
@@ -66,6 +70,8 @@ protected:
 	unsigned char drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);
 	unsigned char drawLowerNodes(s_fNode* hiNode, Img* hexMask, s_2pt& offset, s_rgb& col);
 	void colRotate(s_rgb& col, unsigned char addc, unsigned char basecol=0x00);
+
+	bool setStampEye(int i);
 };
 
 

@@ -13,6 +13,8 @@
 #define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
 #define STAMPEYEMAXNUM 100
 
+const float stampeye_radincmul = 1.5f;
+
 struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
 	s_hexEye* eyes[STAMPEYEMAXNUM];/*hex eyes that have been stamped, generally the eyes are NOT OWNED by the s_eyeStamp*/
@@ -45,10 +47,11 @@ public:
 
 	unsigned char init(
 		PatternLuna* patLuna,
-		int lowestStampLev=1,
+		int lowestStampLev = 1,
 		float numAngDiv = 12.f,
+		float numCircleRadii = 5.f,
 		int smudgeNum = 1,/*number of smudges, along the r direction */
-		int smudgeAngNum=6,/*number of angle variants inside of each of the 12 main angles counted towards a single nnet trained node*/
+		int smudgeAngNum=7,/*number of angle variants inside of each of the 12 main angles counted towards a single nnet trained node*/
 		float maskdim=6.,/*mask dim as a multiple of the smallest r dim*/
 		float r=3.f,
 		HexBase* hexBase = NULL
@@ -60,11 +63,14 @@ public:
 
 	inline s_eyeStamp* getEyeStamps() { return m_stamps; }
 	inline s_eyeStamp* getLunaEyeStamps() { return m_lunaStamps; }
-	inline int numEyeStamps() { return m_eyes_stamped; }
+	inline int numEyeStamps() { return m_eyes_stamped; }/*returns raw index counting total number of eyes stamped in the hexEyeGen obj*/
+	inline s_hexEye& getEyeRawIndex(int i) { return m_eyeGen->getEye(i); }
 protected:
 	float  m_numAngDiv;
+	float  m_numCircleRadii;
+	float  m_minCircleRadius;
 	int    m_smudgeNum;/*number of division over which the corner is smudged*/
-	int    m_smudgeAngNum;/*number of smudge off angle stamps that still count towards the same 12 division*/
+	int    m_smudgeAngNum;/*should be odd number of smudge off angle stamps that still count towards the same 12 division*/
 	float  m_maskdim;/*max dim away from mask before values no longer matter for NNet*/
 	/*not owned*/
 	PatternLuna* m_patternLuna;
@@ -73,7 +79,8 @@ protected:
 	HexEye* m_lunaEyeGen;
 	s_eyeStamp m_stamps[STAMPEYENUM];/*lowest level of 3 total levels has square averaged o hexes corresponding to pattern*/
 	s_eyeStamp m_lunaStamps[STAMPEYENUM]; /*these are the stamp eyes but with 2 levels, lowest nodes (beneath luna 2) are for the luna o values*/
-	int   m_eyes_stamped;
+	int   m_num_stamps;/*total number of stamps, or stamp packets, of eyes corresponding to the total number of nnet nodes that are being trained*/
+	int   m_eyes_stamped;/*total number of eyes stamped combined over ALL stamps including the smudge stamps in the number*/
 	int   m_lowestStampLev;
 
 	s_2pt m_circle_center;
@@ -95,7 +102,8 @@ protected:
 	unsigned char calcLunaStampEye(const s_hexEye& seye, s_hexEye& slunaeye);/*find the */
 
 	unsigned char stampRoundedCorners();
-	int stampRoundedCornersAtCenter(const s_2pt& corner_center, int eye_cnt, s_eyeStamp stamp[]);
+	unsigned char stampRoundedCornersAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
+
 	unsigned char stampEyeRoundedCorner(s_hexEye& seye);
 	float AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt& center);
 
@@ -109,7 +117,7 @@ protected:
 	bool isInRoundedCornerNoRot(const s_2pt& pt);
 	bool isInRoundedCorner(const s_2pt& pt);/*rotation right handed from x0 axis by angle rotAng in rad*/
 
-	bool incStampEyeNs(int start_i);
+	bool stampEyeIncOk(int stamp_cnt);
 };
 
 #endif

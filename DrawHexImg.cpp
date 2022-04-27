@@ -60,6 +60,18 @@ unsigned char DrawHexImg::Init(s_hexPlate* plate, Img* hexMask) {
 	m_defOCol.b = 0xFF;
 	return ECODE_OK;
 }
+unsigned char DrawHexImg::Init(HexBase* hbase, StampEye* stampEyep) {
+	m_stampEye = stampEyep;
+	if (Err(Init(hbase)))
+		return ECODE_FAIL;
+	if (!setStampEye(0))
+		return ECODE_ABORT;
+	m_hexedImg->clearToChar(0x00);
+	m_defOCol.r = 0xFF;
+	m_defOCol.g = 0xFF;
+	m_defOCol.b = 0xFF;
+
+}
 void DrawHexImg::Release()
 {
 	m_hex = NULL;
@@ -76,7 +88,7 @@ void DrawHexImg::Release()
 }
 unsigned char DrawHexImg::Run()
 {
-	return renderHexOuput();//renderHexImg();//genHexImgDebug();
+	return renderIncStamp();//renderHexOuput();//renderHexImg();//genHexImgDebug();
 }
 unsigned char DrawHexImg::renderHexImg()
 {
@@ -146,6 +158,14 @@ unsigned char DrawHexImg::renderAdditiveHexOuput() {
 			m_hexedImg->PrintMaskedImg(img_i, img_j, *m_hexMaskPlus, hexCol);
 		}
 	}
+	return ECODE_OK;
+}
+unsigned char DrawHexImg::renderIncStamp() {
+	m_hexedImg->clearToChar(0x00);
+	if (Err(renderHexOuput()))
+		return ECODE_FAIL;
+	if (!setStampEye(m_cur_stampEye_i + 1))
+		return ECODE_ABORT;
 	return ECODE_OK;
 }
 unsigned char DrawHexImg::drawDrivePlates(s_DrivePlate plates[], int numPlates) {
@@ -294,4 +314,16 @@ void DrawHexImg::colRotate(s_rgb& col, unsigned char addc, unsigned char basecol
 		col.g = basecol;
 		col.b = addc;
 	}
+}
+
+bool DrawHexImg::setStampEye(int i) {
+	int numStamps = m_stampEye->numEyeStamps();
+	if (i >= numStamps)
+		return false;
+	s_hexEye& hEye = m_stampEye->getEyeRawIndex(i);
+	int eye_n = hEye.n;
+	s_hexPlate& lowPlate = hEye.lev[eye_n - 1];
+	m_nodes = lowPlate.m_fhex;
+	m_nHex = lowPlate.m_nHex;
+	m_cur_stampEye_i = i;
 }
