@@ -5,15 +5,44 @@
 #ifndef ROACHNET_SERVER_H
 #include "RoachNet_Server.h"
 #endif
+#ifndef STAMPEYE_H
+#include "StampEye.h"
+#endif
 
 const unsigned int frame_msg_len = 16384;/*2^14*/
 const unsigned int loop_n = 2000;
 
 int testRoachFeed();
+int debugStamp();
 
 int main() {
 	return testRoachFeed();
 }
+
+int debugStamp() {
+	int frame_width = 640;
+	int frame_height = 480;
+	Img dummyImg;
+	dummyImg.init(frame_width, frame_height, 3L);
+	Hex HexLow;
+	HexLow.Init(&dummyImg);
+	PatternLuna lunaPat;
+	lunaPat.init();
+	StampEye stampEy;
+	stampEy.init(&lunaPat, 1, 12.f, 5.f, 1, 7, 6.0f, 3.f, &HexLow);
+	stampEy.spawn();
+
+	bool loop = true;
+
+	do {
+		std::cout << "do next? n\n";
+		char inpc = cin.get();
+		if (inpc != 'n')
+			loop = false;
+	} while (loop);
+
+}
+
 int testRoachFeed() {
 	RoachNet_Client* rnClient;
 	rnClient = new RoachNet_Client;
