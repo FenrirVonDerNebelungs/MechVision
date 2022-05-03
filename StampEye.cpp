@@ -185,7 +185,7 @@ unsigned char StampEye::stampRoundedCorners() {
 
 	int n_circleRadii = (int)floorf(m_numCircleRadii);
 	float cur_circleRadius = m_minCircleRadius;
-	int stamp_cnt = 0;
+	int stamp_cnt = m_num_stamps;
 	for (int i_ang = 0; i_ang < n_ang; i_ang++) {
 		for (int i_rad = 0; i_rad < n_circleRadii; i_rad++) {
 			stampRoundedCornersAtCenterAndAng(center, cur_ang, cur_circleRadius, PI / 4.f, stamp_cnt);/*increaments stamp count appropriately*/
@@ -253,18 +253,19 @@ float StampEye::AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt&
 	/*inc will be 1*/
 	long WH = (long)ceilf(2.f * R);
 	s_2pt pt = { 0.f, 0.f };
-	float av = 0;
+	float av = 0.f;
+	float tot = 0.f;
 	for (int j = 0; j < WH; j++) {
 		for (int i = 0; i < WH; i++) {
 			pt.x0 = startPt.x0 + (float)i;
 			pt.x1 = startPt.x1 + (float)j;
 			if (hexMath::inHex(R, RS, hexU, center, pt)) {
+				tot += 1.f;
 				if (isInRoundedCorner(pt))
 					av += 1.f;
 			}
 		}
 	}
-	float tot = (float)(WH * WH);
 	return av / tot;
 }
 unsigned char StampEye::setBasisFromAng(float ang) {
@@ -277,15 +278,17 @@ unsigned char StampEye::setRoundedCorner(const s_2pt& center, float radius, floa
 		return ECODE_ABORT;
 	/*assumes that the m_UcenterIn points along the x direction*/
 	m_circle_radius = radius;
-	m_UcenterIn.x0 = 0.f;
-	m_UcenterIn.x1 = -1.f;
+	m_UcenterIn.x0 = -1.f;
+	m_UcenterIn.x1 = 0.f;
 	s_2pt offset = vecMath::mul(radius, m_UcenterIn);
 	m_circle_center = vecMath::add(center, offset);
 	float halfAng = ang_rad / 2.f;
 	s_2pt l1 = { cosf(halfAng), sinf(halfAng) };
 	s_2pt l2 = { l1.x0, -l1.x1 };
-	m_Uline_perp1 = vecMath::perpUL(l1);
-	m_Uline_perp2 = vecMath::perpUR(l2);
+	m_Uline_perp1.x0 = -l1.x0; // vecMath::perpUL(l1);
+	m_Uline_perp1.x1 = -l1.x1;
+	m_Uline_perp2.x0 = -l2.x0; //vecMath::perpUR(l2);
+	m_Uline_perp2.x1 = -l2.x1;
 	/* CircCent + (-r*Uperp1) + Lunknw*l1U  = Ounknw * (-1, 0) + CircCent */
 	/* -r*Uperp1 + Lunknw * l1U = Ounknw * (-1, 0) */
 	/* -r * (Uly, -Ulx) + Lunknw * (U1x, U1y) = Ounknw * (-1, 0) */
