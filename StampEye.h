@@ -11,7 +11,7 @@
 
 #define STAMPEYEMINANGRAD 0.001f
 #define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
-#define STAMPEYEMAXNUM 100
+#define STAMPEYEMAXNUM 1000
 
 const float stampeye_radincmul = 1.5f;
 
@@ -47,7 +47,7 @@ public:
 
 	unsigned char init(
 		PatternLuna* patLuna,
-		int lowestStampLev = 1,
+		int lowestStampLev = 2,
 		float numAngDiv = 12.f,
 		float numCircleRadii = 5.f,
 		int smudgeNum = 1,/*number of smudges, along the r direction */

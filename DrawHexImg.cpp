@@ -70,7 +70,7 @@ unsigned char DrawHexImg::Init(HexBase* hbase, StampEye* stampEyep) {
 	m_defOCol.r = 0xFF;
 	m_defOCol.g = 0xFF;
 	m_defOCol.b = 0xFF;
-
+	return ECODE_OK;
 }
 void DrawHexImg::Release()
 {
@@ -326,4 +326,5 @@ bool DrawHexImg::setStampEye(int i) {
 	m_nodes = lowPlate.m_fhex;
 	m_nHex = lowPlate.m_nHex;
 	m_cur_stampEye_i = i;
+	return true;
 }

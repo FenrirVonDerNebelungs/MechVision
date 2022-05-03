@@ -5,8 +5,8 @@
 #ifndef ROACHNET_SERVER_H
 #include "RoachNet_Server.h"
 #endif
-#ifndef STAMPEYE_H
-#include "StampEye.h"
+#ifndef DRAWHEXIMG_H
+#include "DrawHexImg.h"
 #endif
 
 const unsigned int frame_msg_len = 16384;/*2^14*/
@@ -16,7 +16,7 @@ int testRoachFeed();
 int debugStamp();
 
 int main() {
-	return testRoachFeed();
+	return debugStamp();//testRoachFeed();
 }
 
 int debugStamp() {
@@ -29,18 +29,35 @@ int debugStamp() {
 	PatternLuna lunaPat;
 	lunaPat.init();
 	StampEye stampEy;
-	stampEy.init(&lunaPat, 1, 12.f, 5.f, 1, 7, 6.0f, 3.f, &HexLow);
+	stampEy.init(&lunaPat, 2, 12.f, 5.f, 1, 7, 6.0f, 3.f, &HexLow);
 	stampEy.spawn();
+	DrawHexImg hexImg;
+	hexImg.Init(&HexLow, &stampEy);
 
 	bool loop = true;
 
 	do {
+		hexImg.Run();
+		unsigned char* dispImgDat = hexImg.getHexedImg()->getImg();
+		Size frameSize(frame_width, frame_height);
+		Mat rendFrame(frameSize, CV_8UC3, (void*)dispImgDat);
+		imshow("test stamp", rendFrame);
+		char c = (char)waitKey(25);
+		if (c == 27)
+			break;
 		std::cout << "do next? n\n";
 		char inpc = cin.get();
 		if (inpc != 'n')
 			loop = false;
 	} while (loop);
 
+	hexImg.Release();
+	stampEy.release();
+	lunaPat.release();
+	HexLow.Release();
+	dummyImg.release();
+
+	return 0;
 }
 
 int testRoachFeed() {
