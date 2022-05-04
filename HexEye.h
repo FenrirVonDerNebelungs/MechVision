@@ -6,7 +6,7 @@
 #endif
 
 #define HEXEYE_MAXLEVELS 10
-#define HEXEYE_MAXEYES 100
+#define HEXEYE_MAXEYES 1000
 #define HEXEYE_MAXNEBINDXS 6 
 
 /*

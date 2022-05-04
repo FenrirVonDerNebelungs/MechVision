@@ -96,10 +96,12 @@ protected:
 	s_2pt m_UrevBasis1;
 
 	void clearEyeStamps();
+	/*utility*/
+	void zeroStampS(s_eyeStamp& s);
 
 	unsigned char stampFullNewMoons();
 	unsigned char stampMoonEye(s_hexEye& seye, float o);
-	unsigned char calcLunaStampEye(const s_hexEye& seye, s_hexEye& slunaeye);/*find the */
+	unsigned char calcLunaStampEyes();/*find the */
 
 	unsigned char stampRoundedCorners();
 	unsigned char stampRoundedCornersAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
@@ -118,6 +120,7 @@ protected:
 	bool isInRoundedCorner(const s_2pt& pt);/*rotation right handed from x0 axis by angle rotAng in rad*/
 
 	bool stampEyeIncOk(int stamp_cnt);
+
 };
 
 #endif

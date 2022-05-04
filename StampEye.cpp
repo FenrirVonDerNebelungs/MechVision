@@ -48,9 +48,12 @@ unsigned char StampEye::init(
 
 	float targr = (hexBase == NULL) ? r : hexBase->getRhex();
 	m_minCircleRadius = 2.f * targr;/*2 because the hexes in the eye even at the lowest level overlap*/
+
+	int numSmudgeArray = smudgeNum * smudgeAngNum;
+	int totalNumEyes = numSmudgeArray * STAMPEYENUM;
+	if (totalNumEyes > HEXEYE_MAXEYES)
+		return ECODE_FAIL;
 	if (RetOk(m_eyeGen->init(targr, m_lowestStampLev+1))) {
-		int numSmudgeArray = smudgeNum * smudgeAngNum;
-		int totalNumEyes = numSmudgeArray * STAMPEYENUM;
 		for (int i = 0; i < totalNumEyes; i++) {
 			m_eyeGen->spawn();
 		}
@@ -107,9 +110,8 @@ void StampEye::release() {
 unsigned char StampEye::spawn() {
 	stampFullNewMoons();
 	stampRoundedCorners();
-	for (int i = 0; i < m_eyes_stamped; i++) {
-		calcLunaStampEye(m_eyeGen->getEye(i), m_lunaEyeGen->getEye(i));
-	}
+	calcLunaStampEyes();
+
 	return ECODE_OK;
 }
 void StampEye::setupForStampi(int i) {
@@ -121,22 +123,27 @@ void StampEye::setupForStampi(int i) {
 
 void StampEye::clearEyeStamps() {
 	for (int i = 0; i < STAMPEYENUM; i++) {
-		for (int j = 0; j < STAMPEYEMAXNUM; j++) {
-			m_lunaStamps[i].eyes[j] = NULL;
-			m_stamps[i].eyes[j] = NULL;
-		}
-		m_lunaStamps[i].n = 0;
-		m_stamps[i].n = 0;
+		zeroStampS(m_lunaStamps[i]);
+		zeroStampS(m_stamps[i]);
 	}
 	m_num_stamps = 0;
 	m_eyes_stamped = 0;
 }
-unsigned char StampEye::calcLunaStampEye(const s_hexEye& seye, s_hexEye& slunaeye) {
+void StampEye::zeroStampS(s_eyeStamp& s) {
+	for (int j = 0; j < STAMPEYEMAXNUM; j++) {
+		s.eyes[j] = NULL;
+	}
+	s.mask = NULL;
+	s.n = 0;
+}
+unsigned char StampEye::calcLunaStampEyes() {
 	int maxLunLev = m_lowestStampLev - 1;
+	int lunEyeRawCnt = 0;
 	for (int s_i = 0; s_i < m_num_stamps; s_i++) {
 		for (int e_i = 0; e_i < m_stamps[s_i].n; e_i++) {
-			s_hexEye* curLunaStampEye = m_lunaStamps[s_i].eyes[e_i];
 			s_hexEye* curStampEye = m_stamps[s_i].eyes[e_i];
+			s_hexEye* curLunaStampEye = m_lunaEyeGen->getEyePtr(lunEyeRawCnt);/*lunaEyeGen acts as a resevor for the eye stamps, it is a hexEye type object*/
+			m_lunaStamps[s_i].eyes[e_i]=curLunaStampEye;/*transfer the eye pointer to the object that is actually used to reference it*/
 			/*loop over the lowest level of the lunaeyestamps and the 2nd lowest of eyestamps to fill luna value for each hex in the luna eye stamp*/
 			/*this curLunaStampEye->lev[m_lowestStampLev].m_nHex == curStampEye->lev[m_lowestStampLev].m_nHex should be true*/
 			for (int l_i = 0; l_i < curLunaStampEye->lev[maxLunLev].m_nHex; l_i++) {
