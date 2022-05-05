@@ -37,18 +37,17 @@ int debugStamp() {
 	bool loop = true;
 
 	do {
-		hexImg.Run();
+		if (hexImg.Run() != ECODE_OK)
+			break;
 		unsigned char* dispImgDat = hexImg.getHexedImg()->getImg();
 		Size frameSize(frame_width, frame_height);
 		Mat rendFrame(frameSize, CV_8UC3, (void*)dispImgDat);
-		imshow("test stamp", rendFrame);
-		char c = (char)waitKey(25);
-		if (c == 27)
-			break;
-		std::cout << "do next? n\n";
-		char inpc = cin.get();
-		if (inpc != 'n')
-			loop = false;
+		do {
+			imshow("test stamp", rendFrame);
+			char c = (char)waitKey(25);
+			if (c == 27)
+				break;
+		} while (true);
 	} while (loop);
 
 	hexImg.Release();

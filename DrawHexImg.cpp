@@ -166,6 +166,7 @@ unsigned char DrawHexImg::renderIncStamp() {
 		return ECODE_FAIL;
 	if (!setStampEye(m_cur_stampEye_i + 1))
 		return ECODE_ABORT;
+	std::cout << "setup to render stamp:" << m_cur_stampEye_i << "\n";
 	return ECODE_OK;
 }
 unsigned char DrawHexImg::drawDrivePlates(s_DrivePlate plates[], int numPlates) {

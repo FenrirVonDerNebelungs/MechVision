@@ -79,7 +79,7 @@ unsigned char StampEye::init(
 }
 void StampEye::release() {
 	int maxLunLev = m_lowestStampLev - 1;
-	if (m_lunaEyeGen != NULL) {
+ 	if (m_lunaEyeGen != NULL) {
 		/*this is an case where the node pointers of the lowest level of the eyes is actually owned by the hexEyes so this must be released before they are deleted*/
 		for (int i = 0; i < m_lunaEyeGen->getNEyes(); i++) {
 			s_hexEye* Eye = m_lunaEyeGen->getEyePtr(i);
