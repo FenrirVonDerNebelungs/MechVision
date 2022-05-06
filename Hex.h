@@ -12,8 +12,8 @@ public:
 	~Hex();
 	unsigned char Init(
 		Img* img,
-		float Rhex = 3.f,//7.f,//3.f,//5.f, //3.f,  7 for debug of eye
-		float sigmaVsR = 0.75,//1.f, //0.75f,
+		float Rhex = 9.f,//7.f,//3.f,//5.f, //3.f,  7 for debug of eye
+		float sigmaVsR = 0.75f,//1.f, //0.75f,
 		float IMaskRVsR = 1.5f
 	);
 	unsigned char Update(Img* img);

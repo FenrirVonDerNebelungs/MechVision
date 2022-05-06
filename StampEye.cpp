@@ -46,8 +46,8 @@ unsigned char StampEye::init(
 	m_eyeGen = new HexEye;
 	m_lunaEyeGen = new HexEye;
 
-	float targr = (hexBase == NULL) ? r : hexBase->getRhex();
-	m_minCircleRadius = 2.f * targr;/*2 because the hexes in the eye even at the lowest level overlap*/
+	float targr = (hexBase == NULL) ? r : 2.f*hexBase->getRhex();/*for hexEye radius overlap even at lowest level so 2 needed*/
+	m_minCircleRadius = targr;/*2 because the hexes in the eye even at the lowest level overlap*/
 
 	int numSmudgeArray = smudgeNum * smudgeAngNum;
 	int totalNumEyes = numSmudgeArray * STAMPEYENUM;
@@ -132,10 +132,40 @@ void StampEye::clearEyeStamps() {
 void StampEye::zeroStampS(s_eyeStamp& s) {
 	for (int j = 0; j < STAMPEYEMAXNUM; j++) {
 		s.eyes[j] = NULL;
+		s.raw_eye_i[j] = 0;
+		s.ang[j] = 0.f;
+		s.center_ang[j] = 0.f;
+		s.smudge_ang[j] = 0.f;
+		s.radius[j] = 0.f;
 	}
 	s.mask = NULL;
 	s.n = 0;
 }
+
+int StampEye::getStampI_fromRawIndex(int i) {
+	int stamp_i, sub_stamp_i;
+	if (!getStampIs_fromRawIndex(i, stamp_i, sub_stamp_i))
+		return -1;
+	return sub_stamp_i;
+}
+int StampEye::getStampSubI_fromRawIndex(int i) {
+	int stamp_i, sub_stamp_i;
+	if (!getStampIs_fromRawIndex(i, stamp_i, sub_stamp_i))
+		return -1;
+	return sub_stamp_i;
+}
+bool StampEye::getStampIs_fromRawIndex(int i, int& stamp_i_ret, int& sub_stamp_i_ret) {
+	for (int stamp_i = 0; stamp_i < m_num_stamps; stamp_i++) {
+		for (int sub_stamp_i=0; sub_stamp_i < m_stamps[stamp_i].n; sub_stamp_i++)
+			if (m_stamps[stamp_i].raw_eye_i[sub_stamp_i] == i) {
+				stamp_i_ret = stamp_i;
+				sub_stamp_i_ret = sub_stamp_i;
+				return true;
+			}
+	}
+	return false;
+}
+
 unsigned char StampEye::calcLunaStampEyes() {
 	int maxLunLev = m_lowestStampLev - 1;
 	int lunEyeRawCnt = 0;
@@ -191,9 +221,9 @@ unsigned char StampEye::stampRoundedCorners() {
 	float cur_ang = 0.f;
 
 	int n_circleRadii = (int)floorf(m_numCircleRadii);
-	float cur_circleRadius = m_minCircleRadius;
 	int stamp_cnt = m_num_stamps;
 	for (int i_ang = 0; i_ang < n_ang; i_ang++) {
+		float cur_circleRadius = m_minCircleRadius;
 		for (int i_rad = 0; i_rad < n_circleRadii; i_rad++) {
 			stampRoundedCornersAtCenterAndAng(center, cur_ang, cur_circleRadius, PI / 4.f, stamp_cnt);/*increaments stamp count appropriately*/
 			m_num_stamps++;
@@ -216,24 +246,32 @@ unsigned char StampEye::stampRoundedCornersAtCenterAndAng(const s_2pt& center, f
 
 	float angD = 2 * PI / m_numAngDiv;/*width of master angle*/
 	float smudgeAngD = (m_smudgeAngNum>=3) ? angD / (float)(m_smudgeAngNum-1) : 0.f;
-	float smudgeAngStart = (m_smudgeAngNum >= 3) ? smudgeAngD * ((float)m_smudgeAngNum - 1.f) / 2.f : 0.f;
+	float smudgeAngStart = (m_smudgeAngNum >= 5) ? smudgeAngD * (((float)m_smudgeAngNum - 1.f) / 2.f-1.f) : 0.f;
 	float curSmudgeAng = -smudgeAngStart;
 
 	m_stamps[stamp_cnt].n = 0;
+	float cur_ang = 0.f;
 	for (int j = 0; j < m_smudgeNum; j++) {
 		/*not yet adding the smudge from the translational smudge*/
 		/*may or  may not have the translation set up properly with stampEyeRoundedCorner*/
 		if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) {/*not really needed since center is identical to corner_center*/
-			for (int i_ang = 0; i_ang < m_smudgeAngNum; i_ang++) {
-				setBasisFromAng(curSmudgeAng);
-
+			for (int i_ang = 0; i_ang < (m_smudgeAngNum-2); i_ang++) {
+				cur_ang = curSmudgeAng + ang;
+				setBasisFromAng(cur_ang);
 				setRoundedCorner(smudge_center, circle_scale, opening_ang);
 				stampEyeRoundedCorner(m_eyeGen->getEye(m_eyes_stamped));
 				m_stamps[stamp_cnt].eyes[m_stamps[stamp_cnt].n] = m_eyeGen->getEyePtr(m_eyes_stamped);
+				m_stamps[stamp_cnt].raw_eye_i[m_stamps[stamp_cnt].n] = m_eyes_stamped;
+				m_stamps[stamp_cnt].ang[m_stamps[stamp_cnt].n] = cur_ang;
+				m_stamps[stamp_cnt].center_ang[m_stamps[stamp_cnt].n] = ang;
+				m_stamps[stamp_cnt].smudge_ang[m_stamps[stamp_cnt].n] = curSmudgeAng;
+				m_stamps[stamp_cnt].radius[m_stamps[stamp_cnt].n] = circle_scale;
+
 				(m_stamps[stamp_cnt].n)++;
 				m_eyes_stamped++;
 
 				curSmudgeAng += smudgeAngD;
+
 			}
 		}
 	}

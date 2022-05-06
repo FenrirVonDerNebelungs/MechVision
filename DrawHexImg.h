@@ -58,7 +58,7 @@ protected:
 
 
 	unsigned char genHexImgDebug();
-	unsigned char renderHexOuput();/*renders monoscale in col of hex o variable*/
+	unsigned char renderHexOuput(float offset_x=0.f, float offset_y=0.f);/*renders monoscale in col of hex o variable*/
 	unsigned char renderAdditiveHexOuput();
 	unsigned char renderIncStamp();/*renders a stamp then inc so that next stamp is rendered next call, loops over raw indexted eye stamps*/
 

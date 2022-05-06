@@ -21,6 +21,12 @@ struct s_eyeStamp {
 	s_hexEye* mask;/*mask is zero where values are considered not to matter to the nnet */
 	int n;/*number of eyes in stamp*/
 	float o;/*target value for NNet*/
+
+	int raw_eye_i[STAMPEYEMAXNUM];
+	float ang[STAMPEYEMAXNUM];
+	float center_ang[STAMPEYEMAXNUM];
+	float smudge_ang[STAMPEYEMAXNUM];
+	float radius[STAMPEYEMAXNUM];
 };
 
 /*this function generates dummy patterns that the NNet nodes at level 2 (0,1,2) will be trained on */
@@ -65,6 +71,10 @@ public:
 	inline s_eyeStamp* getLunaEyeStamps() { return m_lunaStamps; }
 	inline int numEyeStamps() { return m_eyes_stamped; }/*returns raw index counting total number of eyes stamped in the hexEyeGen obj*/
 	inline s_hexEye& getEyeRawIndex(int i) { return m_eyeGen->getEye(i); }
+
+	int getStampI_fromRawIndex(int i);
+	int getStampSubI_fromRawIndex(int i);
+	bool getStampIs_fromRawIndex(int i, int& stamp_i_ret, int& sub_stamp_i_ret);
 protected:
 	float  m_numAngDiv;
 	float  m_numCircleRadii;

@@ -127,7 +127,7 @@ unsigned char DrawHexImg::genHexImgDebug()
 	/*                             */
 	return ECODE_OK;
 }
-unsigned char DrawHexImg::renderHexOuput() {
+unsigned char DrawHexImg::renderHexOuput(float offset_x, float offset_y) {
 	for (int i = 0; i < m_nHex; i++) {
 		float r = m_nodes[i].o * (float)m_defOCol.r;
 		float g = m_nodes[i].o * (float)m_defOCol.g;
@@ -136,8 +136,8 @@ unsigned char DrawHexImg::renderHexOuput() {
 		/*debug*/
 		if (m_nodes[i].o < 0.0)
 			hexCol = imgMath::convToRGB(0, 0, 0);
-		long img_i = (long)roundf(m_nodes[i].x);
-		long img_j = (long)roundf(m_nodes[i].y);
+		long img_i = (long)roundf(m_nodes[i].x+offset_x);
+		long img_j = (long)roundf(m_nodes[i].y+offset_y);
 		m_hexedImg->PrintMaskedImg(img_i, img_j, *m_hexMaskPlus, hexCol);
 	}
 	return ECODE_OK;
@@ -161,8 +161,8 @@ unsigned char DrawHexImg::renderAdditiveHexOuput() {
 	return ECODE_OK;
 }
 unsigned char DrawHexImg::renderIncStamp() {
-	m_hexedImg->clearToChar(0x00);
-	if (Err(renderHexOuput()))
+	m_hexedImg->clearToChar(0x11);
+	if (Err(renderHexOuput(200.f, 200.f)))
 		return ECODE_FAIL;
 	if (!setStampEye(m_cur_stampEye_i + 1))
 		return ECODE_ABORT;
@@ -327,5 +327,12 @@ bool DrawHexImg::setStampEye(int i) {
 	m_nodes = lowPlate.m_fhex;
 	m_nHex = lowPlate.m_nHex;
 	m_cur_stampEye_i = i;
+	int stamp_i, sub_stamp_i;
+	if (m_stampEye->getStampIs_fromRawIndex(i, stamp_i, sub_stamp_i)) {
+		s_eyeStamp* stmps = m_stampEye->getEyeStamps();
+		std::cout << "rad: " << stmps[stamp_i].radius[sub_stamp_i] << "  ang: " << stmps[stamp_i].ang[sub_stamp_i]
+			<< "  center_ang: " << stmps[stamp_i].center_ang[sub_stamp_i] << "  smudge_ang: " << stmps[stamp_i].smudge_ang[sub_stamp_i] 
+			<< "\n";
+	}
 	return true;
 }
