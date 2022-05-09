@@ -14,11 +14,56 @@ const unsigned int loop_n = 2000;
 
 int testRoachFeed();
 int debugStamp();
+int debugStamp_rawImg();
 
 int main() {
-	return debugStamp();//testRoachFeed();
+	return debugStamp_rawImg();//testRoachFeed();
 }
+int debugStamp_rawImg() {
+	int frame_width_dummy = 640;
+	int frame_height_dummy = 480;
+	Img dummyImg;
+	dummyImg.init(frame_width_dummy, frame_height_dummy, 3L);
+	Hex HexLow;
+	HexLow.Init(&dummyImg);
+	PatternLuna lunaPat;
+	lunaPat.init();
+	StampEye* stampEy = new StampEye;
+	stampEy->init(&lunaPat, 2, 12.f, 5.f, 1, 7, 6.0f, 3.f, &HexLow);
+	stampEy->spawn();
 
+	bool loop = true;
+
+	for (int i_stamps = 0; i_stamps < stampEy->numStamps(); i_stamps++) {
+		s_eyeStamp& curStamp = stampEy->getEyeStamp(i_stamps);
+		for (int i_smearStamp = 0; i_smearStamp < curStamp.n; i_smearStamp++) {
+			Img* cur_debugImg = curStamp.imgs[i_smearStamp];
+			if (cur_debugImg->getWidth() > 0.f) {
+				unsigned char* dispImgDat = cur_debugImg->getImg();
+				Size frameSize(cur_debugImg->getWidth(), cur_debugImg->getHeight());
+				Mat rendFrame(frameSize, CV_8UC3, (void*)dispImgDat);
+				std::cout << "rad: " << curStamp.radius[i_smearStamp] << "  ang: " << curStamp.ang[i_smearStamp]
+					<< "  center_ang: " << curStamp.center_ang[i_smearStamp] << "  smudge_ang: " << curStamp.smudge_ang[i_smearStamp]
+					<< "\n";
+				do {
+					imshow("test stamp", rendFrame);
+					char c = (char)waitKey(25);
+					if (c == 27)
+						break;
+				} while (true);
+			}
+		}
+	}
+
+	stampEy->release();
+	delete stampEy;
+	stampEy = NULL;
+	lunaPat.release();
+	HexLow.Release();
+	dummyImg.release();
+
+	return 0;
+}
 int debugStamp() {
 	int frame_width = 640;
 	int frame_height = 480;
@@ -28,11 +73,11 @@ int debugStamp() {
 	HexLow.Init(&dummyImg);
 	PatternLuna lunaPat;
 	lunaPat.init();
-	StampEye stampEy;
-	stampEy.init(&lunaPat, 2, 12.f, 5.f, 1, 7, 6.0f, 3.f, &HexLow);
-	stampEy.spawn();
+	StampEye* stampEy = new StampEye;
+	stampEy->init(&lunaPat, 2, 12.f, 5.f, 1, 7, 6.0f, 3.f, &HexLow);
+	stampEy->spawn();
 	DrawHexImg hexImg;
-	hexImg.Init(&HexLow, &stampEy);
+	hexImg.Init(&HexLow, stampEy);
 
 	bool loop = true;
 
@@ -51,7 +96,9 @@ int debugStamp() {
 	} while (loop);
 
 	hexImg.Release();
-	stampEy.release();
+	stampEy->release();
+	delete stampEy;
+	stampEy = NULL;
 	lunaPat.release();
 	HexLow.Release();
 	dummyImg.release();

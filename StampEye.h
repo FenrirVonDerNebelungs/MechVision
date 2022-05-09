@@ -9,6 +9,8 @@
 #include "PatternLuna.h"
 #endif
 
+#define STAMPEYE_DODEBUGIMG
+
 #define STAMPEYEMINANGRAD 0.001f
 #define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
 #define STAMPEYEMAXNUM 1000
@@ -27,6 +29,10 @@ struct s_eyeStamp {
 	float center_ang[STAMPEYEMAXNUM];
 	float smudge_ang[STAMPEYEMAXNUM];
 	float radius[STAMPEYEMAXNUM];
+#ifdef STAMPEYE_DODEBUGIMG
+	long img_dim;
+	Img* imgs[STAMPEYEMAXNUM];
+#endif
 };
 
 /*this function generates dummy patterns that the NNet nodes at level 2 (0,1,2) will be trained on */
@@ -68,7 +74,9 @@ public:
 	void          setupForStampi(int i);/*sets up the stamps with the o's so that they are ready to be run with the i'th configuration selectedd*/
 
 	inline s_eyeStamp* getEyeStamps() { return m_stamps; }
+	s_eyeStamp& getEyeStamp(int i) { return m_stamps[i]; }
 	inline s_eyeStamp* getLunaEyeStamps() { return m_lunaStamps; }
+	inline int numStamps() { return m_num_stamps; }
 	inline int numEyeStamps() { return m_eyes_stamped; }/*returns raw index counting total number of eyes stamped in the hexEyeGen obj*/
 	inline s_hexEye& getEyeRawIndex(int i) { return m_eyeGen->getEye(i); }
 
@@ -117,7 +125,14 @@ protected:
 	unsigned char stampRoundedCornersAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
 
 	unsigned char stampEyeRoundedCorner(s_hexEye& seye);
+#ifdef STAMPEYE_DODEBUGIMG
+	unsigned char RenderCornerImage(Img* img, s_hexEye& seye);
+#endif
 	float AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt& center);
+#ifdef STAMPEYE_DODEBUGIMG
+	unsigned char RenderPerHexCornerImage(Img* img, const s_hexPlate& eyeplate, const s_2pt& center);
+	bool stampCoordToImgCoord(Img* img, const s_2pt& pt, s_2pt_i& img_pt);
+#endif
 
 	unsigned char setBasisFromAng(float ang);
 	unsigned char setRoundedCorner(const s_2pt& center/*center of rounded middle, in middle of edge*/, float radius, float ang_rad);
@@ -130,7 +145,6 @@ protected:
 	bool isInRoundedCorner(const s_2pt& pt);/*rotation right handed from x0 axis by angle rotAng in rad*/
 
 	bool stampEyeIncOk(int stamp_cnt);
-
 };
 
 #endif

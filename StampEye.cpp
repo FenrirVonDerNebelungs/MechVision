@@ -75,10 +75,34 @@ unsigned char StampEye::init(
 		}
 	}
 	else return ECODE_FAIL;
+#ifdef STAMPEYE_DODEBUGIMG
+	/*calculate size of img*/
+	/*1+x^1 + x^2 + x^3 +... = (1-x^(n-1))/(1-x)*/
+	/*for level = N max radius = (1-2^N)/(1-2) = 2^N-1*/
+	float multFac = Math::power(2.f, m_lowestStampLev + 1);
+	float maxRad = targr * multFac; /*this is really targr/2 but add a factor of 2 padding*/
+	for (int i = 0; i < STAMPEYENUM; i++) {
+		m_stamps[i].img_dim = (long)(ceilf(maxRad));
+		for (int j = 0; j < STAMPEYEMAXNUM; j++)
+			m_stamps[i].imgs[j] = new Img;
+	}
+#endif
 	return ECODE_OK;
 }
 void StampEye::release() {
 	int maxLunLev = m_lowestStampLev - 1;
+#ifdef STAMPEYE_DODEBUGIMG
+	for (int i = 0; i < STAMPEYENUM; i++) {
+		for (int j = 0; j < STAMPEYEMAXNUM; j++) {
+			if (m_stamps[i].imgs[j] != NULL) {
+				m_stamps[i].imgs[j]->release();
+				delete m_stamps[i].imgs[j];
+				m_stamps[i].imgs[j] = NULL;
+			}
+		}
+		m_stamps[i].img_dim = 0;
+	}
+#endif
  	if (m_lunaEyeGen != NULL) {
 		/*this is an case where the node pointers of the lowest level of the eyes is actually owned by the hexEyes so this must be released before they are deleted*/
 		for (int i = 0; i < m_lunaEyeGen->getNEyes(); i++) {
@@ -137,6 +161,9 @@ void StampEye::zeroStampS(s_eyeStamp& s) {
 		s.center_ang[j] = 0.f;
 		s.smudge_ang[j] = 0.f;
 		s.radius[j] = 0.f;
+#ifdef STAMPEYE_DODEBUGIMG
+		s.imgs[j] = NULL;
+#endif
 	}
 	s.mask = NULL;
 	s.n = 0;
@@ -195,13 +222,20 @@ unsigned char StampEye::stampFullNewMoons() {
 	stampMoonEye(m_eyeGen->getEye(m_eyes_stamped), 0.f);
 	m_stamps[m_num_stamps].eyes[0] = m_eyeGen->getEyePtr(m_eyes_stamped);
 	m_stamps[m_num_stamps].n = 1;
+#ifdef STAMPEYE_DODEBUGIMG
+	m_stamps[m_num_stamps].imgs[0]->init(m_stamps[m_num_stamps].img_dim, m_stamps[m_num_stamps].img_dim, 3L);
+#endif
 	m_eyes_stamped++;
 	m_num_stamps++;
 	stampMoonEye(m_eyeGen->getEye(m_eyes_stamped), 1.f);
 	m_stamps[m_num_stamps].eyes[0] = m_eyeGen->getEyePtr(m_eyes_stamped);
 	m_stamps[m_num_stamps].n = 1;
+#ifdef STAMPEYE_DODEBUGIMG
+	m_stamps[m_num_stamps].imgs[0]->init(m_stamps[m_num_stamps].img_dim, m_stamps[m_num_stamps].img_dim, 3L);
+#endif
 	m_eyes_stamped++;
 	m_num_stamps++;
+
 	return ECODE_OK;
 }
 unsigned char StampEye::stampMoonEye(s_hexEye& seye, float o) {
@@ -256,10 +290,17 @@ unsigned char StampEye::stampRoundedCornersAtCenterAndAng(const s_2pt& center, f
 		/*may or  may not have the translation set up properly with stampEyeRoundedCorner*/
 		if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) {/*not really needed since center is identical to corner_center*/
 			for (int i_ang = 0; i_ang < (m_smudgeAngNum-2); i_ang++) {
+#ifdef STAMPEYE_DODEBUGIMG
+				m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n]->init(m_stamps[stamp_cnt].img_dim, m_stamps[stamp_cnt].img_dim, 3L);
+				m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n]->clearToChar(0x00);
+#endif
 				cur_ang = curSmudgeAng + ang;
 				setBasisFromAng(cur_ang);
 				setRoundedCorner(smudge_center, circle_scale, opening_ang);
 				stampEyeRoundedCorner(m_eyeGen->getEye(m_eyes_stamped));
+#ifdef STAMPEYE_DODEBUGIMG
+				RenderCornerImage(m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n], m_eyeGen->getEye(m_eyes_stamped));
+#endif
 				m_stamps[stamp_cnt].eyes[m_stamps[stamp_cnt].n] = m_eyeGen->getEyePtr(m_eyes_stamped);
 				m_stamps[stamp_cnt].raw_eye_i[m_stamps[stamp_cnt].n] = m_eyes_stamped;
 				m_stamps[stamp_cnt].ang[m_stamps[stamp_cnt].n] = cur_ang;
@@ -290,6 +331,19 @@ unsigned char StampEye::stampEyeRoundedCorner(s_hexEye& seye) {
 	}
 	return ECODE_OK;
 }
+#ifdef STAMPEYE_DODEBUGIMG
+unsigned char StampEye::RenderCornerImage(Img* img, s_hexEye& seye) {
+	int lowestN = seye.n - 1;
+	s_hexPlate& eyeplate = seye.lev[lowestN];
+	s_2pt xy;
+	for (int i = 0; i < eyeplate.m_nHex; i++) {
+		xy.x0 = eyeplate.m_fhex[i].x;
+		xy.x1 = eyeplate.m_fhex[i].y;
+		RenderPerHexCornerImage(img, eyeplate, xy);
+	}
+	return ECODE_OK;
+}
+#endif
 float StampEye::AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt& center) {
 	float R = eyeplate.m_Rhex;
 	float RS = eyeplate.m_RShex;
@@ -313,6 +367,46 @@ float StampEye::AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt&
 	}
 	return av / tot;
 }
+#ifdef STAMPEYE_DODEBUGIMG
+unsigned char StampEye::RenderPerHexCornerImage(Img* img, const s_hexPlate& eyeplate, const s_2pt& center) {
+	s_rgb img_set_col = { 0xFF, 0xFF, 0xFF };
+	float R = eyeplate.m_Rhex;
+	float RS = eyeplate.m_RShex;
+	s_2pt* hexU = m_eyeGen->getUHex();
+	const s_2pt startPt = { center.x0 - R, center.x1 - R };
+	/*inc will be 1*/
+	long WH = (long)ceilf(2.f * R);
+	s_2pt pt = { 0.f, 0.f };
+	for (int j = 0; j < WH; j++) {
+		for (int i = 0; i < WH; i++) {
+			pt.x0 = startPt.x0 + (float)i;
+			pt.x1 = startPt.x1 + (float)j;
+			if (hexMath::inHex(R, RS, hexU, center, pt)) {
+				if (isInRoundedCorner(pt)) {
+					s_2pt_i img_pt = { 0, 0 };
+					if (stampCoordToImgCoord(img, pt, img_pt)) {
+						img->SetRGB(img_pt.x0, img_pt.x1, img_set_col);
+					}
+				}
+			}
+		}
+	}
+}
+bool StampEye::stampCoordToImgCoord(Img* img, const s_2pt& pt, s_2pt_i& img_pt) {
+	float img_mid_calc = img->getWidth();
+	img_mid_calc /= 2.f;
+	long img_mid = (long)floorf(img_mid_calc);
+	img_pt.x0 = (long)floorf(pt.x0);
+	img_pt.x1 = (long)floorf(pt.x1);
+	img_pt.x0 += img_mid;
+	img_pt.x1 += img_mid;
+	if (img_pt.x0 < 0 || img_pt.x1 < 0)
+		return false;
+	if (img_pt.x1 >= img->getHeight() || img_pt.x0 >= img->getWidth())
+		return false;
+	return true;
+}
+#endif
 unsigned char StampEye::setBasisFromAng(float ang) {
 	vecMath::setBasis(ang, m_UBasis0, m_UBasis1);
 	vecMath::revBasis(m_UBasis0, m_UBasis1, m_UrevBasis0, m_UrevBasis1);
