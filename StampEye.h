@@ -9,13 +9,13 @@
 #include "PatternLuna.h"
 #endif
 
-#define STAMPEYE_DODEBUGIMG
+//#define STAMPEYE_DODEBUGIMG
 
 #define STAMPEYEMINANGRAD 0.001f
 #define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
 #define STAMPEYEMAXNUM 1000
 
-const float stampeye_radincmul = 1.5f;
+const float stampeye_radincmul = 2.f;
 
 struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
@@ -104,8 +104,9 @@ protected:
 	s_2pt m_circle_center;
 	float m_circle_radius;
 	s_2pt m_line_intersect;
+	s_2pt m_circle_half_pt;/*point in the x direction that is the x coord of the line intercepts*/
 	s_2pt m_Uline_perp1;/*points perp to line 1 into region beetween lines*/
-	s_2pt m_Uline_perp2;
+	s_2pt m_Uline_perp2;/* "                  2         "                 */
 	s_2pt m_UcenterIn;/*points inward from center of where lines would intersect, should be set to 1,0*/
 
 	s_2pt m_UBasis0;

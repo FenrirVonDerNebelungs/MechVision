@@ -17,8 +17,12 @@ int debugStamp();
 int debugStamp_rawImg();
 
 int main() {
+	#ifdef STAMPEYE_DODEBUGIMG
 	return debugStamp_rawImg();//testRoachFeed();
+#endif
+	return debugStamp();
 }
+#ifdef STAMPEYE_DODEBUGIMG
 int debugStamp_rawImg() {
 	int frame_width_dummy = 640;
 	int frame_height_dummy = 480;
@@ -64,6 +68,7 @@ int debugStamp_rawImg() {
 
 	return 0;
 }
+#endif
 int debugStamp() {
 	int frame_width = 640;
 	int frame_height = 480;

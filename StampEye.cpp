@@ -6,6 +6,8 @@ StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadiu
 	m_circle_center.x1 = 0.f;
 	m_line_intersect.x0 = 0.f;
 	m_line_intersect.x1 = 0.f;
+	m_circle_half_pt.x0 = 0.f;
+	m_circle_half_pt.x1 = 0.f;
 	m_Uline_perp1.x0 = 0.f;
 	m_Uline_perp1.x1 = 0.f;
 	m_Uline_perp2.x0 = 0.f;
@@ -82,7 +84,7 @@ unsigned char StampEye::init(
 	float multFac = Math::power(2.f, m_lowestStampLev + 1);
 	float maxRad = targr * multFac; /*this is really targr/2 but add a factor of 2 padding*/
 	for (int i = 0; i < STAMPEYENUM; i++) {
-		m_stamps[i].img_dim = (long)(ceilf(maxRad));
+		m_stamps[i].img_dim = 2*(long)(ceilf(maxRad));
 		for (int j = 0; j < STAMPEYEMAXNUM; j++)
 			m_stamps[i].imgs[j] = new Img;
 	}
@@ -259,7 +261,7 @@ unsigned char StampEye::stampRoundedCorners() {
 	for (int i_ang = 0; i_ang < n_ang; i_ang++) {
 		float cur_circleRadius = m_minCircleRadius;
 		for (int i_rad = 0; i_rad < n_circleRadii; i_rad++) {
-			stampRoundedCornersAtCenterAndAng(center, cur_ang, cur_circleRadius, PI / 4.f, stamp_cnt);/*increaments stamp count appropriately*/
+			stampRoundedCornersAtCenterAndAng(center, cur_ang, cur_circleRadius, PI / 2.f, stamp_cnt);/*increaments stamp count appropriately*/
 			m_num_stamps++;
 			if (!stampEyeIncOk(stamp_cnt))
 				break;
@@ -391,9 +393,10 @@ unsigned char StampEye::RenderPerHexCornerImage(Img* img, const s_hexPlate& eyep
 			}
 		}
 	}
+	return ECODE_OK;
 }
 bool StampEye::stampCoordToImgCoord(Img* img, const s_2pt& pt, s_2pt_i& img_pt) {
-	float img_mid_calc = img->getWidth();
+	float img_mid_calc = (float)img->getWidth();
 	img_mid_calc /= 2.f;
 	long img_mid = (long)floorf(img_mid_calc);
 	img_pt.x0 = (long)floorf(pt.x0);
@@ -424,17 +427,12 @@ unsigned char StampEye::setRoundedCorner(const s_2pt& center, float radius, floa
 	float halfAng = ang_rad / 2.f;
 	s_2pt l1 = { cosf(halfAng), sinf(halfAng) };
 	s_2pt l2 = { l1.x0, -l1.x1 };
-	m_Uline_perp1.x0 = -l1.x0; // vecMath::perpUL(l1);
+	s_2pt circle_half_pt = { radius * l1.x0, 0.f };/*l1.x0=l2.x0 this is the point on the center line between the enclosing line intercepts*/
+	m_circle_half_pt = vecMath::add(circle_half_pt, offset);/*correct since coord system is centered at circle edge*/
+	m_Uline_perp1.x0 = -l1.x0;/*these are the lines perp to the enclosing lines*/
 	m_Uline_perp1.x1 = -l1.x1;
-	m_Uline_perp2.x0 = -l2.x0; //vecMath::perpUR(l2);
+	m_Uline_perp2.x0 = -l2.x0; 
 	m_Uline_perp2.x1 = -l2.x1;
-	/* CircCent + (-r*Uperp1) + Lunknw*l1U  = Ounknw * (-1, 0) + CircCent */
-	/* -r*Uperp1 + Lunknw * l1U = Ounknw * (-1, 0) */
-	/* -r * (Uly, -Ulx) + Lunknw * (U1x, U1y) = Ounknw * (-1, 0) */
-	/* -r*Uly + Lunknw*Ulx = -Ounknw */
-	/* r*Uly - Lunknw*Ulx = Ounknw */
-	/*  r*Ulx + Lunknw*Uly = 0 */
-	/*  Lunknw = -r*Ulx/Uly */
 	float Ltanvec = radius * l1.x1 / l1.x0;
 	float OutToPt = radius * l1.x0 + Ltanvec * l1.x1;
 	m_line_intersect.x1 = center.x1;
@@ -446,7 +444,7 @@ bool StampEye::isUnderLine(const s_2pt& pt, const s_2pt& Uline_perp) {
 	return vecMath::dot(VtoPt, Uline_perp) >= 0;
 }
 bool StampEye::isInsideCurveHalf(const s_2pt& pt) {
-	s_2pt VtoPt = vecMath::v12(m_circle_center, pt);
+	s_2pt VtoPt = vecMath::v12(m_circle_half_pt, pt);
 	return vecMath::dot(VtoPt, m_UcenterIn) >= 0;
 }
 bool StampEye::isInRoundedCornerNoRot(const s_2pt& pt) {
