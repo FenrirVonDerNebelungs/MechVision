@@ -17,10 +17,11 @@ int debugStamp();
 int debugStamp_rawImg();
 
 int main() {
-	#ifdef STAMPEYE_DODEBUGIMG
+#ifdef STAMPEYE_DODEBUGIMG
 	return debugStamp_rawImg();//testRoachFeed();
-#endif
+#else
 	return debugStamp();
+#endif
 }
 #ifdef STAMPEYE_DODEBUGIMG
 int debugStamp_rawImg() {

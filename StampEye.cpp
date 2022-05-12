@@ -349,6 +349,9 @@ unsigned char StampEye::RenderCornerImage(Img* img, s_hexEye& seye) {
 float StampEye::AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt& center) {
 	float R = eyeplate.m_Rhex;
 	float RS = eyeplate.m_RShex;
+	/*the eye has overlaps but the base hex level does not, so reduce radius*/
+	R /= 2.f;
+	RS /= 2.f;
 	s_2pt* hexU = m_eyeGen->getUHex();
 	const s_2pt startPt = { center.x0 - R, center.x1 - R };
 	/*inc will be 1*/
@@ -374,6 +377,9 @@ unsigned char StampEye::RenderPerHexCornerImage(Img* img, const s_hexPlate& eyep
 	s_rgb img_set_col = { 0xFF, 0xFF, 0xFF };
 	float R = eyeplate.m_Rhex;
 	float RS = eyeplate.m_RShex;
+	/*the eye has overlaps but the base hex level does not, so reduce radius*/
+	R /= 2.f;
+	RS /= 2.f;
 	s_2pt* hexU = m_eyeGen->getUHex();
 	const s_2pt startPt = { center.x0 - R, center.x1 - R };
 	/*inc will be 1*/

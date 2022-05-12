@@ -51,7 +51,10 @@ protected:
 	Img* m_hexMaskPlus;
 	Img* m_lowerHexMask;
 	StampEye* m_stampEye;
+	s_hexPlate* m_curStampPlate;
 	int m_cur_stampEye_i;
+	int m_cur_stamp_i;
+	int m_cur_sub_stamp_i;
 	/*owned*/
 	Img* m_hexedImg;
 	s_rgb m_defOCol;
@@ -68,10 +71,13 @@ protected:
 	unsigned char genEyeImgDebug(s_hexEye& eye);
 	unsigned char drawWebHexPlate(s_hexPlate& plate, s_2pt& offset, int web_i);
 	unsigned char drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);
+	unsigned char drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);
 	unsigned char drawLowerNodes(s_fNode* hiNode, Img* hexMask, s_2pt& offset, s_rgb& col);
 	void colRotate(s_rgb& col, unsigned char addc, unsigned char basecol=0x00);
 
 	bool setStampEye(int i);
+	s_hexPlate& setStampEyeAsRaw(int i);
+	s_hexPlate& setStampEyeAsLuna(int i_stamp, int i_sub_stamp);
 };
 
 
