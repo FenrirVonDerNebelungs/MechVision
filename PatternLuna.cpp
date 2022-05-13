@@ -104,6 +104,6 @@ namespace PatternLunaThreaded {
 			if (lowLinkPtr != NULL)
 				sumN += lowLinkPtr->o * lev0.w[i];
 		}
-		lev0.o = Math::StepFunc(sumN - 0.5f);
+		lev0.o = Math::StepFunc(sumN);// -0.5f);
 	}
 }
