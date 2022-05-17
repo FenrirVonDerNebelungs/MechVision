@@ -59,7 +59,7 @@ unsigned char PatternLuna::GenNodeStructure() {
 void PatternLuna::genNodePattern(int nodeRot, s_fNode* patOUT) {
 	int arcLen = 3;
 	float posFracWeight = 1.f / (3.5f);
-	float negFracWeight = -3.5f / 2.f;//-1.f / arcLen;
+	float negFracWeight = -0.5f;//-3.5f / 2.f;//-1.f / arcLen;
 	for (int i = 0; i < PATTERNLUNA_FOOTS; i++)
 		patOUT->w[i] = negFracWeight;
 	for (int i = 0; i <= arcLen; i++) {

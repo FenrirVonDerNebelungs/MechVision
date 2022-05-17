@@ -211,11 +211,13 @@ unsigned char StampEye::calcLunaStampEyes() {
 				s_fNode& curStampNode = (curStampEye->lev[maxLunLev].m_fhex[l_i]);
 				for (int lun_i = 0; lun_i < curLunaStampEye->lev[maxLunLev].m_fhex[l_i].N; lun_i++) {
 					s_fNode& lunaPatNode = *(m_patternLuna->getPatNode(lun_i));
-					s_fNode& curLunaStampNode = *(s_fNode*)(curLunaStampEye->lev[maxLunLev].m_fhex[l_i].nodes[lun_i]);
+					s_fNode* curLunaStampNode = (s_fNode*)(curLunaStampEye->lev[maxLunLev].m_fhex[l_i].nodes[lun_i]);
+					curLunaStampEye->lev[maxLunLev].m_fhex[l_i].o = 0.f;
 					PatternLunaThreaded::evalLowerNode(lunaPatNode, curStampNode);/*this fills the o of the curStampNode so that it returns the luna value from evaluating in the center of the hex*/
-					curLunaStampNode.o = lunaPatNode.o;
+					curLunaStampNode->o = lunaPatNode.o;
 				}
 			}
+			lunEyeRawCnt++;
 		}
 	}
 	return ECODE_OK;

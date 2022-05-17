@@ -280,7 +280,7 @@ unsigned char DrawHexImg::drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask,
 		float strongest_luna_o = -99.f;
 		for (int luna_i = 0; luna_i < PATTERNLUNA_NUM; luna_i++) {
 			float luna_o = plate.m_fhex[i].nodes[luna_i]->o;
-			if (luna_o > strongest_luna_o) {
+			if (luna_o >= strongest_luna_o) {
 				strongest_luna_o = luna_o;
 				strongest_luna_i = luna_i;
 			}
