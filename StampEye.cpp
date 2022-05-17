@@ -226,6 +226,7 @@ unsigned char StampEye::stampFullNewMoons() {
 	stampMoonEye(m_eyeGen->getEye(m_eyes_stamped), 0.f);
 	m_stamps[m_num_stamps].eyes[0] = m_eyeGen->getEyePtr(m_eyes_stamped);
 	m_stamps[m_num_stamps].n = 1;
+	m_stamps[m_num_stamps].raw_eye_i[0] = m_eyes_stamped;
 #ifdef STAMPEYE_DODEBUGIMG
 	m_stamps[m_num_stamps].imgs[0]->init(m_stamps[m_num_stamps].img_dim, m_stamps[m_num_stamps].img_dim, 3L);
 #endif
@@ -234,6 +235,7 @@ unsigned char StampEye::stampFullNewMoons() {
 	stampMoonEye(m_eyeGen->getEye(m_eyes_stamped), 1.f);
 	m_stamps[m_num_stamps].eyes[0] = m_eyeGen->getEyePtr(m_eyes_stamped);
 	m_stamps[m_num_stamps].n = 1;
+	m_stamps[m_num_stamps].raw_eye_i[0] = m_eyes_stamped;
 #ifdef STAMPEYE_DODEBUGIMG
 	m_stamps[m_num_stamps].imgs[0]->init(m_stamps[m_num_stamps].img_dim, m_stamps[m_num_stamps].img_dim, 3L);
 #endif

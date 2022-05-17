@@ -221,7 +221,7 @@ unsigned char DrawHexImg::genLineImg(LineFinder* lineFinder) {
 	return ECODE_OK;
 }
 s_rgb DrawHexImg::genLineCol(int lunai) {
-	s_rgb rgb = { 0xff, 0xff, 0xff };
+	s_rgb rgb = { 0x22, 0x22, 0x22 };
 	float mul1 = 0x33;
 	float mul2 = 0x44;
 	if (lunai < 3) {
@@ -236,9 +236,9 @@ s_rgb DrawHexImg::genLineCol(int lunai) {
 		rgb = imgMath::convToRGB(0xff, g, b);
 	}
 	else if (lunai == 6) {
-		rgb.r = 0x22;
-		rgb.g = 0x22;
-		rgb.b = 0x22;
+		rgb.r = 0xdd;
+		rgb.g = 0xdd;
+		rgb.b = 0xdd;
 	}
 	return rgb;
 }
@@ -277,10 +277,10 @@ unsigned char DrawHexImg::drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask,
 	for (long i = 0; i < plate.m_nHex; i++) {
 		/*find the color based on the strongest luna*/
 		int strongest_luna_i = -1;
-		float strongest_luna_o = -99.f;
-		for (int luna_i = 0; luna_i < PATTERNLUNA_NUM; luna_i++) {
+		float strongest_luna_o = 0.501f;
+		for (int luna_i = 6; luna_i < PATTERNLUNA_NUM; luna_i++){//PATTERNLUNA_NUM; luna_i++) {
 			float luna_o = plate.m_fhex[i].nodes[luna_i]->o;
-			if (luna_o >= strongest_luna_o) {
+			if (luna_o > strongest_luna_o) {
 				strongest_luna_o = luna_o;
 				strongest_luna_i = luna_i;
 			}
@@ -367,6 +367,8 @@ bool DrawHexImg::setStampEye(int i) {
 			<< "  center_ang: " << stmps[stamp_i].center_ang[sub_stamp_i] << "  smudge_ang: " << stmps[stamp_i].smudge_ang[sub_stamp_i] 
 			<< "\n";
 	}
+	else
+		return false;
 	/*stamp eye raw*/
 //	s_hexPlate& lowPlate = setStampEyeAsRaw(i);
 	/*stamp eye luna*/
