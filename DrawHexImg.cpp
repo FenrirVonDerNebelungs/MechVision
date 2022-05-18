@@ -8,6 +8,9 @@ m_hexedImg(NULL)
 	m_defOCol.r= 0x00;
 	m_defOCol.g = 0x00;
 	m_defOCol.b = 0x00;
+	for (int i = 0; i < PATTERNLUNA_NUM; i++) {
+		m_lunaMiniMask[i] = NULL;
+	}
 }
 DrawHexImg::~DrawHexImg()
 {
@@ -69,6 +72,7 @@ unsigned char DrawHexImg::Init(HexBase* hbase, StampEye* stampEyep) {
 	if (!setStampEye(0))
 		return ECODE_ABORT;
 	m_hexedImg->clearToChar(0x00);
+	initLunaMiniMasks(hbase);
 	m_defOCol.r = 0xFF;
 	m_defOCol.g = 0xFF;
 	m_defOCol.b = 0xFF;
@@ -388,4 +392,46 @@ s_hexPlate& DrawHexImg::setStampEyeAsLuna(int i_stamp, int i_sub_stamp) {
 	int eye_n = lunaEye->n;
 	m_curStampPlate = &(lunaEye->lev[eye_n - 1]);
 	return *m_curStampPlate;
+}
+unsigned char DrawHexImg::initLunaMiniMasks(HexBase* hbase) {
+	Img* oldMask = hbase->getHexMask();
+	for (int i = 0; i < PATTERNLUNA_NUM; i++) {
+		m_lunaMiniMask[i] = new Img;
+		m_lunaMiniMask[i]->init(oldMask->getWidth(), oldMask->getHeight(), oldMask->getColorMode());
+		m_lunaMiniMask[i]->clearToChar(0x00);
+	}
+	s_2pt* hexUs = hbase->getHexUs();
+	s_2pt maskCenter = { ((float)oldMask->getWidth())/2.f, ((float)oldMask->getHeight())/2.f };
+	for (int i = 0; i < 6; i++) {
+		s_2pt perpAtU = getPerpAtU(hexUs, i);
+		for (long i_mask = 0; i_mask < m_lunaMiniMask[i]->getWidth(); i_mask++) {
+			for (long j_mask = 0; j_mask < m_lunaMiniMask[i]->getHeight(); j_mask++) {
+				uint32_t mask_col = oldMask->GetColRGB(i_mask, j_mask);
+				uint32_t luna_mask = getInHalf(maskCenter, i_mask, j_mask, perpAtU);
+				uint32_t new_col = mask_col & luna_mask;
+				m_lunaMiniMask[i]->SetColRGB(i_mask, j_mask, new_col);
+			}
+		}
+	}
+	return ECODE_OK;
+}
+void DrawHexImg::releaseLunaMiniMasks() {
+	for (int i = 0; i < PATTERNLUNA_NUM; i++) {
+		if (m_lunaMiniMask[i] != NULL) {
+			m_lunaMiniMask[i]->release();
+			delete m_lunaMiniMask[i];
+			m_lunaMiniMask[i] = NULL;
+		}
+	}
+}
+s_2pt DrawHexImg::getPerpAtU(s_2pt* hexUs, int i_u) {
+	return vecMath::perpUR(hexUs[i_u]);
+}
+uint32_t DrawHexImg::getInHalf(const s_2pt& center, long mask_x, long mask_y, const s_2pt& perp) {
+	/*been drawing the image with the y up in the internal coord, which is actually down on screen*/
+	s_2pt xy = { (float)mask_x, (float)mask_y };
+	s_2pt vTop = vecMath::v12(center, xy);
+	float dotp = vecMath::dot(perp, vTop);
+	/*if on same side as the perp vector points mask is white*/
+	return (dotp >= 0.f) ? 0xffffff : 0x000000;
 }

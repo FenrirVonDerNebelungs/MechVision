@@ -181,6 +181,10 @@ void Img::SetColRGB(long index, uint32_t col)
 	s_rgb rgb = UintToRGB(col);
 	SetRGB(index, rgb);
 }
+void Img::SetColRGB(long x_i, long y_i, uint32_t col) {
+	s_rgb rgb = UintToRGB(col);
+	SetRGB(x_i, y_i, rgb);
+}
 void Img::AddCol(long index, uint32_t col)
 {
 	if (m_colorMode == 4) {
@@ -210,6 +214,10 @@ uint32_t Img::GetColRGBA(long index) {
 }
 uint32_t Img::GetColRGB(long index) {
 	s_rgb rgb = GetRGB(index);
+	return rgbToUint(rgb);
+}
+uint32_t Img::GetColRGB(long x_i, long y_i) {
+	s_rgb rgb = GetRGB(x_i, y_i);
 	return rgbToUint(rgb);
 }
 unsigned char Img::PrintMaskedImg(long x_i, long y_j, const Img& pImg, const s_rgb& rgb)

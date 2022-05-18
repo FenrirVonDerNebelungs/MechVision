@@ -28,6 +28,7 @@ public:
 	uint32_t GetCol(long index);
 	uint32_t GetColRGBA(long index);
 	uint32_t GetColRGB(long index);
+	uint32_t GetColRGB(long x_i, long y_i);
 	void   SetRGBA(long x_i, long y_i, const s_rgba& rgba);
 	void   SetRGB(long x_i, long y_i, const s_rgb& rgb);
 	void   SetRGBA(long index, const s_rgba& rgba);
@@ -37,6 +38,7 @@ public:
 	void   SetCol(long index, uint32_t col);
 	void   SetColRGBA(long index, uint32_t col);
 	void   SetColRGB(long index, uint32_t col);
+	void   SetColRGB(long x_i, long y_i, uint32_t col);
 	void   AddCol(long index, uint32_t col);
 
 	unsigned char PrintMaskedImg(long x_i, long y_j, const Img& pImg, const s_rgb& rgb);

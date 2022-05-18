@@ -59,6 +59,8 @@ protected:
 	Img* m_hexedImg;
 	s_rgb m_defOCol;
 
+	/*help for luna owned*/
+	Img* m_lunaMiniMask[PATTERNLUNA_NUM];
 
 	unsigned char genHexImgDebug();
 	unsigned char renderHexOuput(float offset_x=0.f, float offset_y=0.f);/*renders monoscale in col of hex o variable*/
@@ -78,6 +80,12 @@ protected:
 	bool setStampEye(int i);
 	s_hexPlate& setStampEyeAsRaw(int i);
 	s_hexPlate& setStampEyeAsLuna(int i_stamp, int i_sub_stamp);
+
+	/*luna helper*/
+	unsigned char initLunaMiniMasks(HexBase* hbase);
+	void releaseLunaMiniMasks();
+	s_2pt getPerpAtU(s_2pt* hexUs, int i_u);
+	uint32_t getInHalf(const s_2pt& center, long mask_x, long mask_y, const s_2pt& perp);
 };
 
 
