@@ -246,7 +246,20 @@ s_rgb DrawHexImg::genLineCol(int lunai) {
 	}
 	return rgb;
 }
-
+s_rgb DrawHexImg::genLunaCol(int lunai, float o) {
+	s_rgb rgb = { 0xff, 0x66, 0x00 };
+	float o_norm = (o >= 1.f) ? 1.f: o;
+	if (o_norm < 0.f)
+		o_norm = 0.f;
+	float o_norm_rev = 1.f - o_norm;
+	float maxv = (float)0xff;
+	float red = maxv * o_norm;
+	float blue = maxv * o_norm_rev;
+	rgb.b = (unsigned char)roundf(red);
+	rgb.r = (unsigned char)roundf(blue);
+	rgb.g = (unsigned char)roundf(200.f * o_norm);
+	return rgb;
+}
 unsigned char DrawHexImg::genEyeImgDebug(s_hexEye& eye) {
 	s_hexPlate& botPlate = eye.lev[eye.n - 1];
 	s_hexPlate& topPlate = eye.lev[0];
@@ -279,21 +292,29 @@ unsigned char DrawHexImg::drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& o
 }
 unsigned char DrawHexImg::drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset) {
 	for (long i = 0; i < plate.m_nHex; i++) {
-		/*find the color based on the strongest luna*/
-		int strongest_luna_i = -1;
-		float strongest_luna_o = 0.501f;
+		float cutoff_o = 0.501f;
+		int lunais[PATTERNLUNA_NUM];
+		float lunaos[PATTERNLUNA_NUM];
+		int lunaN = 0;
+		for (int luna_i = 0; luna_i < PATTERNLUNA_NUM; luna_i++) {
+			lunais[luna_i] = -1;
+			lunaos[luna_i] = 0.f;
+		}
 		for (int luna_i = 6; luna_i < PATTERNLUNA_NUM; luna_i++){//PATTERNLUNA_NUM; luna_i++) {
 			float luna_o = plate.m_fhex[i].nodes[luna_i]->o;
-			if (luna_o > strongest_luna_o) {
-				strongest_luna_o = luna_o;
-				strongest_luna_i = luna_i;
+			if (luna_o > cutoff_o) {
+				int end_i = arrMath::getFirstBelow(luna_o, lunaos, lunaN);
+				arrMath::put(luna_i, end_i, lunais, PATTERNLUNA_NUM);
+				arrMath::put(luna_o, end_i, lunaos, PATTERNLUNA_NUM);
+				lunaN++;
 			}
 		}
 		long Ii = (long)floorf(plate.m_fhex[i].x + offset.x0);
 		long Ij = (long)floorf(plate.m_fhex[i].y + offset.x1);
-		if (strongest_luna_i >= 0) {
-			s_rgb col = genLineCol(strongest_luna_i);
-			m_hexedImg->PrintMaskedImg(Ii, Ij, *hexMask, col);
+		/*draw the results from the weakest to the strongest*/
+		for (int cnt = 0; cnt < lunaN; cnt++) {
+			s_rgb col = genLunaCol(lunais[cnt], lunaos[cnt]);
+			m_hexedImg->PrintMaskedImg(Ii, Ij, *(m_lunaMiniMask[lunais[cnt]]), col);
 		}
 	}
 	return ECODE_OK;

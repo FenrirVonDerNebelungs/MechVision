@@ -70,6 +70,7 @@ protected:
 	unsigned char genSingLunaLineImg(LineFinder* lineFinder);
 	unsigned char genLineImg(LineFinder* lineFinder);
 	s_rgb genLineCol(int lunai);
+	s_rgb genLunaCol(int lunai, float o);
 	unsigned char genEyeImgDebug(s_hexEye& eye);
 	unsigned char drawWebHexPlate(s_hexPlate& plate, s_2pt& offset, int web_i);
 	unsigned char drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);

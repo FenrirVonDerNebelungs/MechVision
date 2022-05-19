@@ -25,6 +25,34 @@ namespace Math {
 		return res;
 	}
 }
+namespace arrMath {
+	void put(float v, int i, float ar[], int n) {
+		if (i >= n)
+			return;
+		for (int ar_i = n-2; ar_i >= i; ar_i--) {
+			ar[ar_i + 1] = ar[ar_i];
+		}
+		ar[i] = v;
+	}
+	void put(int v, int i, int ar[], int n) {
+		if (i >= n)
+			return;
+		for (int ar_i = n - 2; ar_i >= i; ar_i--) {
+			ar[ar_i + 1] = ar[ar_i];
+		}
+		ar[i] = v;
+	}
+	int getFirstBelow(float v, float ar[], int n, int i_start) {
+		int found_i = -1;
+		for (int i = i_start; i < n; i++) {
+			if (ar[i] > v) {
+				found_i = i;
+				break;
+			}
+		}
+		return (found_i >= 0) ? found_i : n;
+	}
+}
 namespace vecMath {
 	s_2pt add(const s_2pt& v1, const s_2pt& v2) {
 		s_2pt v = { v1.x0 + v2.x0, v1.x1 + v2.x1 };

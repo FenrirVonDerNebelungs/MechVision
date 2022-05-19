@@ -43,6 +43,12 @@ namespace Math {
 	int loop(int i, int n);
 	float power(float x, int y);
 }
+namespace arrMath {
+	/*puts value into array at i and moves array forward after the value*/
+	void put(float v, int i, float ar[], int n);
+	void put(int v, int i, int ar[], int n);
+	int getFirstBelow(float v, float ar[], int n, int i_start=0);
+}
 namespace vecMath {
 	s_2pt add(const s_2pt& v1, const s_2pt& v2);
 	s_2pt add(const s_2pt& v1, const s_2pt& v2, const s_2pt& v3);
@@ -73,4 +79,5 @@ namespace imgMath {
 namespace hexMath {
 	bool inHex(float hexR, float hexRS, const s_2pt hexU[], const s_2pt& center, const s_2pt& pt, float padding = 0.f);
 }
+
 #endif
