@@ -10,7 +10,7 @@
 
 #define PATTERNLUNA_NUM 8 //Number of luna patterns 6 round and 2 full
 #define PATTERNLUNA_FOOTS 7
-#define PATTERNLUNA_WSCALE 60.f //1.f
+#define PATTERNLUNA_WSCALE 3.f//60.f for line finder//1.f
 
 class PatternLuna : public Base {
 public:

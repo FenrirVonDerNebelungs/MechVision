@@ -2,7 +2,7 @@
 #include "DrawHexImg.h"
 
 DrawHexImg::DrawHexImg() :m_hex(NULL), m_nodes(NULL), m_nHex(0), m_lowerHex(NULL), m_nLowerHex(0), m_hexMask(NULL), m_hexMaskPlus(NULL), m_lowerHexMask(NULL), 
-m_stampEye(NULL), m_curStampPlate(NULL), m_cur_stampEye_i(0), m_cur_stamp_i(0), m_cur_sub_stamp_i(0),
+m_stampEye(NULL), m_curStampPlate(NULL), m_curLunaStampPlate(NULL), m_cur_stampEye_i(0), m_cur_stamp_i(0), m_cur_sub_stamp_i(0),
 m_hexedImg(NULL)
 {
 	m_defOCol.r= 0x00;
@@ -170,9 +170,12 @@ unsigned char DrawHexImg::renderIncStamp() {
 	m_hexedImg->clearToChar(0x11);
 	s_2pt offset = { 200.f, 200.f };
 	/*stamp eye raw*/
-//	if (Err(renderHexOuput(offset.x0, offset.x1)))
+	if (Err(renderHexOuput(offset.x0 + 200.f, offset.x1)))
+		return ECODE_FAIL;
+	if (Err(renderHexOuput(offset.x0, offset.x1)))
+		return ECODE_FAIL;
 	/*stamp eye luna*/
-	if(Err(drawStampLunaHexPlate(*m_curStampPlate, m_hexMaskPlus, offset)))
+	if(Err(drawStampLunaHexPlate(*m_curLunaStampPlate, m_hexMaskPlus, offset)))
 		return ECODE_FAIL;
 	if (!setStampEye(m_cur_stampEye_i + 1))
 		return ECODE_ABORT;
@@ -248,16 +251,21 @@ s_rgb DrawHexImg::genLineCol(int lunai) {
 }
 s_rgb DrawHexImg::genLunaCol(int lunai, float o) {
 	s_rgb rgb = { 0xff, 0x66, 0x00 };
-	float o_norm = (o >= 1.f) ? 1.f: o;
+	float o_norm = (o - 0.5f) * 2.f;
+	o_norm = (o >= 1.f) ? 1.f: o_norm;
 	if (o_norm < 0.f)
 		o_norm = 0.f;
 	float o_norm_rev = 1.f - o_norm;
+	if (o_norm_rev > 1.f)
+		o_norm_rev = 1.f;
+	if (o_norm_rev < 0.f)
+		o_norm_rev = 0.f;
 	float maxv = (float)0xff;
 	float red = maxv * o_norm;
 	float blue = maxv * o_norm_rev;
 	rgb.b = (unsigned char)roundf(red);
 	rgb.r = (unsigned char)roundf(blue);
-	rgb.g = (unsigned char)roundf(200.f * o_norm);
+	rgb.g = (unsigned char)roundf(100.f*o_norm);
 	return rgb;
 }
 unsigned char DrawHexImg::genEyeImgDebug(s_hexEye& eye) {
@@ -300,7 +308,7 @@ unsigned char DrawHexImg::drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask,
 			lunais[luna_i] = -1;
 			lunaos[luna_i] = 0.f;
 		}
-		for (int luna_i = 6; luna_i < PATTERNLUNA_NUM; luna_i++){//PATTERNLUNA_NUM; luna_i++) {
+		for (int luna_i = 0; luna_i < PATTERNLUNA_NUM; luna_i++){//PATTERNLUNA_NUM; luna_i++) {
 			float luna_o = plate.m_fhex[i].nodes[luna_i]->o;
 			if (luna_o > cutoff_o) {
 				int end_i = arrMath::getFirstBelow(luna_o, lunaos, lunaN);
@@ -314,7 +322,10 @@ unsigned char DrawHexImg::drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask,
 		/*draw the results from the weakest to the strongest*/
 		for (int cnt = 0; cnt < lunaN; cnt++) {
 			s_rgb col = genLunaCol(lunais[cnt], lunaos[cnt]);
-			m_hexedImg->PrintMaskedImg(Ii, Ij, *(m_lunaMiniMask[lunais[cnt]]), col);
+			if (lunais[cnt] < 6)
+				m_hexedImg->PrintMaskedImg(Ii, Ij, *(m_lunaMiniMask[lunais[cnt]]), col);
+			//else
+				//m_hexedImg->PrintMaskedImg(Ii, Ij, *m_hexMask, col);
 		}
 	}
 	return ECODE_OK;
@@ -395,11 +406,11 @@ bool DrawHexImg::setStampEye(int i) {
 	else
 		return false;
 	/*stamp eye raw*/
-//	s_hexPlate& lowPlate = setStampEyeAsRaw(i);
-	/*stamp eye luna*/
-	s_hexPlate& lowPlate = setStampEyeAsLuna(m_cur_stamp_i, m_cur_sub_stamp_i);
-	m_nodes = lowPlate.m_fhex;
+	s_hexPlate& lowPlate = setStampEyeAsRaw(i);
 	m_nHex = lowPlate.m_nHex;
+	m_nodes = lowPlate.m_fhex;
+	/*stamp eye luna*/
+	s_hexPlate& lowLunaPlate = setStampEyeAsLuna(m_cur_stamp_i, m_cur_sub_stamp_i);
 	return true;
 }
 s_hexPlate& DrawHexImg::setStampEyeAsRaw(int i) {
@@ -411,8 +422,8 @@ s_hexPlate& DrawHexImg::setStampEyeAsRaw(int i) {
 s_hexPlate& DrawHexImg::setStampEyeAsLuna(int i_stamp, int i_sub_stamp) {
 	s_hexEye* lunaEye = m_stampEye->getLunaEye(i_stamp, i_sub_stamp);
 	int eye_n = lunaEye->n;
-	m_curStampPlate = &(lunaEye->lev[eye_n - 1]);
-	return *m_curStampPlate;
+	m_curLunaStampPlate = &(lunaEye->lev[eye_n - 1]);
+	return *m_curLunaStampPlate;
 }
 unsigned char DrawHexImg::initLunaMiniMasks(HexBase* hbase) {
 	Img* oldMask = hbase->getHexMask();

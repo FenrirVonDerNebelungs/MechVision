@@ -52,6 +52,7 @@ protected:
 	Img* m_lowerHexMask;
 	StampEye* m_stampEye;
 	s_hexPlate* m_curStampPlate;
+	s_hexPlate* m_curLunaStampPlate;
 	int m_cur_stampEye_i;
 	int m_cur_stamp_i;
 	int m_cur_sub_stamp_i;

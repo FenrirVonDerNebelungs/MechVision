@@ -61,7 +61,7 @@ unsigned char StampEye::init(
 		}
 	}
 	else return ECODE_FAIL;
-	if (RetOk(m_lunaEyeGen->init(targr, m_lowestStampLev, PATTERNLUNA_NUM))) {/*patternluna_num means this generates 8 node pointers at the lowest level*/
+	if (RetOk(m_lunaEyeGen->init(2.f*targr, m_lowestStampLev, PATTERNLUNA_NUM))) {/*patternluna_num means this generates 8 node pointers at the lowest level*/
 		for (int i = 0; i < m_eyeGen->getNEyes(); i++) {
 			m_lunaEyeGen->spawn();
 			/*this is an unusual case where the lowest of nodes of the hexEyes will be owned by the eye*/
