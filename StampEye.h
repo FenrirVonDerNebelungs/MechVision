@@ -9,13 +9,14 @@
 #include "PatternLuna.h"
 #endif
 
-//#define STAMPEYE_DODEBUGIMG
+#define STAMPEYE_DODEBUGIMG
 
-#define STAMPEYEMINANGRAD 0.001f
-#define STAMPEYENUM 74 /*6 * numAngDiv at least added 2 extra (72 +2)*/
-#define STAMPEYEMAXNUM 1000
+#define STAMPEYEMINANGRAD 0.00f
+#define STAMPEYENUM 1000 /*6 * numAngDiv at least added 2 extra (72 +2)*/
+#define STAMPEYEMAXNUM 2
 
-const float stampeye_radincmul = 2.f;
+const float stampeye_radincmul = 2.f;/*multiplicative factor that increases the circle radius each cycle*/
+const float stampeye_openingAngDivisor = 2.f; /*divids PI to get opening angle*/
 
 struct s_eyeStamp {
 	/*multiple eyes are alowed to allow for stamp to shift around and still be considered same stamp*/
@@ -60,10 +61,11 @@ public:
 	unsigned char init(
 		PatternLuna* patLuna,
 		int lowestStampLev = 2,
-		float numAngDiv = 12.f,
+		float numAngDiv = 36.f,//12.f,
 		float numCircleRadii = 5.f,
 		int smudgeNum = 1,/*number of smudges, along the r direction */
-		int smudgeAngNum=7,/*number of angle variants inside of each of the 12 main angles counted towards a single nnet trained node*/
+		int smudgeAngNum=1,/*number of angle variants inside of each of the 12 main angles counted towards a single nnet trained node*/
+		int finalOpeningAngs=3, /*number of opening angles between opening ang and final backwards ang counting backwards ang*/
 		float maskdim=6.,/*mask dim as a multiple of the smallest r dim*/
 		float r=3.f,
 		HexBase* hexBase = NULL
@@ -91,6 +93,7 @@ protected:
 	float  m_minCircleRadius;
 	int    m_smudgeNum;/*number of division over which the corner is smudged*/
 	int    m_smudgeAngNum;/*should be odd number of smudge off angle stamps that still count towards the same 12 division*/
+	int    m_finalOpeningAngs;/*final decreases opening angs by these number of divisions from last opening ang to full backwards*/
 	float  m_maskdim;/*max dim away from mask before values no longer matter for NNet*/
 	/*not owned*/
 	PatternLuna* m_patternLuna;
@@ -126,6 +129,8 @@ protected:
 
 	unsigned char stampRoundedCorners();
 	unsigned char stampRoundedCornersAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
+	unsigned char stampRoundedCornerAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
+	unsigned char stampFinalCornerOpeningAngs(const s_2pt& center, float ang, float circle_scale, float opening_ang_start, int& stamp_cnt);
 
 	unsigned char stampEyeRoundedCorner(s_hexEye& seye);
 #ifdef STAMPEYE_DODEBUGIMG

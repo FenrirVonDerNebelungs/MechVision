@@ -1,6 +1,6 @@
 #include "StampEye.h"
 #include "PatternL1.h"
-StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadius(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_maskdim(0.), m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f) {
+StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadius(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_finalOpeningAngs(0), m_maskdim(0.), m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f) {
 	clearEyeStamps();
 	m_circle_center.x0 = 0.f;
 	m_circle_center.x1 = 0.f;
@@ -33,6 +33,7 @@ unsigned char StampEye::init(
 	float numCircleRadii,
 	int smudgeNum,
 	int smudgeAngNum,
+	int finalOpeningAngs,
 	float maskdim,
 	float r,
 	HexBase* hexBase
@@ -44,6 +45,7 @@ unsigned char StampEye::init(
 	m_numCircleRadii = numCircleRadii;
 	m_smudgeNum = smudgeNum;
 	m_smudgeAngNum = smudgeAngNum;
+	m_finalOpeningAngs = finalOpeningAngs;
 	m_maskdim = maskdim;
 	m_eyeGen = new HexEye;
 	m_lunaEyeGen = new HexEye;
@@ -265,7 +267,11 @@ unsigned char StampEye::stampRoundedCorners() {
 	for (int i_ang = 0; i_ang < n_ang; i_ang++) {
 		float cur_circleRadius = m_minCircleRadius;
 		for (int i_rad = 0; i_rad < n_circleRadii; i_rad++) {
-			stampRoundedCornersAtCenterAndAng(center, cur_ang, cur_circleRadius, PI / 2.f, stamp_cnt);/*increaments stamp count appropriately*/
+			stampRoundedCornersAtCenterAndAng(center, cur_ang, cur_circleRadius, PI / stampeye_openingAngDivisor, stamp_cnt);/*increaments stamp count appropriately*/
+			m_num_stamps++;
+			if (!stampEyeIncOk(stamp_cnt))
+				break;
+			stampFinalCornerOpeningAngs(center, cur_ang, cur_circleRadius, PI / stampeye_openingAngDivisor, stamp_cnt);
 			m_num_stamps++;
 			if (!stampEyeIncOk(stamp_cnt))
 				break;
@@ -283,46 +289,51 @@ unsigned char StampEye::stampRoundedCornersAtCenterAndAng(const s_2pt& center, f
 	float R = 2.f * r_scale / sqrtf(3);
 	s_2pt* hexU = m_eyeGen->getUHex();
 	s_2pt smudge_center = { 0.f, 0.f };
-
-	float angD = 2 * PI / m_numAngDiv;/*width of master angle*/
-	float smudgeAngD = (m_smudgeAngNum>=3) ? angD / (float)(m_smudgeAngNum-1) : 0.f;
-	float smudgeAngStart = (m_smudgeAngNum >= 5) ? smudgeAngD * (((float)m_smudgeAngNum - 1.f) / 2.f-1.f) : 0.f;
-	float curSmudgeAng = -smudgeAngStart;
-
 	m_stamps[stamp_cnt].n = 0;
-	float cur_ang = 0.f;
-	for (int j = 0; j < m_smudgeNum; j++) {
-		/*not yet adding the smudge from the translational smudge*/
-		/*may or  may not have the translation set up properly with stampEyeRoundedCorner*/
-		if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) {/*not really needed since center is identical to corner_center*/
-			for (int i_ang = 0; i_ang < (m_smudgeAngNum-2); i_ang++) {
-#ifdef STAMPEYE_DODEBUGIMG
-				m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n]->init(m_stamps[stamp_cnt].img_dim, m_stamps[stamp_cnt].img_dim, 3L);
-				m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n]->clearToChar(0x00);
-#endif
-				cur_ang = curSmudgeAng + ang;
-				setBasisFromAng(cur_ang);
-				setRoundedCorner(smudge_center, circle_scale, opening_ang);
-				stampEyeRoundedCorner(m_eyeGen->getEye(m_eyes_stamped));
-#ifdef STAMPEYE_DODEBUGIMG
-				RenderCornerImage(m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n], m_eyeGen->getEye(m_eyes_stamped));
-#endif
-				m_stamps[stamp_cnt].eyes[m_stamps[stamp_cnt].n] = m_eyeGen->getEyePtr(m_eyes_stamped);
-				m_stamps[stamp_cnt].raw_eye_i[m_stamps[stamp_cnt].n] = m_eyes_stamped;
-				m_stamps[stamp_cnt].ang[m_stamps[stamp_cnt].n] = cur_ang;
-				m_stamps[stamp_cnt].center_ang[m_stamps[stamp_cnt].n] = ang;
-				m_stamps[stamp_cnt].smudge_ang[m_stamps[stamp_cnt].n] = curSmudgeAng;
-				m_stamps[stamp_cnt].radius[m_stamps[stamp_cnt].n] = circle_scale;
-
-				(m_stamps[stamp_cnt].n)++;
-				m_eyes_stamped++;
-
-				curSmudgeAng += smudgeAngD;
-
-			}
-		}
+	if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) {/*not really needed since center is identical to corner_center*/
+		stampRoundedCornerAtCenterAndAng(smudge_center, ang, circle_scale, opening_ang, stamp_cnt);
 	}
 	stamp_cnt++;
+	return ECODE_OK;
+}
+unsigned char StampEye::stampRoundedCornerAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt) {
+#ifdef STAMPEYE_DODEBUGIMG
+	m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n]->init(m_stamps[stamp_cnt].img_dim, m_stamps[stamp_cnt].img_dim, 3L);
+	m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n]->clearToChar(0x00);
+#endif
+	setBasisFromAng(ang);
+	setRoundedCorner(center, circle_scale, opening_ang);
+	stampEyeRoundedCorner(m_eyeGen->getEye(m_eyes_stamped));
+#ifdef STAMPEYE_DODEBUGIMG
+	RenderCornerImage(m_stamps[stamp_cnt].imgs[m_stamps[stamp_cnt].n], m_eyeGen->getEye(m_eyes_stamped));
+#endif
+	m_stamps[stamp_cnt].eyes[m_stamps[stamp_cnt].n] = m_eyeGen->getEyePtr(m_eyes_stamped);
+	m_stamps[stamp_cnt].raw_eye_i[m_stamps[stamp_cnt].n] = m_eyes_stamped;
+	m_stamps[stamp_cnt].ang[m_stamps[stamp_cnt].n] = ang;
+	m_stamps[stamp_cnt].center_ang[m_stamps[stamp_cnt].n] = ang;
+	m_stamps[stamp_cnt].smudge_ang[m_stamps[stamp_cnt].n] = ang;
+	m_stamps[stamp_cnt].radius[m_stamps[stamp_cnt].n] = circle_scale;
+
+	(m_stamps[stamp_cnt].n)++;
+	m_eyes_stamped++;
+	return ECODE_OK;
+}
+unsigned char StampEye::stampFinalCornerOpeningAngs(const s_2pt& center, float ang, float circle_scale, float opening_ang_start, int& stamp_cnt) {
+	float r_scale = m_eyeGen->getRSHex(0, m_eyeGen->getMaxLevi(0));
+	r_scale *= 2.f;
+	float R = 2.f * r_scale / sqrtf(3);
+	s_2pt* hexU = m_eyeGen->getUHex();
+	s_2pt smudge_center = { 0.f, 0.f };
+
+	float dAng = opening_ang_start / ((float)m_finalOpeningAngs);
+	for (int i = m_finalOpeningAngs-1; i >=0; i--) {
+		float opening_ang = ((float)i) * dAng;
+		m_stamps[stamp_cnt].n = 0;
+		if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) {/*not really needed since center is identical to corner_center*/
+			stampRoundedCornerAtCenterAndAng(smudge_center, ang, circle_scale, opening_ang, stamp_cnt);
+		}
+		stamp_cnt++;
+	}	
 	return ECODE_OK;
 }
 unsigned char StampEye::stampEyeRoundedCorner(s_hexEye& seye) {
@@ -436,6 +447,8 @@ unsigned char StampEye::setRoundedCorner(const s_2pt& center, float radius, floa
 	m_circle_center = vecMath::add(center, offset);
 	float halfAng = ang_rad / 2.f;
 	s_2pt l1 = { cosf(halfAng), sinf(halfAng) };
+	if (l1.x0 == 0.f)
+		return ECODE_FAIL;
 	s_2pt l2 = { l1.x0, -l1.x1 };
 	s_2pt circle_half_pt = { radius * l1.x0, 0.f };/*l1.x0=l2.x0 this is the point on the center line between the enclosing line intercepts*/
 	m_circle_half_pt = vecMath::add(circle_half_pt, offset);/*correct since coord system is centered at circle edge*/
