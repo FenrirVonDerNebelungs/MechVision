@@ -13,7 +13,7 @@
 
 #define STAMPEYEMAXANGRAD 3.1f
 #define STAMPEYENUM 1000 /*6 * numAngDiv at least added 2 extra (72 +2)*/
-#define STAMPEYEMAXNUM 2
+#define STAMPEYEMAXNUM 4
 
 const float stampeye_radincmul = 2.f;/*multiplicative factor that increases the circle radius each cycle*/
 const float stampeye_openingAngDivisor = 2.f; /*divids PI to get opening angle*/
@@ -74,7 +74,7 @@ public:
 	void release();
 
 	unsigned char spawn();
-	void          setupForStampi(int i);/*sets up the stamps with the o's so that they are ready to be run with the i'th configuration selectedd*/
+	bool          setupForStampi(int i);/*sets up the stamps with the o's so that they are ready to be run with the i'th configuration selectedd*/
 
 	inline s_eyeStamp* getEyeStamps() { return m_stamps; }
 	s_eyeStamp& getEyeStamp(int i) { return m_stamps[i]; }

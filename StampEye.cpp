@@ -145,11 +145,14 @@ unsigned char StampEye::spawn() {
 
 	return ECODE_OK;
 }
-void StampEye::setupForStampi(int i) {
-	for (int j = 0; j < STAMPEYENUM; j++) {
+bool StampEye::setupForStampi(int i) {
+	if (i < 0 || i >= m_num_stamps)
+		return false;
+	for (int j = 0; j < m_num_stamps; j++) {
 		m_lunaStamps[j].o = 0.f;
 	}
 	m_lunaStamps[i].o = 1.f;
+	return true;
 }
 
 void StampEye::clearEyeStamps() {
