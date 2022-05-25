@@ -145,6 +145,18 @@ unsigned char StampEye::spawn() {
 
 	return ECODE_OK;
 }
+unsigned char StampEye::initNNets(HexEye* net) {
+	/*must have initiated the luna stamps first*/
+	if (m_num_stamps < 1)
+		return ECODE_ABORT;
+	float R = m_lunaStamps[0].eyes[0]->lev[m_lowestStampLev - 1].m_Rhex;
+	if (RetOk(net->init(R, m_lowestStampLev, PATTERNLUNA_NUM))) {
+		for(int i=0; i<m_num_stamps; i++)
+			net->spawn();
+	}else
+		return ECODE_FAIL;
+	return ECODE_OK;
+}
 bool StampEye::setupForStampi(int i) {
 	if (i < 0 || i >= m_num_stamps)
 		return false;

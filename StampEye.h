@@ -74,6 +74,7 @@ public:
 	void release();
 
 	unsigned char spawn();
+	unsigned char initNNets(HexEye* net);/*takes the hexEye and initializes it so that it goes with the luna eye stamp*/
 	bool          setupForStampi(int i);/*sets up the stamps with the o's so that they are ready to be run with the i'th configuration selectedd*/
 
 	inline s_eyeStamp* getEyeStamps() { return m_stamps; }
