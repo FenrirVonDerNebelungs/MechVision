@@ -34,7 +34,7 @@ int debugStamp_rawImg() {
 	PatternLuna lunaPat;
 	lunaPat.init();
 	StampEye* stampEy = new StampEye;
-	stampEy->init(&lunaPat, 2, 36.f, 5.f, 1, 1, 3, 6.0f, 3.f, &HexLow);
+	stampEy->init(&lunaPat, 2, 12.f, 5.f, 1, 1, 3, 1.1f, 6.0f, 3.f, &HexLow);
 	stampEy->spawn();
 
 	bool loop = true;
@@ -48,7 +48,7 @@ int debugStamp_rawImg() {
 				Size frameSize(cur_debugImg->getWidth(), cur_debugImg->getHeight());
 				Mat rendFrame(frameSize, CV_8UC3, (void*)dispImgDat);
 				std::cout << "rad: " << curStamp.radius[i_smearStamp] << "  ang: " << curStamp.ang[i_smearStamp]
-					<< "  center_ang: " << curStamp.center_ang[i_smearStamp] << "  smudge_ang: " << curStamp.smudge_ang[i_smearStamp]
+					<< "  center_ang: " << curStamp.center_ang[i_smearStamp] << "  opening_ang: " << curStamp.opening_ang[i_smearStamp]
 					<< "\n";
 				do {
 					imshow("test stamp", rendFrame);
@@ -80,7 +80,7 @@ int debugStamp() {
 	PatternLuna lunaPat;
 	lunaPat.init();
 	StampEye* stampEy = new StampEye;
-	stampEy->init(&lunaPat, 2, 36.f, 5.f, 1, 1, 3, 6.0f, 3.f, &HexLow);
+	stampEy->init(&lunaPat, 2, 12.f, 5.f, 1, 1, 3, 1.1f, 6.0f, 3.f, &HexLow);
 	stampEy->spawn();
 	DrawHexImg hexImg;
 	hexImg.Init(&HexLow, stampEy);

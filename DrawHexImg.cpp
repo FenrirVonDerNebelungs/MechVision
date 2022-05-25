@@ -400,7 +400,7 @@ bool DrawHexImg::setStampEye(int i) {
 		m_cur_sub_stamp_i = sub_stamp_i;
 		s_eyeStamp* stmps = m_stampEye->getEyeStamps();
 		std::cout << "rad: " << stmps[stamp_i].radius[sub_stamp_i] << "  ang: " << stmps[stamp_i].ang[sub_stamp_i]
-			<< "  center_ang: " << stmps[stamp_i].center_ang[sub_stamp_i] << "  smudge_ang: " << stmps[stamp_i].smudge_ang[sub_stamp_i] 
+			<< "  center_ang: " << stmps[stamp_i].center_ang[sub_stamp_i] << "  opening_ang: " << stmps[stamp_i].opening_ang[sub_stamp_i] 
 			<< "\n";
 	}
 	else
