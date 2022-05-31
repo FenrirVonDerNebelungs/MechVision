@@ -60,6 +60,7 @@ public:
 
 	unsigned char init(
 		PatternLuna* patLuna,
+		HexBase* hexBase = NULL,
 		int lowestStampLev = 2,
 		float numAngDiv = 12.f,//36.f,//12.f,
 		float numCircleRadii = 5.f,
@@ -68,13 +69,13 @@ public:
 		int finalOpeningAngs=3, /*number of opening angles between opening ang and final backwards ang counting backwards ang*/
 		float maxRadForFinalOpeningAngs_mul=1.1f,
 		float maskdim=6.,/*mask dim as a multiple of the smallest r dim*/
-		float r=3.f,
-		HexBase* hexBase = NULL
+		float r=3.f
 	);
 	void release();
 
 	unsigned char spawn();
 	unsigned char initNNets(HexEye* net);/*takes the hexEye and initializes it so that it goes with the luna eye stamp*/
+	void          releaseNNets(HexEye* net);/*releases what is done in the above*/
 	bool          setupForStampi(int i);/*sets up the stamps with the o's so that they are ready to be run with the i'th configuration selectedd*/
 
 	inline s_eyeStamp* getEyeStamps() { return m_stamps; }

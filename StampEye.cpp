@@ -28,6 +28,7 @@ StampEye::~StampEye() {
 }
 unsigned char StampEye::init(
 	PatternLuna* patLuna,
+	HexBase* hexBase,
 	int lowestStampLev,
 	float numAngDiv,
 	float numCircleRadii,
@@ -36,8 +37,7 @@ unsigned char StampEye::init(
 	int finalOpeningAngs,
 	float maxRadForFinalOpeningAngs_mul,
 	float maskdim,
-	float r,
-	HexBase* hexBase
+	float r
 ) {
 	m_lowestStampLev = lowestStampLev;
 	m_patternLuna = patLuna;
@@ -156,6 +156,11 @@ unsigned char StampEye::initNNets(HexEye* net) {
 	}else
 		return ECODE_FAIL;
 	return ECODE_OK;
+}
+void StampEye::releaseNNets(HexEye* net) {
+	if (net != NULL) {
+		net->release();
+	}
 }
 bool StampEye::setupForStampi(int i) {
 	if (i < 0 || i >= m_num_stamps)

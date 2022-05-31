@@ -1,5 +1,5 @@
 #include "NNetTrain.h"
-NNetTrain::NNetTrain():m_net(NULL), m_stampEye(NULL), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
+NNetTrain::NNetTrain():m_net(NULL), m_stampEye(NULL), m_stepSize(0.f), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
 {
 	for (int i = 0; i < NNETTRAINMAXDATAN; i++) {
 		m_dataStamps[i] = NULL;
@@ -16,6 +16,7 @@ unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's 
 	long  max_loop_cnt) 
 {	
 	m_stampEye = stampEyep;
+	m_stepSize = stepSize;
 	m_net = net;
 	m_DeltaE_closeEnough = DeltaE_closeEnough;
 	m_max_loop_cnt = max_loop_cnt;
@@ -35,11 +36,8 @@ unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's 
 	m_steps = new float[m_Ws_N];
 	m_DeltaEs = new float[m_Ws_N];
 	m_E = new float[m_Ws_N];
-	for (int i = 0; i < m_Ws_N; i++) {
-		m_steps[i] = stepSize;
-		m_DeltaEs[i] = 0.f;
-		m_E[i] = 0.f;
-	}
+	reset();
+
 	return ECODE_OK;
 }
 void NNetTrain::release() {
@@ -55,6 +53,23 @@ void NNetTrain::release() {
 		delete[] m_steps;
 	}
 	m_steps = NULL;
+}
+bool NNetTrain::run(s_hexEye* net) {
+	if (net == NULL)
+		return false;
+	reset();
+	int m_Ws_N = net->lev[1].m_nHex * net->lev[1].m_fhex[0].N;
+	if (m_Ws_N != m_dataStamps[0]->lev[2].m_nHex)
+		return ECODE_ABORT;
+	m_net = net;
+	run();
+}
+void NNetTrain::reset() {
+	for (int i = 0; i < m_Ws_N; i++) {
+		m_steps[i] = m_stepSize;
+		m_DeltaEs[i] = 0.f;
+		m_E[i] = 0.f;
+	}
 }
 unsigned char NNetTrain::trainNet() {
 	int level_num = m_net->n - 1;/*should be 1*/

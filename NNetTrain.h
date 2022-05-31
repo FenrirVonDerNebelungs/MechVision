@@ -24,6 +24,7 @@ public:
 	);
 	void release();
 	void run() { trainNet(); }
+	bool run(s_hexEye* net);/*works but new net must have same dim as the one used for initialization*/
 protected:
 	/*not owned*/
 	s_hexEye* m_net;   
@@ -31,6 +32,7 @@ protected:
 	s_hexEye* m_dataStamps[NNETTRAINMAXDATAN];/*broken out from stampEye */
 
 	/* owned   */
+	float      m_stepSize;
 	float      m_y[NNETTRAINMAXDATAN];
 	int        m_QN;/*total number of data stamps in the training set*/
 	float*     m_steps;
@@ -40,6 +42,7 @@ protected:
 	float      m_DeltaE_closeEnough;/*value of dE/dw that is low enough that the scan is considered to have converged*/
 	long       m_max_loop_cnt;
 	/*         */
+	void reset();
 
 	unsigned char trainNet();
 
