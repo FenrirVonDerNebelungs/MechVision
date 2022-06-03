@@ -6,7 +6,7 @@
 #include "StampEye.h"
 #endif
 
-#define NNETTRAINMAXDATAN 10000
+#define NNETTRAINMAXDATAN 1000
 
 /*class will currently train a simple two stage neural net into a 2 level hexeye,
   The lowest level will be on independent data and therefore will be trained seperately from the 2nd level */
@@ -20,7 +20,8 @@ public:
 		s_hexEye* net,
 		float stepSize=0.01,
 		float DeltaE_closeEnough=0.001,
-		long  max_loop_cnt = 10000
+		long  max_loop_cnt = 10000,
+		int lowestLevel=1
 	);
 	void release();
 	void run() { trainNet(); }
@@ -32,6 +33,7 @@ protected:
 	s_hexEye* m_dataStamps[NNETTRAINMAXDATAN];/*broken out from stampEye */
 
 	/* owned   */
+	int        m_lowestLevel;
 	float      m_stepSize;
 	float      m_y[NNETTRAINMAXDATAN];
 	int        m_QN;/*total number of data stamps in the training set*/

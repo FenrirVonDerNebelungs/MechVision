@@ -1,5 +1,11 @@
 #include "NNetMaster.h"
-
+NNetMaster::NNetMaster() :m_patLuna(NULL), m_stampEyeL1(NULL), m_NNetsL1(NULL), m_trainL1(NULL),m_numNets(0)
+{
+	;
+}
+NNetMaster::~NNetMaster() {
+	;
+}
 unsigned char NNetMaster::init() {
 	m_patLuna = new PatternLuna;
 	m_stampEyeL1 = new StampEye;

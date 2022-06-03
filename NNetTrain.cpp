@@ -1,5 +1,5 @@
 #include "NNetTrain.h"
-NNetTrain::NNetTrain():m_net(NULL), m_stampEye(NULL), m_stepSize(0.f), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
+NNetTrain::NNetTrain():m_net(NULL), m_stampEye(NULL), m_lowestLevel(0), m_stepSize(0.f), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
 {
 	for (int i = 0; i < NNETTRAINMAXDATAN; i++) {
 		m_dataStamps[i] = NULL;
@@ -9,17 +9,20 @@ NNetTrain::NNetTrain():m_net(NULL), m_stampEye(NULL), m_stepSize(0.f), m_QN(0), 
 NNetTrain::~NNetTrain() {
 	;
 }
-unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's of its lowest level [2]*/
+unsigned char NNetTrain::init(
+	StampEye* stampEyep,/*contain patterns in the o's of its lowest level [2]*/
 	s_hexEye* net,/*net has essentially same structure as the stampe eye's s_hexEye's*/
 	float stepSize,
 	float DeltaE_closeEnough,
-	long  max_loop_cnt) 
+	long  max_loop_cnt,
+	int lowestLevel) 
 {	
 	m_stampEye = stampEyep;
 	m_stepSize = stepSize;
 	m_net = net;
 	m_DeltaE_closeEnough = DeltaE_closeEnough;
 	m_max_loop_cnt = max_loop_cnt;
+	m_lowestLevel = lowestLevel;
 	s_eyeStamp* eyeStampsp = m_stampEye->getLunaEyeStamps();
 	m_QN = 0;
 	for (int i = 0; i < m_stampEye->numEyeStamps(); i++) {
@@ -30,8 +33,10 @@ unsigned char NNetTrain::init(StampEye* stampEyep,/*contain patterns in the o's 
 		}
 	}
 	/*all eyes used in training should have the same structure, and all of the 7 pack on the bottom should descend to the number of luna pattern sub nodes each*/
-	int m_Ws_N = net->lev[1].m_nHex * net->lev[1].m_fhex[0].N;
-	if (m_Ws_N != m_dataStamps[0]->lev[2].m_nHex)
+	if ((m_lowestLevel + 1) >= m_dataStamps[0]->n)
+		return ECODE_FAIL;
+	int m_Ws_N = net->lev[m_lowestLevel].m_nHex * net->lev[m_lowestLevel].m_fhex[0].N;
+	if (m_Ws_N != m_dataStamps[0]->lev[m_lowestLevel].m_nHex)
 		return ECODE_ABORT;
 	m_steps = new float[m_Ws_N];
 	m_DeltaEs = new float[m_Ws_N];
@@ -58,7 +63,7 @@ bool NNetTrain::run(s_hexEye* net) {
 	if (net == NULL)
 		return false;
 	reset();
-	int m_Ws_N = net->lev[1].m_nHex * net->lev[1].m_fhex[0].N;
+	int m_Ws_N = net->lev[m_lowestLevel].m_nHex * net->lev[m_lowestLevel].m_fhex[0].N;
 	if (m_Ws_N != m_dataStamps[0]->lev[2].m_nHex)
 		return ECODE_ABORT;
 	m_net = net;
