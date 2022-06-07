@@ -10,7 +10,7 @@ unsigned char NNetMaster::init() {
 	m_patLuna = new PatternLuna;
 	m_stampEyeL1 = new StampEye;
 	m_NNetsL1 = new HexEye;
-	m_trainL1 = new NNetTrain;
+	m_trainL1 = new EyeNetTrain;
 
 	m_patLuna->init();
 	m_stampEyeL1->init(m_patLuna);

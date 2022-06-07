@@ -1,174 +1,190 @@
 #include "NNetTrain.h"
-NNetTrain::NNetTrain():m_net(NULL), m_stampEye(NULL), m_lowestLevel(0), m_stepSize(0.f), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
-{
-	for (int i = 0; i < NNETTRAINMAXDATAN; i++) {
-		m_dataStamps[i] = NULL;
-		m_y[i] = 0.f;
-	}
-}
-NNetTrain::~NNetTrain() {
-	;
-}
-unsigned char NNetTrain::init(
-	StampEye* stampEyep,/*contain patterns in the o's of its lowest level [2]*/
-	s_hexEye* net,/*net has essentially same structure as the stampe eye's s_hexEye's*/
-	float stepSize,
-	float DeltaE_closeEnough,
-	long  max_loop_cnt,
-	int lowestLevel) 
-{	
-	m_stampEye = stampEyep;
-	m_stepSize = stepSize;
-	m_net = net;
-	m_DeltaE_closeEnough = DeltaE_closeEnough;
-	m_max_loop_cnt = max_loop_cnt;
-	m_lowestLevel = lowestLevel;
-	s_eyeStamp* eyeStampsp = m_stampEye->getLunaEyeStamps();
-	m_QN = 0;
-	for (int i = 0; i < m_stampEye->numEyeStamps(); i++) {
-		for (int j = 0; j < eyeStampsp[i].n; i++) {
-			m_y[m_QN] = eyeStampsp[i].o;
-			m_dataStamps[m_QN] = eyeStampsp[i].eyes[j]; /*filling the pointers in another array to make this easier to read later*/
-			m_QN++;
-		}
-	}
-	/*all eyes used in training should have the same structure, and all of the 7 pack on the bottom should descend to the number of luna pattern sub nodes each*/
-	if ((m_lowestLevel + 1) >= m_dataStamps[0]->n)
-		return ECODE_FAIL;
-	int m_Ws_N = net->lev[m_lowestLevel].m_nHex * net->lev[m_lowestLevel].m_fhex[0].N;
-	if (m_Ws_N != m_dataStamps[0]->lev[m_lowestLevel].m_nHex)
-		return ECODE_ABORT;
-	m_steps = new float[m_Ws_N];
-	m_DeltaEs = new float[m_Ws_N];
-	m_E = new float[m_Ws_N];
-	reset();
 
-	return ECODE_OK;
-}
-void NNetTrain::release() {
-	if (m_E != NULL) {
-		delete[] m_E;
-	}
-	m_E = NULL;
-	if (m_DeltaEs != NULL) {
-		delete[] m_DeltaEs;
-	}
-	m_DeltaEs = NULL;
-	if (m_steps != NULL) {
-		delete[] m_steps;
-	}
-	m_steps = NULL;
-}
-bool NNetTrain::run(s_hexEye* net) {
-	if (net == NULL)
-		return false;
-	reset();
-	int m_Ws_N = net->lev[m_lowestLevel].m_nHex * net->lev[m_lowestLevel].m_fhex[0].N;
-	if (m_Ws_N != m_dataStamps[0]->lev[2].m_nHex)
-		return ECODE_ABORT;
-	m_net = net;
-	run();
-}
-void NNetTrain::reset() {
-	for (int i = 0; i < m_Ws_N; i++) {
-		m_steps[i] = m_stepSize;
-		m_DeltaEs[i] = 0.f;
-		m_E[i] = 0.f;
-	}
-}
-unsigned char NNetTrain::trainNet() {
-	int level_num = m_net->n - 1;/*should be 1*/
-	s_hexPlate& netBot = m_net->lev[level_num];
-	//int totalWs = netBot.m_nHex * netBot.m_fhex[0].N all cells should have the same number of inputs from the base
-	//float* Ws = new float[totalWs];
-
+unsigned char NNetTrain0::trainNet() {
 	bool converged = false;
 	long loop_cnt = 0;
+	reset();
 	do {
-		findDeltaEs(netBot, level_num);
-		converged = updateWs(netBot);
+		findDeltaEs();
+		converged = updateWs();
 	} while (!converged && loop_cnt < m_max_loop_cnt);
 	return converged ? ECODE_OK : ECODE_ABORT;
 }
-bool NNetTrain::updateWs(s_hexPlate& netBot) {
+void NNetTrain0::reset() {
+	for (int i = 0; i < m_nX; i++) {
+		m_w[i] = m_w_init;
+		m_steps[i] = -m_stepSize;
+	}
+}
+unsigned char NNetTrain0::findDeltaEs() {
+	m_E = 0;
+	for (int i = 0; i < m_nX; i++) {
+		m_DeltaEs[i] = 0.f;
+	}
+	for (int q = 0; q < m_nData; q++) {
+		float y = m_y[q];/* */
+		for (int k_indx = 0; k_indx < m_nX; k_indx++) {
+			int W_jk_indx = k_indx;/*since just training one node j=0 */
+			for (long q_indx = 0; q_indx < m_nData; q_indx++) {
+				m_DeltaEs[W_jk_indx] += m_steps[W_jk_indx] * evalForQth_jk(m_y[q_indx], m_X[q_indx], q_indx, k_indx);
+				m_E += 0.5f * evalEForQth_j(y, m_X[q_indx]);
+			}
+		}
+	}
+	return ECODE_OK;
+}
+bool NNetTrain0::updateWs() {
 	bool converged = true;
-	for (int j_indx = 0; j_indx < netBot.m_nHex; j_indx++) {
-		for (int k_indx = 0; k_indx < netBot.m_fhex[j_indx].N; k_indx++) {
-			int W_jk_indx = j_indx * netBot.m_fhex[j_indx].N + k_indx;
-			if (fabs(m_DeltaEs[W_jk_indx]) < m_DeltaE_closeEnough) {
-				/*consider this converged*/
-				m_steps[W_jk_indx] = 0.f;
+	for (int k_indx = 0; k_indx < m_nX; k_indx++) {
+		int W_jk_indx = k_indx;/*since there is only one node j=0*/
+		if (fabs(m_DeltaEs[W_jk_indx]) < m_DeltaE_closeEnough) {
+			/*consider this converged*/
+			m_steps[W_jk_indx] = 0.f;
+		}
+		else {
+			converged = false;/*at least one value is not converged*/
+							  /*not yet converged*/
+			if (m_DeltaEs[W_jk_indx] > 0.f) {
+			/*going in wrong direction error is getting bigger*/
+				m_steps[W_jk_indx] = -m_steps[W_jk_indx];/*reverse the direction of the steps*/
 			}
 			else {
-				converged = false;/*at least one value is not converged*/
-				/*not yet converged*/
-				if (m_DeltaEs[W_jk_indx] > 0.f) {
-					/*going in wrong direction error is getting bigger*/
-					m_steps[W_jk_indx] = -m_steps[W_jk_indx];/*reverse the direction of the steps*/
-				}
-				else {
-					/*going in the correct direction, so update the w*/
-					netBot.m_fhex[j_indx].w[k_indx] += m_DeltaEs[W_jk_indx];
-				}
+				/*going in the correct direction, so update the w*/
+				m_w[W_jk_indx] += m_DeltaEs[W_jk_indx];
 			}
 		}
 	}
 	return converged;
 }
-unsigned char NNetTrain::findDeltaEs(s_hexPlate& netBot, int level_num) {
-	/**
-
-	*/
-	for (int i = 0; i < m_Ws_N; i++) {
-		m_DeltaEs[i] = 0.f;
-		m_E[i] = 0.f;
-	}
-
-	for (int q = 0; q < m_QN; q++) {
-		connNetToQthStamp(netBot, q, level_num);
-		float y = m_y[q];/*each cell cluster (an therefor cell output node) in the stamp is going to have the same target,
-						 although in a general sense a NNet could have different target for each
-						 a.k.a. ignoring the 'j' on the y*/
-		for (int j_indx = 0; j_indx < netBot.m_nHex; j_indx++) {
-			for (int k_indx = 0; k_indx < netBot.m_fhex[j_indx].N; k_indx++) {
-				int W_jk_indx = j_indx * netBot.m_fhex[j_indx].N + k_indx;
-				m_DeltaEs[W_jk_indx] += m_steps[W_jk_indx] * evalForQth_jk(y, netBot.m_fhex[j_indx], k_indx);
-				m_E[W_jk_indx] += 0.5f * evalEForQth_j(y, netBot.m_fhex[j_indx]);
-			}
-		}
-	}
-	return ECODE_OK;
+float NNetTrain0::evalForQth_jk(float y, s_NNetL1X& X, long q, int k) {
+	float sumW = sumWs(X.m_x);
+	float n_j = NNet::NNetFunc(sumW);
+	float e_j = n_j - y;
+	float df = NNet::NNetDFunc(sumW);
+	return e_j * df * X.m_x[k];
 }
-unsigned char NNetTrain::connNetToQthStamp(s_hexPlate& netBot, int q, int level_num) {
-	s_hexPlate& stampBot = m_dataStamps[q]->lev[level_num];
-	for (int i = 0; i < netBot.m_nHex; i++) {
-		s_fNode& net_nd = netBot.m_fhex[i];
-		s_fNode& stamp_nd = stampBot.m_fhex[i];
-		for (int j = 0; j < net_nd.N; j++) {
-			net_nd.nodes[j] = stamp_nd.nodes[j];
-		}
-	}
-	return ECODE_OK;
-}
-float NNetTrain::evalEForQth_j(float y, s_fNode& n) {
-	float n_out = sumWs(n);
+float NNetTrain0::evalEForQth_j(float y, s_NNetL1X& X) {
+	float n_out = sumWs(X.m_x);
 	float diff = n_out - y;
 	return diff * diff;
 }
-float NNetTrain::evalForQth_jk(float y, s_fNode& n, int k) {
-	float sumW = sumWs(n);
-	float n_j = NNetFunc(sumW);
-	float e_j = n_j - y;
-	float df = NNetDFunc(sumW);
-	return e_j * df * getX(n, k);
-}
-float NNetTrain::sumWs(s_fNode& n) {
+
+float NNetTrain0::sumWs(float X[]) {
 	float sum = 0.f;
-	for (int i = 0; i < n.N; i++) {
-		sum += n.w[i] * n.nodes[i]->o;
+	for (int i = 0; i < m_nX; i++) {
+		sum += m_w[i] * X[i];
 	}
 	return sum;
 }
-float NNetTrain::getX(s_fNode& n, int k) {
-	return n.nodes[k]->o;
+EyeNetTrain::EyeNetTrain():m_net(NULL), m_stampEye(NULL), m_lowestLevel(0), m_stepSize(0.f), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
+{
+	;
 }
+EyeNetTrain::~EyeNetTrain() {
+	;
+}
+unsigned char EyeNetTrain::init(
+	StampEye* stampEyep,/*contain patterns in the o's of its lowest level [2]*/
+	float stepSize,
+	float DeltaE_closeEnough,
+	long  max_loop_cnt)
+{
+	m_stampEye = stampEyep;
+	m_net = NULL;
+	s_eyeStamp* eyeStampsp = m_stampEye->getLunaEyeStamps();
+	if (eyeStampsp->n < 1)
+		return ECODE_ABORT;
+	if (eyeStampsp[0].eyes[0]->n < 1)
+		return ECODE_ABORT;
+	m_lowestLevel = eyeStampsp[0].eyes[0]->n - 1;
+	m_NNetTrain0 = new NNetTrain0;
+	if (Err(m_NNetTrain0->init(stepSize, DeltaE_closeEnough, max_loop_cnt)))
+		return ECODE_FAIL;
+	return ECODE_OK;
+}
+unsigned char EyeNetTrain::setDataForNode(int node_i) {
+	if (m_net == NULL)
+		return ECODE_FAIL;
+	if (m_lowestLevel != m_net->n - 1)
+		return ECODE_FAIL;
+	s_eyeStamp* lunaDatStamps = m_stampEye->getLunaEyeStamps();
+	long dataSize = (long)m_stampEye->numEyeStamps();
+	long numStamps = (long)m_stampEye->numStamps();
+	if (lunaDatStamps[0].eyes[0]->n != m_net->n)
+		return ECODE_FAIL;
+	s_hexPlate& lowestLunaPlate0 = lunaDatStamps[0].eyes[0]->lev[m_lowestLevel];
+	int numNodesLowest = lowestLunaPlate0.m_nHex;
+	if (numNodesLowest < 1 || numNodesLowest<=node_i)
+		return ECODE_FAIL;
+	if (numNodesLowest != m_net->lev[m_lowestLevel].m_nHex)
+		return ECODE_FAIL;
+	s_fNode& stampNode0 = lowestLunaPlate0.m_fhex[node_i];
+	int nX = stampNode0.N;
+	if (nX < 1)
+		return ECODE_FAIL;
+	if (nX != m_net->lev[m_lowestLevel].m_fhex[node_i].N)
+		return ECODE_FAIL;
+	s_NNetL1X* Xvec = new s_NNetL1X[dataSize];
+	for (long i = 0; i < dataSize; i++) {
+		Xvec[i].m_x = new float[nX];
+		Xvec[i].m_n = nX;
+		for (int i_X = 0; i_X < nX; i_X++)
+			Xvec[i].m_x[i_X] = 0.f;/*not really needed since this will be redone shortly */
+	}
+	float* y = new float[dataSize];
+	long i_dat = 0;
+	for (long i_stamp = 0; i_stamp < numStamps; i_stamp++) {
+		for (long i_sub = 0; i_sub < lunaDatStamps[i_stamp].n; i_sub++) {
+			if (i_dat >= dataSize)
+				return ECODE_ABORT;
+			y[i_dat] = lunaDatStamps[i_stamp].o;
+			s_hexPlate& lowestLunaPlate = lunaDatStamps[i_stamp].eyes[i_sub]->lev[m_lowestLevel];
+			s_fNode& dataNode = lowestLunaPlate.m_fhex[node_i];
+			for (int i_X = 0; i_X < nX; i_X++) {
+				Xvec[i_dat].m_x[i_X] = dataNode.nodes[i_X]->o;
+			}
+			i_dat++;
+		}
+	}
+	unsigned char ErrC=m_NNetTrain0->setNet(dataSize, Xvec, y);
+	if (y != NULL) {
+		delete[] y;
+	}
+	if (Xvec != NULL) {
+		for (long i = 0; i < dataSize; i++) {
+			if (Xvec[i].m_x != NULL)
+				delete [] Xvec[i].m_x;
+			delete[] Xvec;
+		}
+	}
+	return ErrC;
+}
+unsigned char EyeNetTrain::getDataIntoNode(int node_i) {
+	s_hexPlate& lowestNetLevel = m_net->lev[m_lowestLevel];
+	s_fNode& netNode = lowestNetLevel.m_fhex[node_i];
+	float* Ws = m_NNetTrain0->getWs();
+	int nX = m_NNetTrain0->getnX();
+	if (nX != netNode.N)
+		return ECODE_FAIL;
+	for (int i = 0; i < nX; i++) {
+		netNode.nodes[i]->o = Ws[i];
+	}
+	return ECODE_OK;
+}
+
+unsigned char EyeNetTrain::run(s_hexEye* net) {
+	if (net == NULL)
+		return ECODE_FAIL;
+	m_net = net;
+	int numNodes = m_net->lev[m_lowestLevel].m_nHex;
+	for (int i = 0; i < numNodes; i++) {
+		if (Err(setDataForNode(i)))
+			return ECODE_ABORT;
+		if(Err(m_NNetTrain0->run()))
+			return ECODE_FAIL;
+		if (Err(getDataIntoNode(i)))
+			return ECODE_FAIL;
+	}
+	return ECODE_OK;
+}
+

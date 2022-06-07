@@ -31,7 +31,7 @@ protected:
 	PatternLuna* m_patLuna;
 	StampEye* m_stampEyeL1;
 	HexEye* m_NNetsL1;
-	NNetTrain* m_trainL1;
+	EyeNetTrain* m_trainL1;
 
 	int m_numNets;
 };
