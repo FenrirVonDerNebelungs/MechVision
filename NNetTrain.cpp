@@ -1,4 +1,94 @@
 #include "NNetTrain.h"
+NNetTrain0::NNetTrain0() :m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0), m_w_init(0.f), m_stepSize(0.f),
+m_X(NULL), m_nX(0), m_y(NULL), m_nData(0), m_w(NULL), m_nNodes(0),
+m_DeltaEs(NULL), m_steps(NULL), m_E(0.f)
+{
+	;
+}
+NNetTrain0::~NNetTrain0() {
+	;
+}
+unsigned char NNetTrain0::init(
+	float stepSize,
+	float DeltaE_closeEnough,
+	long max_loop_cnt,
+	float init_all_ws
+) {
+	m_stepSize = stepSize;
+	m_DeltaE_closeEnough = DeltaE_closeEnough;
+	m_max_loop_cnt = max_loop_cnt;
+	m_w_init = init_all_ws;
+	m_nNodes = 1;/*this variable is not actually used in NNetTrain0 */
+}
+void NNetTrain0::release() {
+	releaseMem();
+}
+unsigned char NNetTrain0::setNet(long datasize, s_NNetL1X X[], float y[]) {
+	unsigned char e_code = initMem(datasize, X[0].m_n);
+	if (IsErrFail(e_code))
+		return e_code;
+	for (long i = 0; i < datasize; i++) {
+		for (int x_i = 0; x_i < X[i].m_n; x_i++) {
+			m_X[i].m_x[x_i] = X[i].m_x[x_i];
+		}
+		m_X[i].m_n = X[i].m_n;
+		m_y[i] = y[i];
+	}
+	return ECODE_OK;
+}
+unsigned char NNetTrain0::initMem(long datasize, int nX) {
+	if (datasize == m_nData && nX == m_nX)
+		return ECODE_ABORT;/*nothing needs to be done the data is still the same size*/
+	releaseMem();
+	m_nData = datasize;
+	m_nX = nX;
+	m_X = new s_NNetL1X[m_nData];
+	for (long i = 0; i < m_nData; i++) {
+		m_X[i].m_x = new float[m_nX];
+		m_X[i].m_n = m_nX;
+	}
+	m_y = new float[m_nData];
+	m_w = new float[m_nX];
+	
+	m_DeltaEs = new float[m_nData];
+	m_steps = new float[m_nX];
+	if (m_X == NULL || m_y == NULL || m_w == NULL || m_DeltaEs == NULL || m_steps == NULL) {
+		releaseMem();
+		return ECODE_FAIL;
+	}
+	return ECODE_OK;
+}
+void NNetTrain0::releaseMem() {
+	if(m_steps!=NULL)
+		delete[] m_steps;
+	m_steps = NULL;
+	if(m_DeltaEs!=NULL)
+		delete[] m_DeltaEs;
+	m_DeltaEs = NULL;
+	if (m_w != NULL)
+		delete[] m_w;
+	m_w = NULL;
+	if (m_y != NULL)
+		delete[] m_y;
+	m_y = NULL;
+	if (m_X != NULL) {
+		for (long i = 0; i < m_nData; i++) {
+			if (m_X[i].m_x != NULL)
+				delete[] m_X[i].m_x;
+			m_X[i].m_x = NULL;
+		}
+		delete[] m_X;
+	}
+	m_X = NULL;
+	m_nX = 0;
+	m_nData = 0;
+}
+void NNetTrain0::reset() {
+	for (int i = 0; i < m_nX; i++) {
+		m_w[i] = m_w_init;
+		m_steps[i] = -m_stepSize;
+	}
+}
 
 unsigned char NNetTrain0::trainNet() {
 	bool converged = false;
@@ -9,12 +99,6 @@ unsigned char NNetTrain0::trainNet() {
 		converged = updateWs();
 	} while (!converged && loop_cnt < m_max_loop_cnt);
 	return converged ? ECODE_OK : ECODE_ABORT;
-}
-void NNetTrain0::reset() {
-	for (int i = 0; i < m_nX; i++) {
-		m_w[i] = m_w_init;
-		m_steps[i] = -m_stepSize;
-	}
 }
 unsigned char NNetTrain0::findDeltaEs() {
 	m_E = 0;
@@ -68,7 +152,6 @@ float NNetTrain0::evalEForQth_j(float y, s_NNetL1X& X) {
 	float diff = n_out - y;
 	return diff * diff;
 }
-
 float NNetTrain0::sumWs(float X[]) {
 	float sum = 0.f;
 	for (int i = 0; i < m_nX; i++) {
@@ -76,6 +159,8 @@ float NNetTrain0::sumWs(float X[]) {
 	}
 	return sum;
 }
+
+
 EyeNetTrain::EyeNetTrain():m_net(NULL), m_stampEye(NULL), m_lowestLevel(0), m_stepSize(0.f), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
 {
 	;

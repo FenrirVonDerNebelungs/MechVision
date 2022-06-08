@@ -34,7 +34,6 @@ public:
 	void release();
 	unsigned char setNet(long dataSize, s_NNetL1X X[], float y[]);
 	
-
 	inline unsigned char run() { return trainNet(); }
 
 	inline float* getWs() {return m_w;}
@@ -59,6 +58,9 @@ protected:
 	float* m_DeltaEs;/*change in error \delta_ji; j=0 since only one node is being trained at L0 therefore this has the length m_nX*/
 	float*  m_steps;/*has same length as w's, since some steps are pos and some are neg*/
 	float  m_E; /*current error */
+
+	unsigned char initMem(long dataSize, int nX);
+	void          releaseMem();
 
 	void          reset();
 
