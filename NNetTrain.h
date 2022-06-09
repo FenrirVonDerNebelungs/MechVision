@@ -15,7 +15,15 @@ struct s_NNetL1X {
 namespace NNet {
 	inline float NNetFunc(float x) { return Math::StepFuncSym(x); }
 	inline float NNetDFunc(float x) { return Math::DStepFuncSym(x); }/*gives the derivative of the NNetFunc*/
+
+	unsigned char initNNetL1X(int N, s_NNetL1X& X);
+	unsigned char initNNetL1Xs(long datasize, int nX, s_NNetL1X X[]);
+	void releaseNNetL1X(s_NNetL1X& X);
+	void releaseNNetL1Xs(long datasize, s_NNetL1X X[]);
+
+	bool oNNetL0(s_hexEye& net, const s_hexEye& lunaEye);
 }
+
 /*
   trains simplest kind of NNet with only one plane that seperates all variables in hyperspace with a simple cut
   this NNet has only one node
@@ -88,7 +96,7 @@ public:
 		long  max_loop_cnt = 10000
 	);
 	void release();
-	unsigned char run(s_hexEye* net);/*net has the same structure as the stampe eye's s_hexEye's for the luna output*/
+	inline unsigned char run(s_hexEye* net) { return runL0(net); }/*net has the same structure as the stampe eye's s_hexEye's for the luna output*/
 protected:
 	int        m_lowestLevel;
 	/*owned*/
@@ -98,9 +106,14 @@ protected:
 	s_hexEye* m_net;   
 	StampEye* m_stampEye; /*Master function array of eye stamps that will act as the 'q' data set*/
 
-	unsigned char setDataForNode(int node_i);
-	unsigned char getDataIntoNode(int node_i);
+	unsigned char runL0(s_hexEye* net);/* runs but trains each node independently so only one node in the net, not a true NNet just one planar cuts per node*/
 
+	unsigned char setDataForNode(int node_i);
+	unsigned char getResultsIntoNode(int node_i);
+
+	unsigned char setDataForTopNode();
+	unsigned char getResultsIntoTopNode();
+	
 
 };
 
