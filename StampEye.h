@@ -14,6 +14,7 @@
 #define STAMPEYEMAXANGRAD 3.1f
 #define STAMPEYENUM 1000 /*6 * numAngDiv at least added 2 extra (72 +2)*/
 #define STAMPEYEMAXNUM 4
+#define STAMPEYENUMHOLEPATS 5/*number of pats for each curve/arc-corner with varying middles (holes cut out of middle)*/
 
 const float stampeye_radincmul = 2.f;/*multiplicative factor that increases the circle radius each cycle*/
 const float stampeye_openingAngDivisor = 2.f; /*divids PI to get opening angle*/
@@ -69,7 +70,9 @@ public:
 		int finalOpeningAngs=3, /*number of opening angles between opening ang and final backwards ang counting backwards ang*/
 		float maxRadForFinalOpeningAngs_mul=1.1f,
 		float maskdim=6.,/*mask dim as a multiple of the smallest r dim*/
-		float r=3.f
+		float r=3.f,
+		float thickness_in_2Runits=2.f,
+		float gaussSigma_in_thicknessUnits=2.f
 	);
 	void release();
 
@@ -99,6 +102,8 @@ protected:
 	int    m_finalOpeningAngs;/*final decreases opening angs by these number of divisions from last opening ang to full backwards*/
 	float  m_maskdim;/*max dim away from mask before values no longer matter for NNet*/
 	float  m_maxRadForFinalOpeningAng;/*for circles larger than this the final set of opening angs narrowing to almost parallel is not computed*/
+	float  m_minThickness;
+	float m_gaussSigma;
 	/*not owned*/
 	PatternLuna* m_patternLuna;
 	/*owned*/
@@ -110,6 +115,12 @@ protected:
 	int   m_eyes_stamped;/*total number of eyes stamped combined over ALL stamps including the smudge stamps in the number*/
 	int   m_lowestStampLev;
 
+	s_2pt m_UBasis0;
+	s_2pt m_UBasis1;
+	s_2pt m_UrevBasis0;/*vectors that determine the rotation of the curent pattern*/
+	s_2pt m_UrevBasis1;
+
+	/*working scratch*/
 	s_2pt m_circle_center;
 	float m_circle_radius;
 	s_2pt m_line_intersect;
@@ -117,11 +128,11 @@ protected:
 	s_2pt m_Uline_perp1;/*points perp to line 1 into region beetween lines*/
 	s_2pt m_Uline_perp2;/* "                  2         "                 */
 	s_2pt m_UcenterIn;/*points inward from center of where lines would intersect, should be set to 1,0*/
+	float m_thickness;
+	bool  m_cosFalloff;
+	bool  m_linearFalloff;
+	bool  m_gaussFalloff;
 
-	s_2pt m_UBasis0;
-	s_2pt m_UBasis1;
-	s_2pt m_UrevBasis0;/*vectors that determine the rotation of the curent pattern*/
-	s_2pt m_UrevBasis1;
 
 	void clearEyeStamps();
 	/*utility*/
@@ -153,8 +164,15 @@ protected:
 	bool isUnderLine(const s_2pt& pt, const s_2pt& Uline_perp);
 	bool isInsideCurveHalf(const s_2pt& pt);/*is inside vs the center of the circle*/
 
+	float distFromRoundedCorner(const s_2pt& pt);
+	/*helpers to distFromRoundedCorner*/
+	inline float distFromLine(const s_2pt& pt, const s_2pt& Uline_perp) { return vecMath::distLineGivenPerp(m_line_intersect, Uline_perp, pt); }
+	float distFromClosestLine(const s_2pt& pt);
+	inline float distFromCircle(const s_2pt& pt) { return -vecMath::distCircleArc(m_circle_radius, m_circle_center, pt); }
+
 	bool isInRoundedCornerNoRot(const s_2pt& pt);
-	bool isInRoundedCorner(const s_2pt& pt);/*rotation right handed from x0 axis by angle rotAng in rad*/
+	float RoundedCornerIntensityNoRot(const s_2pt& pt);
+	bool isInRoundedCorner(const s_2pt& pt, float& intensity);/*rotation right handed from x0 axis by angle rotAng in rad*/
 
 	bool stampEyeIncOk(int stamp_cnt);
 };

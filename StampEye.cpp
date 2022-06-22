@@ -37,7 +37,9 @@ unsigned char StampEye::init(
 	int finalOpeningAngs,
 	float maxRadForFinalOpeningAngs_mul,
 	float maskdim,
-	float r
+	float r,
+	float thickness_in_2Runits,
+	float gaussSigma_in_thicknessUnits
 ) {
 	m_lowestStampLev = lowestStampLev;
 	m_patternLuna = patLuna;
@@ -56,7 +58,14 @@ unsigned char StampEye::init(
 
 	m_maxRadForFinalOpeningAng = maxRadForFinalOpeningAngs_mul*targr;
 
-	int numSmudgeArray = smudgeNum * smudgeAngNum;
+	m_minThickness = thickness_in_2Runits * targr;
+	m_gaussSigma = gaussSigma_in_thicknessUnits * m_minThickness;
+	m_thickness = m_minThickness;
+	m_cosFalloff = false;
+	m_linearFalloff = false;
+	m_gaussFalloff = false;
+
+	int numSmudgeArray = smudgeNum * smudgeAngNum *STAMPEYENUMHOLEPATS;
 	int totalNumEyes = numSmudgeArray * STAMPEYENUM;
 	if (totalNumEyes > HEXEYE_MAXEYES)
 		return ECODE_FAIL;
@@ -136,6 +145,7 @@ void StampEye::release() {
 	m_smudgeNum = 0;
 	m_numAngDiv = 0.f;
 	m_eyes_stamped = 0;
+
 	clearEyeStamps();
 }
 unsigned char StampEye::spawn() {
@@ -377,6 +387,7 @@ unsigned char StampEye::stampEyeRoundedCorner(s_hexEye& seye) {
 	}
 	return ECODE_OK;
 }
+
 #ifdef STAMPEYE_DODEBUGIMG
 unsigned char StampEye::RenderCornerImage(Img* img, s_hexEye& seye) {
 	int lowestN = seye.n - 1;
@@ -409,8 +420,9 @@ float StampEye::AveOverHexRoundedCorner(const s_hexPlate& eyeplate, const s_2pt&
 			pt.x1 = startPt.x1 + (float)j;
 			if (hexMath::inHex(R, RS, hexU, center, pt)) {
 				tot += 1.f;
-				if (isInRoundedCorner(pt))
-					av += 1.f;
+				float intensity = 1.f;
+				if (isInRoundedCorner(pt, intensity))
+					av += intensity;
 			}
 		}
 	}
@@ -499,6 +511,20 @@ bool StampEye::isInsideCurveHalf(const s_2pt& pt) {
 	s_2pt VtoPt = vecMath::v12(m_circle_half_pt, pt);
 	return vecMath::dot(VtoPt, m_UcenterIn) >= 0;
 }
+float StampEye::distFromRoundedCorner(const s_2pt& pt) {
+	float dist = 0.f;
+	if (isInsideCurveHalf(pt)) {
+		dist = distFromClosestLine(pt);
+	}
+	else
+		dist = distFromCircle(pt);
+	return dist;
+}
+float StampEye::distFromClosestLine(const s_2pt& pt) {
+	float dist1 = distFromLine(pt, m_Uline_perp1);
+	float dist2 = distFromLine(pt, m_Uline_perp2);
+	return (dist1 >= dist2) ? dist2 : dist1;
+}
 bool StampEye::isInRoundedCornerNoRot(const s_2pt& pt) {
 	bool isInLines = isUnderLine(pt, m_Uline_perp1) && isUnderLine(pt, m_Uline_perp2);
 	if (!isInLines)
@@ -507,8 +533,33 @@ bool StampEye::isInRoundedCornerNoRot(const s_2pt& pt) {
 		return true;
 	return isInCircle(pt);
 }
-bool StampEye::isInRoundedCorner(const s_2pt& pt) {
+float StampEye::RoundedCornerIntensityNoRot(const s_2pt& pt) {
+	float dist = distFromRoundedCorner(pt);
+	if (dist < m_thickness)
+		return 1.f;
+	float in_lin=1.f;
+	float in_cos=1.f;
+	float in_gau=1.f;
+	if (m_linearFalloff) {
+		in_lin = 1.f - dist / m_circle_radius;
+		if (in_lin < 0.f)
+			in_lin = 0.f;
+	}
+	if (m_cosFalloff) {
+		float cmet = (PI / 2.f) * (dist / m_circle_radius);
+		in_cos = cosf(cmet);
+		if (in_cos < 0.f)
+			in_cos = 0.f;
+	}
+	if (m_gaussFalloff) {
+		float gmet = dist / m_circle_radius;
+		in_gau = Math::Gaussian(gmet, m_gaussSigma);
+	}
+	return in_lin * in_cos * in_gau;
+}
+bool StampEye::isInRoundedCorner(const s_2pt& pt, float& intensity) {
 	s_2pt convPt = vecMath::convBasis(m_UrevBasis0, m_UrevBasis1, pt);
+	intensity = RoundedCornerIntensityNoRot(pt);
 	return isInRoundedCornerNoRot(convPt);
 }
 

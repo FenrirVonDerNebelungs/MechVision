@@ -24,6 +24,19 @@ namespace Math {
 			res *= x;
 		return res;
 	}
+	float Gaussian(float pt, float norm_const, float center = 0.f) {
+		float Norm = 1.f / sqrtf(2.f * PI * norm_const * norm_const);
+		float sqrt2_ExpConst = sqrtf(2.f) * norm_const;
+		return GaussianFast(pt, sqrt2_ExpConst, Norm, center);
+	}
+	float GaussianFast(float pt, float sqrt2_ExpConst, float Norm, float center)
+	{
+		float dist = pt-center;
+		float expval = dist / sqrt2_ExpConst;
+		expval = expval * expval;
+		float val = expf(-expval);
+		return val * Norm;
+	}
 }
 namespace arrMath {
 	void put(float v, int i, float ar[], int n) {
@@ -124,6 +137,14 @@ namespace vecMath {
 	bool inCircle(float r, const s_2pt& center, const s_2pt& pt) {
 		float d = dist(center, pt);
 		return d <= r;
+	}
+	float distCircleArc(float r, const s_2pt& center, const s_2pt& pt) {
+		float distance = dist(center, pt);
+		return distance-r;
+	}
+	float distLineGivenPerp(const s_2pt& line_pt, const s_2pt& line_perp, const s_2pt& pt) {
+		s_2pt vec = v12(line_pt, pt);
+		return dot(vec, line_perp);
 	}
 }
 

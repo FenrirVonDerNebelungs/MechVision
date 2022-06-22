@@ -42,6 +42,8 @@ namespace Math {
 	}/* derivitave of tanhf with respect to x is 1-tanhf^2(x)*/
 	int loop(int i, int n);
 	float power(float x, int y);
+	float Gaussian(float pt, float norm_const, float center = 0.f);
+	float GaussianFast(float pt, float sqrt2_ExpConst, float Norm, float center);
 }
 namespace arrMath {
 	/*puts value into array at i and moves array forward after the value*/
@@ -66,6 +68,8 @@ namespace vecMath {
 	void  revBasis(const s_2pt& basisU0, const s_2pt& basisU1, s_2pt& revBasisU0, s_2pt& revBasisU1);
 	s_2pt convBasis(const s_2pt& basisU0, const s_2pt& basisU1, const s_2pt& vecInBasis);
 	bool inCircle(float r, const s_2pt& center, const s_2pt& pt);
+	float distCircleArc(float r, const s_2pt& center, const s_2pt& pt);/*returns negative if point is inside circle*/
+	float distLineGivenPerp(const s_2pt& line_pt, const s_2pt& line_perp, const s_2pt& pt);/* returns pos distance from line in direction of line_perp, line_perp must be of length 1*/
 }
 namespace imgMath {
 	s_rgba convToRGBA(float r, float g, float b);

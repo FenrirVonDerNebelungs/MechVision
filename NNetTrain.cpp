@@ -203,7 +203,7 @@ float NNetTrain0::sumWs(float X[]) {
 }
 
 
-EyeNetTrain::EyeNetTrain():m_net(NULL), m_stampEye(NULL), m_lowestLevel(0), m_stepSize(0.f), m_QN(0), m_steps(NULL), m_DeltaEs(NULL), m_E(NULL), m_Ws_N(0), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0)
+EyeNetTrain::EyeNetTrain():m_lowestLevel(0), m_NNetTrain0(NULL), m_net(NULL), m_stampEye(NULL)
 {
 	;
 }
@@ -228,6 +228,9 @@ unsigned char EyeNetTrain::init(
 	if (Err(m_NNetTrain0->init(stepSize, DeltaE_closeEnough, max_loop_cnt)))
 		return ECODE_FAIL;
 	return ECODE_OK;
+}
+void EyeNetTrain::release() {
+	m_NNetTrain0->release();
 }
 unsigned char EyeNetTrain::setDataForNode(int node_i) {
 	if (m_net == NULL)
