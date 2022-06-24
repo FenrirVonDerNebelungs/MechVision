@@ -1,7 +1,24 @@
 #include "StampEye.h"
 #include "PatternL1.h"
-StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadius(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_finalOpeningAngs(0), m_maskdim(0.), m_maxRadForFinalOpeningAng(0.f), m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f) {
+StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadius(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_finalOpeningAngs(0), 
+m_maskdim(0.), m_maxRadForFinalOpeningAng(0.f), 
+m_minThickness(0.f),m_gaussSigma(0.f),
+m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), 
+m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f),
+m_thickness(0.f),m_cosFalloff(false),m_linearFalloff(false),m_gaussFalloff(false),m_sharpFalloff(false)
+{
 	clearEyeStamps();
+
+	m_UBasis0.x0 = 0.f;
+	m_UBasis0.x1 = 0.f;
+	m_UBasis1.x0 = 0.f;
+	m_UBasis1.x1 = 0.f;
+	m_UrevBasis0.x0 = 0.f;
+	m_UrevBasis0.x1 = 0.f;
+	m_UrevBasis1.x0 = 0.f;
+	m_UrevBasis1.x1 = 0.f;
+
+
 	m_circle_center.x0 = 0.f;
 	m_circle_center.x1 = 0.f;
 	m_line_intersect.x0 = 0.f;
@@ -14,14 +31,6 @@ StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadiu
 	m_Uline_perp2.x1 = 0.f;
 	m_UcenterIn.x0 = 0.f;
 	m_UcenterIn.x1 = 0.f;
-	m_UBasis0.x0 = 0.f;
-	m_UBasis0.x1 = 0.f;
-	m_UBasis1.x0 = 0.f;
-	m_UBasis1.x1 = 0.f;
-	m_UrevBasis0.x0 = 0.f;
-	m_UrevBasis0.x1 = 0.f;
-	m_UrevBasis1.x0 = 0.f;
-	m_UrevBasis1.x1 = 0.f;
 }
 StampEye::~StampEye() {
 	;
@@ -64,6 +73,7 @@ unsigned char StampEye::init(
 	m_cosFalloff = false;
 	m_linearFalloff = false;
 	m_gaussFalloff = false;
+	m_sharpFalloff = false;
 
 	int numSmudgeArray = smudgeNum * smudgeAngNum *STAMPEYENUMHOLEPATS;
 	int totalNumEyes = numSmudgeArray * STAMPEYENUM;
@@ -320,13 +330,31 @@ bool StampEye::stampRoundedCornersAtCenterAndAng(const s_2pt& center, float ang,
 	s_2pt* hexU = m_eyeGen->getUHex();
 	s_2pt smudge_center = { 0.f, 0.f };
 	m_stamps[stamp_cnt].n = 0;
-	if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) {/*not really needed since center is identical to corner_center*/
-		stampRoundedCornerAtCenterAndAng(smudge_center, ang, circle_scale, opening_ang, stamp_cnt);
-	}
+	stampHoleSetRoundedCornersAtCenterAndAng(smudge_center, ang, circle_scale, opening_ang, stamp_cnt);
 	stamp_cnt++;
 	m_num_stamps++;
 	if (!stampEyeIncOk(m_num_stamps))
 		return false;
+	return true;
+}
+bool StampEye::stampHoleSetRoundedCornersAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt) {
+	m_cosFalloff = false;
+	m_linearFalloff = false;
+	m_gaussFalloff = false;
+	m_sharpFalloff = false;
+	//if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) 
+	stampRoundedCornerAtCenterAndAng(center, ang, circle_scale, opening_ang, stamp_cnt);
+	m_linearFalloff = true;
+	stampRoundedCornerAtCenterAndAng(center, ang, circle_scale, opening_ang, stamp_cnt);
+	m_linearFalloff = false;
+	m_cosFalloff = true;
+	stampRoundedCornerAtCenterAndAng(center, ang, circle_scale, opening_ang, stamp_cnt);
+	m_cosFalloff = false;
+	m_gaussFalloff = true;
+	stampRoundedCornerAtCenterAndAng(center, ang, circle_scale, opening_ang, stamp_cnt);
+	m_gaussFalloff = false;
+	m_sharpFalloff = true;
+	stampRoundedCornerAtCenterAndAng(center, ang, circle_scale, opening_ang, stamp_cnt);
 	return true;
 }
 bool StampEye::stampRoundedCornerAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt) {
@@ -365,9 +393,8 @@ bool StampEye::stampFinalCornerOpeningAngs(const s_2pt& center, float ang, float
 	m_stamps[stamp_cnt].n = 0;
 	for (int i = m_finalOpeningAngs-1; i >=0; i--) {
 		float opening_ang = opening_ang_end - ((float)i) * dAng;
-		if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) {/*not really needed since center is identical to corner_center*/
-			stampRoundedCornerAtCenterAndAng(smudge_center, ang, circle_scale, opening_ang, stamp_cnt);
-		}
+		//if (hexMath::inHex(R, r_scale, hexU, smudge_center, center)) smudge center is at 0,0 same as center
+		stampHoleSetRoundedCornersAtCenterAndAng(smudge_center, ang, circle_scale, opening_ang, stamp_cnt);
 	}	
 	stamp_cnt++;
 	m_num_stamps++;
@@ -540,10 +567,13 @@ float StampEye::RoundedCornerIntensityNoRot(const s_2pt& pt) {
 	float in_lin=1.f;
 	float in_cos=1.f;
 	float in_gau=1.f;
+	float in_line = 1.f;
 	if (m_linearFalloff) {
-		in_lin = 1.f - dist / m_circle_radius;
+		in_lin = 1.f - (dist-m_thickness) / m_circle_radius;
 		if (in_lin < 0.f)
 			in_lin = 0.f;
+		if (in_lin > 1.f)
+			in_lin = 1.f;
 	}
 	if (m_cosFalloff) {
 		float cmet = (PI / 2.f) * (dist / m_circle_radius);
@@ -553,9 +583,13 @@ float StampEye::RoundedCornerIntensityNoRot(const s_2pt& pt) {
 	}
 	if (m_gaussFalloff) {
 		float gmet = dist / m_circle_radius;
-		in_gau = Math::Gaussian(gmet, m_gaussSigma);
+		in_gau = Math::GaussianOneMax(gmet, m_gaussSigma);
 	}
-	return in_lin * in_cos * in_gau;
+	if (m_sharpFalloff) {
+		if (dist > m_thickness)
+			in_line = 0.f;
+	}
+	return in_lin * in_cos * in_gau*in_line;
 }
 bool StampEye::isInRoundedCorner(const s_2pt& pt, float& intensity) {
 	s_2pt convPt = vecMath::convBasis(m_UrevBasis0, m_UrevBasis1, pt);

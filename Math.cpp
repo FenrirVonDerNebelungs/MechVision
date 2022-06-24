@@ -29,6 +29,12 @@ namespace Math {
 		float sqrt2_ExpConst = sqrtf(2.f) * norm_const;
 		return GaussianFast(pt, sqrt2_ExpConst, Norm, center);
 	}
+	float GaussianOneMax(float pt, float norm_const) {/*used for art is 1 at pt=0*/
+		float sqrt2_ExpConst = sqrtf(2.f) * norm_const;
+		float expval = pt / sqrt2_ExpConst;
+		expval *= expval;
+		return expf(-expval);
+	}
 	float GaussianFast(float pt, float sqrt2_ExpConst, float Norm, float center)
 	{
 		float dist = pt-center;

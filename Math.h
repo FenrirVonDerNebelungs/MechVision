@@ -43,6 +43,7 @@ namespace Math {
 	int loop(int i, int n);
 	float power(float x, int y);
 	float Gaussian(float pt, float norm_const, float center = 0.f);
+	float GaussianOneMax(float pt, float norm_const);
 	float GaussianFast(float pt, float sqrt2_ExpConst, float Norm, float center);
 }
 namespace arrMath {

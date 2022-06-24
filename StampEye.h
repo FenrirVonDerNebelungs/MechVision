@@ -132,6 +132,7 @@ protected:
 	bool  m_cosFalloff;
 	bool  m_linearFalloff;
 	bool  m_gaussFalloff;
+	bool  m_sharpFalloff;
 
 
 	void clearEyeStamps();
@@ -145,6 +146,7 @@ protected:
 	unsigned char stampRoundedCorners();
 	bool stampRoundedCornersAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
 	bool stampRoundedCornerAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
+	bool stampHoleSetRoundedCornersAtCenterAndAng(const s_2pt& center, float ang, float circle_scale, float opening_ang, int& stamp_cnt);
 	bool stampFinalCornerOpeningAngs(const s_2pt& center, float ang, float circle_scale, float opening_ang_start, int& stamp_cnt);
 
 	unsigned char stampEyeRoundedCorner(s_hexEye& seye);
