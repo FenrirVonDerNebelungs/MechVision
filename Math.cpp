@@ -24,7 +24,7 @@ namespace Math {
 			res *= x;
 		return res;
 	}
-	float Gaussian(float pt, float norm_const, float center = 0.f) {
+	float Gaussian(float pt, float norm_const, float center) {
 		float Norm = 1.f / sqrtf(2.f * PI * norm_const * norm_const);
 		float sqrt2_ExpConst = sqrtf(2.f) * norm_const;
 		return GaussianFast(pt, sqrt2_ExpConst, Norm, center);

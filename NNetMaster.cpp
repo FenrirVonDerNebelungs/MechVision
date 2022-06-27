@@ -23,7 +23,7 @@ unsigned char NNetMaster::init() {
 	if (m_numNets < 1)
 		return ECODE_ABORT;
 	s_hexEye initNet = m_NNetsL1->getEye(0);
-	if (Err(m_trainL1->init(m_stampEyeL1, &initNet)))
+	if (Err(m_trainL1->init(m_stampEyeL1)))
 		return ECODE_FAIL;
 
 	return ECODE_OK;

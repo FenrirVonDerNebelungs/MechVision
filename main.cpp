@@ -80,7 +80,7 @@ int debugStamp() {
 	PatternLuna lunaPat;
 	lunaPat.init();
 	StampEye* stampEy = new StampEye;
-	stampEy->init(&lunaPat, 2, 12.f, 5.f, 1, 1, 3, 1.1f, 6.0f, 3.f, &HexLow);
+	stampEy->init(&lunaPat, &HexLow);
 	stampEy->spawn();
 	DrawHexImg hexImg;
 	hexImg.Init(&HexLow, stampEy);

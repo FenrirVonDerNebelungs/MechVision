@@ -73,6 +73,7 @@ unsigned char NNetTrain0::init(
 	m_max_loop_cnt = max_loop_cnt;
 	m_w_init = init_all_ws;
 	m_nNodes = 1;/*this variable is not actually used in NNetTrain0 */
+	return ECODE_OK;
 }
 void NNetTrain0::release() {
 	releaseMem();

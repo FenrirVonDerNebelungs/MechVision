@@ -1,6 +1,7 @@
 #pragma once
 #ifndef MATH_H
 #define MATH_H
+
 #ifndef TUPLES_H
 #include "Tuples.h"
 #endif
