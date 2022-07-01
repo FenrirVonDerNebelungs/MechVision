@@ -42,6 +42,19 @@ Tup3& Tup3::operator+=(const Tup3& other) {
 	this->z += other.z;
 	return *this;
 }
+Tup3& Tup3::operator*=(const float& f) {
+	this->x *= f;
+	this->y *= f;
+	this->z *= f;
+	return *this;
+}
+Tup3& Tup3::operator*=(const Tup3& other) {
+	this->x *= other.x;
+	this->y *= other.y;
+	this->z *= other.z;
+	return *this;
+}
+
 void Tup3::fill_xyz(Tup3& tup) {
 	this->x = tup.x;
 	this->y = tup.y;

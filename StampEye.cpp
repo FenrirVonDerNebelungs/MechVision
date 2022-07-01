@@ -473,10 +473,12 @@ unsigned char StampEye::RenderPerHexCornerImage(Img* img, const s_hexPlate& eyep
 			pt.x0 = startPt.x0 + (float)i;
 			pt.x1 = startPt.x1 + (float)j;
 			if (hexMath::inHex(R, RS, hexU, center, pt)) {
-				if (isInRoundedCorner(pt)) {
+				float intensity=0;
+				if (isInRoundedCorner(pt,intensity)) {
 					s_2pt_i img_pt = { 0, 0 };
+					s_rgb curCol = imgMath::mulIntensity(img_set_col, intensity);
 					if (stampCoordToImgCoord(img, pt, img_pt)) {
-						img->SetRGB(img_pt.x0, img_pt.x1, img_set_col);
+						img->SetRGB(img_pt.x0, img_pt.x1, curCol);
 					}
 				}
 			}
@@ -583,7 +585,7 @@ float StampEye::RoundedCornerIntensityNoRot(const s_2pt& pt) {
 	}
 	if (m_gaussFalloff) {
 		float gmet = dist / m_circle_radius;
-		in_gau = Math::GaussianOneMax(gmet, m_gaussSigma);
+		in_gau = Math::GaussianOneMax(gmet, m_gaussSigma/m_circle_radius);
 	}
 	if (m_sharpFalloff) {
 		if (dist > m_thickness)

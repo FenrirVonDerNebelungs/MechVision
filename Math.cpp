@@ -187,6 +187,11 @@ namespace imgMath {
 		s_rgb rgb = { (unsigned char)r, (unsigned char)g, (unsigned char)b };
 		return rgb;
 	}
+	s_rgb mulIntensity(const s_rgb& rgb, float intensity) {
+		Tup3 frgb = rgbToTup3(rgb);
+		frgb *= intensity;
+		return tup3ToRgb(frgb);
+	}
 	s_2pt_i convToVint(const s_2pt& vec) {
 		s_2pt_i vi;
 		vi.x0 = (long)floorf(vec.x0);
@@ -198,6 +203,17 @@ namespace imgMath {
 		vec.x0 = (float)vi.x0;
 		vec.x1 = (float)vi.x1;
 		return vec;
+	}
+	Tup3 rgbToTup3(const s_rgb& rgb) {
+		Tup3 tup;
+		tup.x = (float)rgb.r;
+		tup.y = (float)rgb.g;
+		tup.z = (float)rgb.b;
+		return tup;
+	}
+	s_rgb tup3ToRgb(const Tup3& tup) {
+		s_rgb rgb = convToRGB(tup.x, tup.y, tup.z);
+		return rgb;
 	}
 	s_2pt perpUR(s_2pt& vec) {
 		s_2pt perp = { -vec.x1, vec.x0 };

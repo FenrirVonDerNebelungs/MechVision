@@ -76,8 +76,13 @@ namespace vecMath {
 namespace imgMath {
 	s_rgba convToRGBA(float r, float g, float b);
 	s_rgb  convToRGB(float r, float g, float b);
+	s_rgb mulIntensity(const s_rgb& rgb, float intensity);
+
 	s_2pt_i convToVint(const s_2pt& vec);
 	s_2pt convToVfloat(const s_2pt_i& vi);
+	Tup3 rgbToTup3(const s_rgb& rgb);
+	s_rgb tup3ToRgb(const Tup3& tup);
+
 	void drawPoint(long i, long j, const s_rgba& col, Img* canvas);
 	void drawLine(long i_start, long j_start, long i_end, long j_end, const s_rgba& col, float thickness, Img* canvas);
 	void drawV(const s_2pt& v, long i, long j, const s_rgba& col, float thickness, Img* canvas);

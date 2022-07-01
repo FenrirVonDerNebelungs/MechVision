@@ -19,6 +19,8 @@ public:
 	Tup3 operator+(const Tup3& other);
 	Tup3 operator-(const Tup3& other);
 	Tup3& operator+=(const Tup3& other);
+	Tup3& operator*=(const float& f);
+	Tup3& operator*=(const Tup3& other);
 	float x;
 	float y;
 	float z;

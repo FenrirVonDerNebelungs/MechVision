@@ -9,11 +9,11 @@
 #include "PatternLuna.h"
 #endif
 
-//#define STAMPEYE_DODEBUGIMG
+#define STAMPEYE_DODEBUGIMG
 
 #define STAMPEYEMAXANGRAD 3.1f
 #define STAMPEYENUM 1000 /*6 * numAngDiv at least added 2 extra (72 +2)*/
-#define STAMPEYEMAXNUM 4
+#define STAMPEYEMAXNUM 20
 #define STAMPEYENUMHOLEPATS 5/*number of pats for each curve/arc-corner with varying middles (holes cut out of middle)*/
 
 const float stampeye_radincmul = 2.f;/*multiplicative factor that increases the circle radius each cycle*/
@@ -71,8 +71,8 @@ public:
 		float maxRadForFinalOpeningAngs_mul=1.1f,
 		float maskdim=6.,/*mask dim as a multiple of the smallest r dim*/
 		float r=3.f,
-		float thickness_in_2Runits=2.f,
-		float gaussSigma_in_thicknessUnits=2.f
+		float thickness_in_2Runits=1.f,
+		float gaussSigma_in_thicknessUnits=1.f
 	);
 	void release();
 
