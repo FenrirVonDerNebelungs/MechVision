@@ -17,7 +17,6 @@ struct s_hexLevel {
 };*/
 struct s_hexEye {
 	s_hexPlate lev[HEXEYE_MAXLEVELS];
-	//s_hexLevel lev[HEXEYE_MAXLEVELS];
 	int n;/*starting from one*/
 };
 

@@ -2,7 +2,7 @@
 #include "PatternL1.h"
 StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadius(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_finalOpeningAngs(0), 
 m_maskdim(0.), m_maxRadForFinalOpeningAng(0.f), 
-m_minThickness(0.f),m_gaussSigma(0.f),
+m_minThickness(0.f), m_falloffScale(0.f),m_gaussSigma(0.f),
 m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), 
 m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f),
 m_thickness(0.f),m_cosFalloff(false),m_linearFalloff(false),m_gaussFalloff(false),m_sharpFalloff(false)
@@ -48,6 +48,7 @@ unsigned char StampEye::init(
 	float maskdim,
 	float r,
 	float thickness_in_2Runits,
+	float falloff_scale_factor_2Runits,
 	float gaussSigma_in_thicknessUnits
 ) {
 	m_lowestStampLev = lowestStampLev;
@@ -68,6 +69,7 @@ unsigned char StampEye::init(
 	m_maxRadForFinalOpeningAng = maxRadForFinalOpeningAngs_mul*targr;
 
 	m_minThickness = thickness_in_2Runits * targr;
+	m_falloffScale = falloff_scale_factor_2Runits * targr;
 	m_gaussSigma = gaussSigma_in_thicknessUnits * m_minThickness;
 	m_thickness = m_minThickness;
 	m_cosFalloff = false;
@@ -570,22 +572,31 @@ float StampEye::RoundedCornerIntensityNoRot(const s_2pt& pt) {
 	float in_cos=1.f;
 	float in_gau=1.f;
 	float in_line = 1.f;
+	float scale = m_falloffScale;
+	if (scale < 0.f)
+		return 1.f;
 	if (m_linearFalloff) {
-		in_lin = 1.f - (dist-m_thickness) / m_circle_radius;
+		in_lin = 1.f - (dist-m_thickness) / scale;
 		if (in_lin < 0.f)
 			in_lin = 0.f;
 		if (in_lin > 1.f)
 			in_lin = 1.f;
 	}
 	if (m_cosFalloff) {
-		float cmet = (PI / 2.f) * (dist / m_circle_radius);
+		float delta_dist = dist - m_thickness;
+		if (delta_dist < 0.f)
+			delta_dist = 0.f;
+		float cmet = (PI / 2.f) * (delta_dist / scale);
 		in_cos = cosf(cmet);
 		if (in_cos < 0.f)
 			in_cos = 0.f;
 	}
 	if (m_gaussFalloff) {
-		float gmet = dist / m_circle_radius;
-		in_gau = Math::GaussianOneMax(gmet, m_gaussSigma/m_circle_radius);
+		float delta_dist = dist - m_thickness;
+		if (delta_dist < 0.f)
+			delta_dist = 0.f;
+		float gmet = delta_dist / scale;
+		in_gau = Math::GaussianOneMax(gmet, m_gaussSigma/scale);
 	}
 	if (m_sharpFalloff) {
 		if (dist > m_thickness)
@@ -595,7 +606,7 @@ float StampEye::RoundedCornerIntensityNoRot(const s_2pt& pt) {
 }
 bool StampEye::isInRoundedCorner(const s_2pt& pt, float& intensity) {
 	s_2pt convPt = vecMath::convBasis(m_UrevBasis0, m_UrevBasis1, pt);
-	intensity = RoundedCornerIntensityNoRot(pt);
+	intensity = RoundedCornerIntensityNoRot(convPt);
 	return isInRoundedCornerNoRot(convPt);
 }
 
