@@ -1,5 +1,13 @@
 #include "ParseTxt.h"
 
+namespace n_datLine {
+	void clear(s_datLine& dl) {
+		for (int i = 0; i < PARSETXT_MAXAR; i++)
+			dl.v[i] = 0.f;
+		dl.n = 0;
+	}	
+}
+
 ParseTxt::ParseTxt() { ; }
 ParseTxt::~ParseTxt() { ; }
 

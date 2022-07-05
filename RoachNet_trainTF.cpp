@@ -1,8 +1,10 @@
 #include "RoachNet_trainTF.h"
 
+
 unsigned char RoachNet_trainTF::init(int frame_width, int frame_height) {
 	m_frame_width = frame_width;
 	m_frame_height = frame_height;
+	m_numDatLines = 0;
 	m_imgLow = new Img;
 	m_imgLow->init(m_frame_width, m_frame_height, 3L);
 	m_hexLow = new Hex;
@@ -47,6 +49,11 @@ void RoachNet_trainTF::release() {
 	m_frame_height = 0;
 }
 unsigned char RoachNet_trainTF::gen() {
+	if (Err(genDatLines()))
+		return ECODE_FAIL;
+	return m_parse->writeCSV(m_datLines, m_numDatLines);
+}
+unsigned char RoachNet_trainTF::genDatLines() {
 	m_stampEye->spawn();
 	int numStamps = m_stampEye->numStamps();
 	HexEye* netEye = new HexEye;
@@ -67,12 +74,13 @@ unsigned char RoachNet_trainTF::gen() {
 	int num_hanging = num_hanging_per_hex * num_lowest_hex;
 	int dump_ar_len = 1 + num_hanging + ROACHNET_TRAINTF_NUMTRAILVALS;
 	float* dump_ar = new float[dump_ar_len];
+	m_numDatLines = 0;
 	for (int i = 0; i < numStamps; i++) {
-		int dump_ar_index = 0;
-		dump_ar[dump_ar_index] = (float)i;
-		dump_ar_index++;
 		s_eyeStamp eyeStamp = m_stampEye->getLunaEyeStamp(i);
 		for (int i_sub = 0; i_sub < eyeStamp.n; i_sub++) {
+			int dump_ar_index = 0;
+			dump_ar[dump_ar_index] = (float)i;
+			dump_ar_index++;
 			s_hexEye* lunaEye = eyeStamp.eyes[i_sub];
 			s_hexPlate& lunaPlate = lunaEye->lev[lowest_net_lev];
 			for (int i_hex = 0; i_hex < lunaPlate.m_nHex; i_hex++) {
@@ -83,14 +91,23 @@ unsigned char RoachNet_trainTF::gen() {
 					dump_ar_index++;
 				}
 			}
-			
 			/*add the trailing values*/
-			
+			dump_ar[dump_ar_index] = eyeStamp.ang[i_sub];
+			dump_ar_index++;
+			dump_ar[dump_ar_index] = eyeStamp.center_ang[i_sub];
+			dump_ar_index++;
+			dump_ar[dump_ar_index] = eyeStamp.radius[i_sub];
+			dump_ar_index++;
+			for (int ar_i = 0; ar_i < dump_ar_index; ar_i++)
+				m_datLines[m_numDatLines].v[ar_i] = dump_ar[i];
+			m_datLines[m_numDatLines].n = dump_ar_index;
+			m_numDatLines++;
 		}
 	}
 	if (dump_ar != NULL)
-		delete dump_ar;
+		delete [] dump_ar;
 	m_stampEye->releaseNNets(netEye);
 	if (netEye != NULL)
 		delete netEye;
+	return ECODE_OK;
 }

@@ -5,13 +5,16 @@
 #include "Base.h"
 #endif
 
-#define PARSETXT_MAXAR 10
+#define PARSETXT_MAXAR 80
 using namespace std;
 
 struct s_datLine {
 	float v[PARSETXT_MAXAR];
 	int n;
 };
+namespace n_datLine {
+	void clear(s_datLine& dl);
+}
 
 class ParseTxt : public Base {
 public:
