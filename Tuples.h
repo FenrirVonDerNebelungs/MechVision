@@ -2,6 +2,8 @@
 #ifndef TUPLES_H
 #define TUPLES_H
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <thread>
 #include <ctgmath>
 #ifndef MECVISPI_WIN

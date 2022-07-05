@@ -1,8 +1,8 @@
 #pragma once
 #ifndef HEXEYE_H
 #define HEXEYE_H
-#ifndef HEXBASE_H
-#include "HexBase.h"
+#ifndef HEX_H
+#include "Hex.h"
 #endif
 
 #define HEXEYE_MAXLEVELS 10
