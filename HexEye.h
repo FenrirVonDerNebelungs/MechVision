@@ -37,7 +37,9 @@ public:
 
 	inline s_fNode* getNodes(int ieye, int ilevel) { return m_eye[ieye].lev[ilevel].m_fhex; }
 	inline int getNHexes(int ieye, int ilevel) { return m_eye[ieye].lev[ilevel].m_nHex; }
-	inline float getRSHex(int ieye, int ilevel) {return m_eye[ieye].lev[ilevel].m_RShex; }//Rs)*2.f/sqrtf(3.f); }
+	inline float getRSHex(int ieye, int ilevel) { return m_eye[ieye].lev[ilevel].m_RShex; }//Rs)*2.f/sqrtf(3.f); }
+	inline float getLowestRHex() { return m_r; }
+	inline int getNLowestNodePtrs() { return m_N_lowestNodePtrs; }
 	inline int getMaxLevi(int ieye) { return m_eye[ieye].n - 1; }
 	inline s_2pt* getUHex() { return m_hexU; }
 	inline s_hexEye& getEye(int n) { return m_eye[n]; }

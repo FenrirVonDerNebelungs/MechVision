@@ -26,7 +26,7 @@ public:
 		const string& outFile);
 	void release() { ; }
 
-	unsigned char readCSV(s_datLine dat[], int maxSize=5000);
+	int readCSV(s_datLine dat[], int maxSize=5000);
 	unsigned char writeCSV(const s_datLine dat[], int dat_size);
 protected:
 	string m_inFile;

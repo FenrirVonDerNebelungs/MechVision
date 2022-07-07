@@ -13,6 +13,7 @@
 #define ROACHNET_TRAINTF_INFNAME "TFtrained.csv"
 #define ROACHNET_TRAINTF_OUTFNAME "TFstamps.csv"
 #define ROACHNET_TRAINTF_NUMTRAILVALS 3
+#define ROACHNET_TRAINTF_LOWESTLEVNUMHEX 7
 
 class RoachNet_trainTF : public Base
 {
@@ -27,13 +28,13 @@ public:
 	void release();
 
 	unsigned char gen();/*dumps result as (stamp index), (lowest plate hex, lowest hanging nodes --each per luna-- for X's), (3 values ang, center_ang, radius) */
-	unsigned char getNet(HexEye* netEyes);/*netEyes should be an object that exists but has not been initialized 
+	unsigned char setTrainedNets(HexEye* netEyes);/*netEyes should be an object that exists but has not been initialized 
 										    sets up the net eyes so that each of the seven base nodes has connections to all the  hanging nodes, each of the seven
 										    lowest plate nodes is one of the nodes in the hidden layer
 											the top node is the final output node which has weighted connections to the hidden layer nodes
 											the geometry does not necessarly match exactly, as in the training network could have trained the hidden layer nodes
 											to match just about anything
-										  assumes the data is in the format (stamp index), (weights from lower hanging nodes to 1st hidden layer), (weights from hidden layer to final node) */
+										  assumes the data is in the format (stamp index), (weights from hidden layer to final node), (weights from lower hanging nodes to 1st hidden layer)  */
 protected:
 	/* owned */
 	Img* m_imgLow;
@@ -47,9 +48,13 @@ protected:
 	int m_frame_width;
 	int m_frame_height;
 
+	int m_numNNetLineVals;/*number of input values expected on one line of the dat line for the nnet*/
+
 	unsigned char genDatLines();
 
 	unsigned char initHexEyes(HexEye* netEyes);
+
 	unsigned char getDatLines();
+	unsigned char setTrainedNet(int i_net, HexEye* netEyes);
 };
 #endif

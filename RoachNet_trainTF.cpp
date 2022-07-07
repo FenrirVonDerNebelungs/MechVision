@@ -53,6 +53,18 @@ unsigned char RoachNet_trainTF::gen() {
 		return ECODE_FAIL;
 	return m_parse->writeCSV(m_datLines, m_numDatLines);
 }
+unsigned char RoachNet_trainTF::setTrainedNets(HexEye* netEyes) {
+	if (Err(setTrainedNets(netEyes)))
+		return ECODE_FAIL;
+	if (Err(getDatLines()))
+		return ECODE_FAIL;
+	for (int i = 0; i < netEyes->getNEyes(); i++) {
+		unsigned char errcode = setTrainedNet(i, netEyes);
+		if (Err(errcode))
+			return errcode;
+	}
+	return ECODE_OK;
+}
 unsigned char RoachNet_trainTF::genDatLines() {
 	m_stampEye->spawn();
 	int numStamps = m_stampEye->numStamps();
@@ -109,5 +121,57 @@ unsigned char RoachNet_trainTF::genDatLines() {
 	m_stampEye->releaseNNets(netEye);
 	if (netEye != NULL)
 		delete netEye;
+	return ECODE_OK;
+}
+unsigned char RoachNet_trainTF::initHexEyes(HexEye* netEyes) {
+	float r = m_stampEye->getLunaEyeGen()->getLowestRHex();
+	int lowestStampLev = m_stampEye->getLowestStampLev();
+	int TotalNumberHanging = ROACHNET_TRAINTF_LOWESTLEVNUMHEX * PATTERNLUNA_NUM;
+
+	int numStamps = m_stampEye->numStamps();
+	if (RetOk(netEyes->init(r, lowestStampLev, TotalNumberHanging))) {
+		for (int i = 0; i < numStamps; i++)
+			netEyes->spawn();
+	}
+	else
+		return ECODE_FAIL;
+	m_numNNetLineVals = 1 + TotalNumberHanging + ROACHNET_TRAINTF_LOWESTLEVNUMHEX;
+	return ECODE_OK;
+}
+
+unsigned char RoachNet_trainTF::getDatLines() {
+	m_numDatLines = 0;
+	m_numDatLines = m_parse->readCSV(m_datLines, HEXEYE_MAXEYES);
+	return m_numDatLines > 0 ? ECODE_OK : ECODE_ABORT;
+}
+unsigned char RoachNet_trainTF::setTrainedNet(int i_net, HexEye* netEyes) {
+	int numNets = netEyes->getNEyes();
+	if (i_net >= numNets)
+		return ECODE_ABORT;
+	s_hexEye* nnet = netEyes->getEyePtr(i_net);
+	int maxLev_i = nnet->n - 1;/*this should be 1*/
+	if (maxLev_i != 1)
+		return ECODE_ABORT;
+	/*try to find the stamp index in the input data*/
+	for (int i = 0; i < m_numDatLines; i++) {
+		if (m_datLines[i].n < m_numNNetLineVals)
+			continue;
+		int stampIndex = (int)floorf(m_datLines[i].v[0]);
+		if (stampIndex == i_net) {
+			s_hexPlate& topPlate = nnet->lev[0];
+			s_hexPlate& botPlate = nnet->lev[maxLev_i];
+			s_fNode& topNode = topPlate.m_fhex[0];
+			for (int low_i = 0; low_i < topNode.N; low_i++)
+				topNode.w[low_i] = m_datLines[i].v[1 + low_i];
+			int datLines_i = 1 + topNode.N;
+			for (int low_i = 0; low_i < botPlate.m_nHex; low_i++) {
+				s_fNode& botNode = botPlate.m_fhex[low_i];
+				for (int hanging_i = 0; hanging_i < botNode.N; hanging_i++) {
+					botNode.w[hanging_i] = m_datLines[i].v[datLines_i];
+					datLines_i++;
+				}
+			}
+		}
+	}
 	return ECODE_OK;
 }

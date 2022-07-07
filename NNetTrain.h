@@ -97,6 +97,7 @@ public:
 	);
 	void release();
 	inline unsigned char run(s_hexEye* net) { return runL0(net); }/*net has the same structure as the stampe eye's s_hexEye's for the luna output*/
+
 protected:
 	int        m_lowestLevel;
 	/*owned*/
@@ -113,8 +114,6 @@ protected:
 
 	unsigned char setDataForTopNode();
 	unsigned char getResultsIntoTopNode();
-	
-
 };
 
 #endif

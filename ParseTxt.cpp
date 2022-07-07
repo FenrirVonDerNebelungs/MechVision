@@ -17,17 +17,19 @@ unsigned char ParseTxt::init(const string& inFile, const string& outFile) {
 	return ECODE_OK;
 }
 
-unsigned char ParseTxt::readCSV(s_datLine dat[], int maxSize) {
+int ParseTxt::readCSV(s_datLine dat[], int maxSize) {
 	ifstream ffile(m_inFile);
 	string line;
 	int lcnt = 0;
 	int arlen = 0;
+	int lines_read = 0;
 	while (getline(ffile,line) && lcnt<maxSize && arlen>0) {
 		arlen = readFloatLine(line, dat[lcnt].v);
 		dat[lcnt].n = arlen;
+		lines_read++;
 	};
 	ffile.close();
-	return ECODE_OK;
+	return lines_read;
 }
 unsigned char ParseTxt::writeCSV(const s_datLine dat[], int dat_size) {
 	ofstream ffile;
