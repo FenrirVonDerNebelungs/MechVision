@@ -22,9 +22,14 @@ unsigned char RoachNet_trainTF::init(int frame_width, int frame_height) {
 	m_patLuna->init();
 	m_stampEye = new StampEye;
 	m_stampEye->init(m_patLuna, m_hexLow);
-	m_parse = new ParseTxt;
+	m_stampEye->spawn();
+	m_NNetsPreTrained = new HexEye;
+	m_stampEye->initNNets(m_NNetsPreTrained);/*number of stamps should equal the */
+	m_preTrain = new EyeNetTrain;
+	m_preTrain->init(m_stampEye);
 	string infName(ROACHNET_TRAINTF_INFNAME);
 	string outfName(ROACHNET_TRAINTF_OUTFNAME);
+	m_parse = new ParseTxt;
 	m_parse->init(infName, outfName);
 	return ECODE_OK;
 }
@@ -34,6 +39,17 @@ void RoachNet_trainTF::release() {
 		delete m_parse;
 	}
 	m_parse = NULL;
+	if (m_preTrain != NULL) {
+		m_preTrain->release();
+		delete m_preTrain;
+	}
+	m_preTrain = NULL;
+	if (m_NNetsPreTrained != NULL) {
+		if (m_stampEye != NULL)
+			m_stampEye->releaseNNets(m_NNetsPreTrained);
+		delete m_NNetsPreTrained;
+	}
+	m_NNetsPreTrained = NULL;
 	if (m_stampEye != NULL) {
 		m_stampEye->release();
 		delete m_stampEye;
@@ -99,10 +115,9 @@ unsigned char RoachNet_trainTF::setNetDim() {
 	return ECODE_OK;
 }
 unsigned char RoachNet_trainTF::genDatLines() {
-	m_stampEye->spawn();
 	setNetDim();
 	int numStamps = m_stampEye->numStamps();
-	int dump_ar_len = 1 + m_numNNetLowestXs + ROACHNET_TRAINTF_NUMTRAILVALS;
+	int dump_ar_len = 1 + m_numNNetLowestXs + m_numLowestHex + m_numNNetLowestXs + ROACHNET_TRAINTF_NUMTRAILVALS;
 	float* dump_ar = new float[dump_ar_len];
 	m_numDatLines = 0;
 	for (int i = 0; i < numStamps; i++) {
@@ -121,6 +136,28 @@ unsigned char RoachNet_trainTF::genDatLines() {
 					dump_ar_index++;
 				}
 			}
+			/*dump the preTrained weights
+			  numStamps() from m_stampEye should be the same as getNEyes() from m_NNetsPreTrained */
+			s_hexEye& preTrainedNet = m_NNetsPreTrained->getEye(i);
+			s_hexPlate& lowestPreTrainedPlate = preTrainedNet.lev[m_lowestNetLevel];
+			for (int i_hex = 0; i_hex < lunaPlate.m_nHex; i_hex++) {
+				dump_ar[dump_ar_index] = preTrainedNet.lev[0].m_fhex[0].w[i_hex];
+				dump_ar_index++;
+			}
+			float* hanging_ar = new float[m_numNNetLowestXs];/*numNNetLowestXs must equal lowestPreTrainedPlate.m_fhex[].N * lunaPlate.m_nHex */
+			for (int hang_i = 0; hang_i < m_numNNetLowestXs; hang_i++)
+				hanging_ar[hang_i] = 0.f;
+			for (int i_hex = 0; i_hex < lunaPlate.m_nHex; i_hex++) {
+				s_fNode& lowNetHexNode = lowestPreTrainedPlate.m_fhex[i_hex];
+				int hang_start_i = i_hex * lowNetHexNode.N;/*all of these nodes should have the same N*/
+				for (int hang_i = 0; hang_i < lowNetHexNode.N; hang_i++)
+					hanging_ar[hang_start_i + hang_i] = lowNetHexNode.w[hang_i];
+				for (int hang_i = 0; hang_i < m_numNNetLowestXs; hang_i++) {
+					dump_ar[dump_ar_index] = hanging_ar[hang_i];
+					dump_ar_index++;
+				}
+			}
+			delete[] hanging_ar;
 			/*add the trailing values*/
 			dump_ar[dump_ar_index] = eyeStamp.ang[i_sub];
 			dump_ar_index++;
@@ -137,6 +174,15 @@ unsigned char RoachNet_trainTF::genDatLines() {
 	if (dump_ar != NULL)
 		delete [] dump_ar;
 
+	return ECODE_OK;
+}
+unsigned char RoachNet_trainTF::preTrain() {
+	int numNets = m_NNetsPreTrained->getNEyes();
+	for(int i=0; i<numNets; i++){
+		m_stampEye->setupForStampi(i);
+		if (!m_preTrain->run(m_NNetsPreTrained->getEyePtr(i)))
+			return ECODE_FAIL;
+	}
 	return ECODE_OK;
 }
 unsigned char RoachNet_trainTF::initHexEyes(HexEye* netEyes) {

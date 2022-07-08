@@ -2,8 +2,9 @@
 #ifndef ROACHNET_TRAINTF_H
 #define ROACHNET_TRAINTF_H
 
-#ifndef STAMPEYE_H
-#include "StampEye.h"
+
+#ifndef NNETTRAIN_H
+#include "NNetTrain.h"
 #endif
 
 #ifndef PARSETXT_H
@@ -27,7 +28,8 @@ public:
 	);
 	void release();
 
-	unsigned char gen();/*dumps result as (stamp index), (lowest plate hex, lowest hanging nodes --each per luna-- for X's), (3 values ang, center_ang, radius) */
+	unsigned char gen();/*dumps result as (stamp index), (X's lowest hanging nodes --num = num lowest hexes x lunas-- ), 
+						(pre train weights for highest node--num = num lowest hexes), (pre train weights for hanging nodes X's) (3 values ang, center_ang, radius) */
 	unsigned char setTrainedNets(HexEye* netEyes);/*netEyes should be an object that exists but has not been initialized 
 										    sets up the net eyes so that each of the seven base nodes has connections to all the  hanging nodes, each of the seven
 										    lowest plate nodes is one of the nodes in the hidden layer
@@ -44,6 +46,8 @@ protected:
 	ParseTxt* m_parse;
 	s_datLine m_datLines[STAMPEYENUM];
 	int       m_numDatLines;
+	HexEye* m_NNetsPreTrained;
+	EyeNetTrain* m_preTrain;
 	/*       */
 	int m_frame_width;
 	int m_frame_height;
@@ -56,6 +60,7 @@ protected:
 	int m_numNNetLineVals;/*number of input values expected on one line of the dat line for the nnet*/
 
 	unsigned char genDatLines();
+	unsigned char preTrain();
 
 	unsigned char setNetDim();
 	unsigned char initHexEyes(HexEye* netEyes);
