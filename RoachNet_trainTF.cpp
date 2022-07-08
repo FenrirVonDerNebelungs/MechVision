@@ -2,9 +2,18 @@
 
 
 unsigned char RoachNet_trainTF::init(int frame_width, int frame_height) {
+	m_numDatLines = 0;
+
 	m_frame_width = frame_width;
 	m_frame_height = frame_height;
-	m_numDatLines = 0;
+
+	m_lowestNetR = 0.f;
+	m_lowestNetLevel = 0;
+	m_numLowestHex = 0;
+	m_numHangingPerHex = 0;
+	m_numNNetLowestXs = 0;
+	m_numNNetLineVals = 0;
+
 	m_imgLow = new Img;
 	m_imgLow->init(m_frame_width, m_frame_height, 3L);
 	m_hexLow = new Hex;
@@ -65,9 +74,7 @@ unsigned char RoachNet_trainTF::setTrainedNets(HexEye* netEyes) {
 	}
 	return ECODE_OK;
 }
-unsigned char RoachNet_trainTF::genDatLines() {
-	m_stampEye->spawn();
-	int numStamps = m_stampEye->numStamps();
+unsigned char RoachNet_trainTF::setNetDim() {
 	HexEye* netEye = new HexEye;
 	if (Err(m_stampEye->initNNets(netEye))) {
 		if (netEye != NULL) {
@@ -76,15 +83,26 @@ unsigned char RoachNet_trainTF::genDatLines() {
 		}
 		return ECODE_FAIL;
 	}
+	m_lowestNetR = netEye->getLowestRHex();
 	s_hexEye& s_netEye = netEye->getEye(0);
-	int lowest_net_lev = s_netEye.n - 1;
-	s_hexPlate& lowest_net_plate = s_netEye.lev[lowest_net_lev];
-	int num_lowest_hex = lowest_net_plate.m_nHex;
+	m_lowestNetLevel = s_netEye.n - 1;
+	s_hexPlate& lowest_net_plate = s_netEye.lev[m_lowestNetLevel];
+	m_numLowestHex = lowest_net_plate.m_nHex;
 	/*assume all hanging nodes have the same number which should be equal to the number of luna nodes of interest*/
-	int num_hanging_per_hex = lowest_net_plate.m_fhex[0].N;
+	m_numHangingPerHex = lowest_net_plate.m_fhex[0].N;
 	/*calculate the total number that the nodes contribute to the array*/
-	int num_hanging = num_hanging_per_hex * num_lowest_hex;
-	int dump_ar_len = 1 + num_hanging + ROACHNET_TRAINTF_NUMTRAILVALS;
+	m_numNNetLowestXs = m_numHangingPerHex * m_numLowestHex;
+	m_numNNetLineVals = 1 + m_numLowestHex+1+m_numNNetLowestXs+m_numLowestHex;
+	m_stampEye->releaseNNets(netEye);
+	if (netEye != NULL)
+		delete netEye;
+	return ECODE_OK;
+}
+unsigned char RoachNet_trainTF::genDatLines() {
+	m_stampEye->spawn();
+	setNetDim();
+	int numStamps = m_stampEye->numStamps();
+	int dump_ar_len = 1 + m_numNNetLowestXs + ROACHNET_TRAINTF_NUMTRAILVALS;
 	float* dump_ar = new float[dump_ar_len];
 	m_numDatLines = 0;
 	for (int i = 0; i < numStamps; i++) {
@@ -94,7 +112,7 @@ unsigned char RoachNet_trainTF::genDatLines() {
 			dump_ar[dump_ar_index] = (float)i;
 			dump_ar_index++;
 			s_hexEye* lunaEye = eyeStamp.eyes[i_sub];
-			s_hexPlate& lunaPlate = lunaEye->lev[lowest_net_lev];
+			s_hexPlate& lunaPlate = lunaEye->lev[m_lowestNetLevel];
 			for (int i_hex = 0; i_hex < lunaPlate.m_nHex; i_hex++) {
 				s_fNode& hex_node = lunaPlate.m_fhex[i_hex];
 				for (int i_hanging = 0; i_hanging < hex_node.N; i_hanging++) {
@@ -118,24 +136,18 @@ unsigned char RoachNet_trainTF::genDatLines() {
 	}
 	if (dump_ar != NULL)
 		delete [] dump_ar;
-	m_stampEye->releaseNNets(netEye);
-	if (netEye != NULL)
-		delete netEye;
+
 	return ECODE_OK;
 }
 unsigned char RoachNet_trainTF::initHexEyes(HexEye* netEyes) {
-	float r = m_stampEye->getLunaEyeGen()->getLowestRHex();
-	int lowestStampLev = m_stampEye->getLowestStampLev();
-	int TotalNumberHanging = ROACHNET_TRAINTF_LOWESTLEVNUMHEX * PATTERNLUNA_NUM;
-
+	setNetDim();
 	int numStamps = m_stampEye->numStamps();
-	if (RetOk(netEyes->init(r, lowestStampLev, TotalNumberHanging))) {
+	if (RetOk(netEyes->init(m_lowestNetR, m_lowestNetLevel, m_numNNetLowestXs))) {
 		for (int i = 0; i < numStamps; i++)
 			netEyes->spawn();
 	}
 	else
 		return ECODE_FAIL;
-	m_numNNetLineVals = 1 + TotalNumberHanging + ROACHNET_TRAINTF_LOWESTLEVNUMHEX;
 	return ECODE_OK;
 }
 
@@ -163,13 +175,19 @@ unsigned char RoachNet_trainTF::setTrainedNet(int i_net, HexEye* netEyes) {
 			s_fNode& topNode = topPlate.m_fhex[0];
 			for (int low_i = 0; low_i < topNode.N; low_i++)
 				topNode.w[low_i] = m_datLines[i].v[1 + low_i];
-			int datLines_i = 1 + topNode.N;
+			topNode.b = m_datLines[i].v[1 + topNode.N];
+			int datLines_i = 1 + topNode.N+1;
 			for (int low_i = 0; low_i < botPlate.m_nHex; low_i++) {
 				s_fNode& botNode = botPlate.m_fhex[low_i];
 				for (int hanging_i = 0; hanging_i < botNode.N; hanging_i++) {
 					botNode.w[hanging_i] = m_datLines[i].v[datLines_i];
 					datLines_i++;
 				}
+			}
+			for (int low_i = 0; low_i < botPlate.m_nHex; low_i++) {
+				s_fNode& botNode = botPlate.m_fhex[low_i];
+				botNode.b = m_datLines[i].v[datLines_i];
+				datLines_i++;
 			}
 		}
 	}

@@ -34,7 +34,7 @@ public:
 											the top node is the final output node which has weighted connections to the hidden layer nodes
 											the geometry does not necessarly match exactly, as in the training network could have trained the hidden layer nodes
 											to match just about anything
-										  assumes the data is in the format (stamp index), (weights from hidden layer to final node), (weights from lower hanging nodes to 1st hidden layer)  */
+										  assumes the data is in the format (stamp index), (weights from hidden layer to final node), b final node, (weights from lower hanging nodes to 1st hidden layer), (b's for each of the hidden nodes)  */
 protected:
 	/* owned */
 	Img* m_imgLow;
@@ -48,10 +48,16 @@ protected:
 	int m_frame_width;
 	int m_frame_height;
 
+	float m_lowestNetR;
+	int m_lowestNetLevel;
+	int m_numLowestHex;
+	int m_numHangingPerHex;/*number hanging in original simple NNet not the total number of hanging*/
+	int m_numNNetLowestXs;/*total number hanging*/
 	int m_numNNetLineVals;/*number of input values expected on one line of the dat line for the nnet*/
 
 	unsigned char genDatLines();
 
+	unsigned char setNetDim();
 	unsigned char initHexEyes(HexEye* netEyes);
 
 	unsigned char getDatLines();
