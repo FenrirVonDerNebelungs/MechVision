@@ -8,6 +8,9 @@
 #ifndef DRAWHEXIMG_H
 #include "DrawHexImg.h"
 #endif
+#ifndef NNETTRAIN_H
+#include "NNetTrain.h"
+#endif
 
 const unsigned int frame_msg_len = 16384;/*2^14*/
 const unsigned int loop_n = 2000;
@@ -15,6 +18,7 @@ const unsigned int loop_n = 2000;
 int testRoachFeed();
 int debugStamp();
 int debugStamp_rawImg();
+int debugTrain();
 
 int main() {
 #ifdef STAMPEYE_DODEBUGIMG
@@ -70,6 +74,41 @@ int debugStamp_rawImg() {
 	return 0;
 }
 #endif
+int debugTrain() {
+	int frame_width = 640;
+	int frame_height = 480;
+	Img dummyImg;
+	dummyImg.init(frame_width, frame_height, 3L);
+	Hex HexLow;
+	HexLow.Init(&dummyImg);
+	PatternLuna lunaPat;
+	lunaPat.init();
+	StampEye* stampEy = new StampEye;
+	stampEy->init(&lunaPat, &HexLow);
+	stampEy->spawn();
+	HexEye* NNetsPreTrained = new HexEye;
+	stampEy->initNNets(NNetsPreTrained);
+	EyeNetTrain* preTrain = new EyeNetTrain;
+	preTrain->init(stampEy);
+	int numNets = NNetsPreTrained->getNEyes();
+	for (int i = 0; i < numNets; i++) {
+		stampEy->setupForStampi(i);
+		if (!preTrain->run(NNetsPreTrained->getEyePtr(i)))
+			return ECODE_FAIL;
+	}
+	DrawHexImg hexImg;
+	hexImg.Init(&HexLow, stampEy);
+
+	hexImg.Release();
+	stampEy->release();
+	delete stampEy;
+	stampEy = NULL;
+	lunaPat.release();
+	HexLow.Release();
+	dummyImg.release();
+
+	return 0;
+}
 int debugStamp() {
 	int frame_width = 640;
 	int frame_height = 480;
