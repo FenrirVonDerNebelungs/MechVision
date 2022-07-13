@@ -8,7 +8,7 @@
 #ifndef NNETTRAIN_H
 #include "NNetTrain.h"
 #endif
-
+/*probably going to replace this with RoachNet_trainTF*/
 /*
 this class is currently independent of the other 'master' class RoachNet_Client
 class mostly just for testing of nnets. Once nets work will derive means to write
