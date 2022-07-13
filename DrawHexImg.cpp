@@ -98,7 +98,7 @@ void DrawHexImg::Release()
 }
 unsigned char DrawHexImg::Run()
 {
-	return renderIncStamp();//renderHexOuput();//renderHexImg();//genHexImgDebug();
+	return renderIncNNet();//renderIncStamp();//renderHexOuput();//renderHexImg();//genHexImgDebug();
 }
 unsigned char DrawHexImg::renderHexImg()
 {

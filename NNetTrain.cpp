@@ -10,7 +10,6 @@ namespace NNet {
 		return ECODE_OK;
 	}
 	unsigned char initNNetL1Xs(long datasize, int nX, s_NNetL1X X[]) {
-		X = new s_NNetL1X[datasize];
 		if (X == NULL)
 			return ECODE_FAIL;
 		for (long i = 0; i < datasize; i++) {
@@ -29,9 +28,7 @@ namespace NNet {
 			for (long i = 0; i < datasize; i++) {
 				releaseNNetL1X(X[i]);
 			}
-			delete[] X;
 		}
-		X = NULL;
 	}
 	bool oNNetL0(s_hexEye& net, const s_hexEye& lunaEye) {/*results are storned in the net eye*/
 	/*the two eyes must have the same structure*/
@@ -97,6 +94,7 @@ unsigned char NNetTrain0::initMem(long datasize, int nX) {
 	releaseMem();
 	m_nData = datasize;
 	m_nX = nX;
+	m_X = new s_NNetL1X[m_nData];
 	NNet::initNNetL1Xs(m_nData, m_nX, m_X);
 	m_y = new float[m_nData];
 	m_w = new float[m_nX];
@@ -122,7 +120,11 @@ void NNetTrain0::releaseMem() {
 	if (m_y != NULL)
 		delete[] m_y;
 	m_y = NULL;
-	NNet::releaseNNetL1Xs(m_nData, m_X);
+	if (m_X != NULL) {
+		NNet::releaseNNetL1Xs(m_nData, m_X);
+		delete[] m_X;
+	}
+	m_X = NULL;
 	m_nX = 0;
 	m_nData = 0;
 }
@@ -153,6 +155,7 @@ unsigned char NNetTrain0::findDeltaEs() {
 		for (int k_indx = 0; k_indx < m_nX; k_indx++) {
 			int W_jk_indx = k_indx;/*since just training one node j=0 */
 			for (long q_indx = 0; q_indx < m_nData; q_indx++) {
+				float y = m_y[q];
 				m_DeltaEs[W_jk_indx] += m_steps[W_jk_indx] * evalForQth_jk(m_y[q_indx], m_X[q_indx], q_indx, k_indx);
 				m_E += 0.5f * evalEForQth_j(y, m_X[q_indx]);
 			}
@@ -220,7 +223,7 @@ unsigned char EyeNetTrain::init(
 	m_stampEye = stampEyep;
 	m_net = NULL;
 	s_eyeStamp* eyeStampsp = m_stampEye->getLunaEyeStamps();
-	if (eyeStampsp->n < 1)
+	if (m_stampEye->numStamps() < 1)
 		return ECODE_ABORT;
 	if (eyeStampsp[0].eyes[0]->n < 1)
 		return ECODE_ABORT;
@@ -255,7 +258,7 @@ unsigned char EyeNetTrain::setDataForNode(int node_i) {
 		return ECODE_FAIL;
 	if (nX != m_net->lev[m_lowestLevel].m_fhex[node_i].N)
 		return ECODE_FAIL;
-	s_NNetL1X* Xvec = NULL;
+	s_NNetL1X* Xvec = new s_NNetL1X[dataSize];
 	NNet::initNNetL1Xs(dataSize, nX, Xvec);
 	float* y = new float[dataSize];
 	long i_dat = 0;
@@ -276,7 +279,10 @@ unsigned char EyeNetTrain::setDataForNode(int node_i) {
 	if (y != NULL) {
 		delete[] y;
 	}
-	NNet::releaseNNetL1Xs(dataSize, Xvec);
+	if (Xvec != NULL) {
+		NNet::releaseNNetL1Xs(dataSize, Xvec);
+		delete[] Xvec;
+	}
 	return ErrC;
 }
 

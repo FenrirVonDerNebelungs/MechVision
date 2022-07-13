@@ -173,8 +173,14 @@ unsigned char StampEye::initNNets(HexEye* net) {
 		return ECODE_ABORT;
 	float R = m_lunaStamps[0].eyes[0]->lev[m_lowestStampLev - 1].m_Rhex;
 	if (RetOk(net->init(R, m_lowestStampLev, PATTERNLUNA_NUM))) {
-		for(int i=0; i<m_num_stamps; i++)
+		for (int i = 0; i < m_num_stamps; i++) {
 			net->spawn();
+			s_hexEye& lastNetEye = net->getLastEye();
+			s_hexPlate& lowNetPlate = lastNetEye.lev[m_lowestStampLev - 1];
+			for (int i_hex = 0; i_hex < lowNetPlate.m_nHex; i_hex++) {
+				lowNetPlate.m_fhex[i_hex].N = PATTERNLUNA_NUM;
+			}
+		}
 	}else
 		return ECODE_FAIL;
 	return ECODE_OK;
@@ -246,6 +252,7 @@ unsigned char StampEye::calcLunaStampEyes() {
 	int maxLunLev = m_lowestStampLev - 1;
 	int lunEyeRawCnt = 0;
 	for (int s_i = 0; s_i < m_num_stamps; s_i++) {
+		m_lunaStamps[s_i].n = 0;
 		for (int e_i = 0; e_i < m_stamps[s_i].n; e_i++) {
 			s_hexEye* curStampEye = m_stamps[s_i].eyes[e_i];
 			s_hexEye* curLunaStampEye = m_lunaEyeGen->getEyePtr(lunEyeRawCnt);/*lunaEyeGen acts as a resevor for the eye stamps, it is a hexEye type object*/
@@ -264,6 +271,7 @@ unsigned char StampEye::calcLunaStampEyes() {
 					curLunaStampNode->o = lunaPatNode.o;
 				}
 			}
+			m_lunaStamps[s_i].n++;
 			lunEyeRawCnt++;
 		}
 	}

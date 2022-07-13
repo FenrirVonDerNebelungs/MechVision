@@ -1,14 +1,6 @@
 #include "RoachNet_trainTF.h"
-RoachNet_trainTF::RoachNet_trainTF() : m_imgLow(NULL), m_hexLow(NULL), m_patLuna(NULL), m_stampEye(NULL), m_parse(NULL),
-m_numDatLines(0), m_NNetsPreTrained(NULL), m_preTrain(NULL),
-m_frame_width(0), m_frame_height(0),
-m_lowestNetR(0.f), m_lowestNetLevel(0), m_numLowestHex(0), m_numHangingPerHex(0), m_numNNetLowestXs(0), m_numNNetLineVals(0){
-	for (int i = 0; i < STAMPEYENUM; i++)
-		n_datLine::clear(m_datLines[i]);
-}
-RoachNet_trainTF::~RoachNet_trainTF() {
-	;
-}
+
+
 unsigned char RoachNet_trainTF::init(int frame_width, int frame_height) {
 	m_numDatLines = 0;
 
@@ -82,15 +74,11 @@ void RoachNet_trainTF::release() {
 	m_frame_height = 0;
 }
 unsigned char RoachNet_trainTF::gen() {
-	if (Err(preTrain()))
-		return ECODE_FAIL;
 	if (Err(genDatLines()))
 		return ECODE_FAIL;
-	return ECODE_OK;// m_parse->writeCSV(m_datLines, m_numDatLines);
+	return m_parse->writeCSV(m_datLines, m_numDatLines);
 }
 unsigned char RoachNet_trainTF::setTrainedNets(HexEye* netEyes) {
-	if (Err(setTrainedNets(netEyes)))
-		return ECODE_FAIL;
 	if (Err(getDatLines()))
 		return ECODE_FAIL;
 	for (int i = 0; i < netEyes->getNEyes(); i++) {
