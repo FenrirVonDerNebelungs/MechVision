@@ -29,6 +29,7 @@ public:
 	unsigned char Init(HexBase* hbase, s_hexPlate* plate);
 	unsigned char Init(s_hexPlate* plate, Img* hexMask);
 	unsigned char Init(HexBase* hbase, StampEye* stampEyep);
+	unsigned char Init(HexBase* hbase, StampEye* stampEyep, HexEye* NNets);
 	void Release();
 	unsigned char Run();
 	unsigned char renderHexImg();
@@ -51,8 +52,10 @@ protected:
 	Img* m_hexMaskPlus;
 	Img* m_lowerHexMask;
 	StampEye* m_stampEye;
+	HexEye* m_NNets;
 	s_hexPlate* m_curStampPlate;
 	s_hexPlate* m_curLunaStampPlate;
+	s_hexPlate* m_curNNetPlate;
 	int m_cur_stampEye_i;
 	int m_cur_stamp_i;
 	int m_cur_sub_stamp_i;
@@ -67,21 +70,26 @@ protected:
 	unsigned char renderHexOuput(float offset_x=0.f, float offset_y=0.f);/*renders monoscale in col of hex o variable*/
 	unsigned char renderAdditiveHexOuput();
 	unsigned char renderIncStamp();/*renders a stamp then inc so that next stamp is rendered next call, loops over raw indexted eye stamps*/
+	unsigned char renderIncNNet();
 
 	unsigned char genSingLunaLineImg(LineFinder* lineFinder);
 	unsigned char genLineImg(LineFinder* lineFinder);
 	s_rgb genLineCol(int lunai);
 	s_rgb genLunaCol(int lunai, float o);
+	s_rgb genNNetCol(int lunai, float o);/*blue positive green neutral red negative*/
 	unsigned char genEyeImgDebug(s_hexEye& eye);
 	unsigned char drawWebHexPlate(s_hexPlate& plate, s_2pt& offset, int web_i);
 	unsigned char drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);
 	unsigned char drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);
+	unsigned char drawNNetHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset);
 	unsigned char drawLowerNodes(s_fNode* hiNode, Img* hexMask, s_2pt& offset, s_rgb& col);
 	void colRotate(s_rgb& col, unsigned char addc, unsigned char basecol=0x00);
 
 	bool setStampEye(int i);
+	bool setNNetEye(int i);
 	s_hexPlate& setStampEyeAsRaw(int i);
 	s_hexPlate& setStampEyeAsLuna(int i_stamp, int i_sub_stamp);
+	s_hexPlate& setNNetEyeAsDisp(int i_nnetEye);
 
 	/*luna helper*/
 	unsigned char initLunaMiniMasks(HexBase* hbase);
