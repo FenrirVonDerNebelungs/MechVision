@@ -7,6 +7,7 @@
 #endif
 
 #define NNETTRAINMAXDATAN 1000
+#define NNETTRAIN_DEBUG
 
 struct s_NNetL1X {
 	float* m_x; /*has length the number of input x's */
@@ -36,7 +37,7 @@ public:
 	unsigned char init(
 		float stepSize = 0.01,/* eta */
 		float DeltaE_closeEnough = 0.001,
-		long max_loop_cnt = 10000,
+		long max_loop_cnt = 1000000,
 		float init_all_ws=0.f
 	);
 	void release();
@@ -81,6 +82,10 @@ protected:
 	float evalEForQth_j(float y, s_NNetL1X& X);/* find the sum squared error for 'all', in this case 1, node(s) for a given q*/
 	/******* helpers for evalForQth_jk*/
 	float sumWs(float X[]);
+#ifdef NNETTRAIN_DEBUG
+	void DumpNet(int q, float DeltaEs_q[]);
+	void DumpNetVerbose(int q);
+#endif
 };
 
 

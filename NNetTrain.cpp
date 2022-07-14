@@ -99,7 +99,7 @@ unsigned char NNetTrain0::initMem(long datasize, int nX) {
 	m_y = new float[m_nData];
 	m_w = new float[m_nX];
 	
-	m_DeltaEs = new float[m_nData];
+	m_DeltaEs = new float[m_nX];
 	m_steps = new float[m_nX];
 	if (m_X == NULL || m_y == NULL || m_w == NULL || m_DeltaEs == NULL || m_steps == NULL) {
 		releaseMem();
@@ -131,7 +131,10 @@ void NNetTrain0::releaseMem() {
 void NNetTrain0::reset() {
 	for (int i = 0; i < m_nX; i++) {
 		m_w[i] = m_w_init;
-		m_steps[i] = -m_stepSize;
+		if (m_nData > 0)
+			m_steps[i] = -(m_stepSize / ((float)m_nData));
+		else
+			m_steps[i] = -m_stepSize;
 	}
 }
 
@@ -146,21 +149,24 @@ unsigned char NNetTrain0::trainNet() {
 	return converged ? ECODE_OK : ECODE_ABORT;
 }
 unsigned char NNetTrain0::findDeltaEs() {
+	float* DeltaEs_q = new float[m_nX];
 	m_E = 0;
 	for (int i = 0; i < m_nX; i++) {
 		m_DeltaEs[i] = 0.f;
 	}
 	for (int q = 0; q < m_nData; q++) {
-		float y = m_y[q];/* */
 		for (int k_indx = 0; k_indx < m_nX; k_indx++) {
 			int W_jk_indx = k_indx;/*since just training one node j=0 */
-			for (long q_indx = 0; q_indx < m_nData; q_indx++) {
-				float y = m_y[q];
-				m_DeltaEs[W_jk_indx] += m_steps[W_jk_indx] * evalForQth_jk(m_y[q_indx], m_X[q_indx], q_indx, k_indx);
-				m_E += 0.5f * evalEForQth_j(y, m_X[q_indx]);
-			}
+			DeltaEs_q[W_jk_indx]= m_steps[W_jk_indx] * evalForQth_jk(m_y[q], m_X[q], q, k_indx);
+			m_DeltaEs[W_jk_indx] += DeltaEs_q[W_jk_indx];
+			m_E += 0.5f * evalEForQth_j(m_y[q], m_X[q]);
 		}
+#ifdef NNETTRAIN_DEBUG
+		std::cout << "\n\n";
+		DumpNet(q, DeltaEs_q);
+#endif
 	}
+	delete[] DeltaEs_q;
 	return ECODE_OK;
 }
 bool NNetTrain0::updateWs() {
@@ -180,7 +186,7 @@ bool NNetTrain0::updateWs() {
 			}
 			else {
 				/*going in the correct direction, so update the w*/
-				m_w[W_jk_indx] += m_DeltaEs[W_jk_indx];
+				m_w[W_jk_indx] += m_steps[W_jk_indx];
 			}
 		}
 	}
@@ -194,7 +200,7 @@ float NNetTrain0::evalForQth_jk(float y, s_NNetL1X& X, long q, int k) {
 	return e_j * df * X.m_x[k];
 }
 float NNetTrain0::evalEForQth_j(float y, s_NNetL1X& X) {
-	float n_out = sumWs(X.m_x);
+	float n_out = NNet::NNetFunc(sumWs(X.m_x));
 	float diff = n_out - y;
 	return diff * diff;
 }
@@ -205,7 +211,40 @@ float NNetTrain0::sumWs(float X[]) {
 	}
 	return sum;
 }
-
+#ifdef NNETTRAIN_DEBUG
+void NNetTrain0::DumpNet(int q, float DeltaEs_q[]) {
+	std::cout << q << ",";
+	std::cout << m_y[q] << ",";
+	for (int i = 0; i < m_nX; i++) {
+		std::cout << m_X[q].m_x[i]<<",";
+	}
+	for (int i = 0; i < m_nX; i++) {
+		std::cout << DeltaEs_q[i] << ",";
+	}
+	std::cout << "\n";
+}
+void NNetTrain0::DumpNetVerbose(int q) {
+	std::cout << q<<" | ";
+	std::cout << "y: " << m_y[q]<<" | ";
+	std::cout << "Xs: ";
+	for (int i = 0; i < m_nX; i++) {
+		std::cout << m_X[q].m_x[i] << ", ";
+	}
+	std::cout << " | Steps: ";
+	for (int i = 0; i < m_nX; i++) {
+		std::cout << m_steps[i] << ", ";
+	}
+	std::cout << " | dE: ";
+	for (int i = 0; i < m_nX; i++) {
+		std::cout << m_DeltaEs[i] << ", ";
+	}
+	std::cout << " | w: ";
+	for (int i = 0; i < m_nX; i++) {
+		std::cout << m_w[i] << ", ";
+	}
+	std::cout << "\n";
+}
+#endif
 
 EyeNetTrain::EyeNetTrain():m_lowestLevel(0), m_NNetTrain0(NULL), m_net(NULL), m_stampEye(NULL)
 {
