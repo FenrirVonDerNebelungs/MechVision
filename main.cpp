@@ -91,6 +91,11 @@ int debugTrain() {
 	EyeNetTrain* preTrain = new EyeNetTrain;
 	preTrain->init(stampEy);
 	int numNets = NNetsPreTrained->getNEyes();
+#ifdef NNETTRAIN_DEBUG
+	stampEy->setupForStampi(0);
+	preTrain->run(NNetsPreTrained->getEyePtr(0));
+	preTrain->writeDump();
+#elif
 	for (int i = 0; i < numNets; i++) {
 		stampEy->setupForStampi(i);
 		if (!preTrain->run(NNetsPreTrained->getEyePtr(i)))
@@ -114,8 +119,8 @@ int debugTrain() {
 				break;
 		} while (true);
 	} while (loop);
-
 	hexImg.Release();
+#endif
 	preTrain->release();
 	delete preTrain;
 	stampEy->releaseNNets(NNetsPreTrained);

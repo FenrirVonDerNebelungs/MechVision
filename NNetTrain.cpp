@@ -50,11 +50,19 @@ namespace NNet {
 	}
 }
 
-NNetTrain0::NNetTrain0() :m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0), m_w_init(0.f), m_stepSize(0.f),
+NNetTrain0::NNetTrain0() :m_DeltaE_closeEnough_unscaled(0.f), m_DeltaE_closeEnough(0.f), m_max_loop_cnt(0), m_w_init(0.f), m_stepSize(0.f),
+m_step_cnt(0),
 m_X(NULL), m_nX(0), m_y(NULL), m_nData(0), m_w(NULL), m_nNodes(0),
-m_DeltaEs(NULL), m_steps(NULL), m_E(0.f)
+m_DeltaEs(NULL), m_steps(NULL), m_E(0.f), m_step_rev(NULL)
 {
 	;
+#ifdef NNETTRAIN_DEBUG
+	m_selq = 0;
+	m_parse = NULL;
+	for (int i = 0; i < NNETTRAINMAXDUMP; i++)
+		n_datLine::clear(m_dump[i]);
+	m_dump_len = 0;
+#endif
 }
 NNetTrain0::~NNetTrain0() {
 	;
@@ -66,14 +74,27 @@ unsigned char NNetTrain0::init(
 	float init_all_ws
 ) {
 	m_stepSize = stepSize;
-	m_DeltaE_closeEnough = DeltaE_closeEnough;
+	m_DeltaE_closeEnough_unscaled = DeltaE_closeEnough;
 	m_max_loop_cnt = max_loop_cnt;
 	m_w_init = init_all_ws;
 	m_nNodes = 1;/*this variable is not actually used in NNetTrain0 */
+#ifdef NNETTRAIN_DEBUG
+	m_parse = new ParseTxt;
+	std::string inF = "in.csv";
+	std::string outF = "trainDump.csv";
+	m_parse->init(inF, outF);
+#endif
 	return ECODE_OK;
 }
 void NNetTrain0::release() {
 	releaseMem();
+#ifdef NNETTRAIN_DEBUG
+	if (m_parse != NULL) {
+		m_parse->release();
+		delete m_parse;
+	}
+	m_parse = NULL;
+#endif
 }
 unsigned char NNetTrain0::setNet(long datasize, s_NNetL1X X[], float y[]) {
 	unsigned char e_code = initMem(datasize, X[0].m_n);
@@ -101,13 +122,16 @@ unsigned char NNetTrain0::initMem(long datasize, int nX) {
 	
 	m_DeltaEs = new float[m_nX];
 	m_steps = new float[m_nX];
-	if (m_X == NULL || m_y == NULL || m_w == NULL || m_DeltaEs == NULL || m_steps == NULL) {
+	m_step_rev = new long[m_nX];
+	if (m_X == NULL || m_y == NULL || m_w == NULL || m_DeltaEs == NULL || m_steps == NULL || m_step_rev==NULL) {
 		releaseMem();
 		return ECODE_FAIL;
 	}
 	return ECODE_OK;
 }
 void NNetTrain0::releaseMem() {
+	if (m_step_rev != NULL)
+		delete[] m_step_rev;
 	if(m_steps!=NULL)
 		delete[] m_steps;
 	m_steps = NULL;
@@ -131,25 +155,35 @@ void NNetTrain0::releaseMem() {
 void NNetTrain0::reset() {
 	for (int i = 0; i < m_nX; i++) {
 		m_w[i] = m_w_init;
-		if (m_nData > 0)
+		if (m_nData > 0) 
 			m_steps[i] = -(m_stepSize / ((float)m_nData));
 		else
 			m_steps[i] = -m_stepSize;
+		m_step_rev[i] = 0;
 	}
+	if (m_nData > 0)
+		m_DeltaE_closeEnough = m_DeltaE_closeEnough_unscaled / ((float)m_nData);
+	else
+		m_DeltaE_closeEnough = m_DeltaE_closeEnough_unscaled;
+#ifdef NNETTRAIN_DEBUG
+	m_dump_len = 0;
+#endif
 }
 
 unsigned char NNetTrain0::trainNet() {
 	bool converged = false;
-	long loop_cnt = 0;
 	reset();
+	m_step_cnt = 0;
 	do {
 		findDeltaEs();
 		converged = updateWs();
-	} while (!converged && loop_cnt < m_max_loop_cnt);
+		m_step_cnt++;
+	} while (!converged && m_step_cnt < m_max_loop_cnt);
 	return converged ? ECODE_OK : ECODE_ABORT;
 }
 unsigned char NNetTrain0::findDeltaEs() {
 	float* DeltaEs_q = new float[m_nX];
+	float Es_q;
 	m_E = 0;
 	for (int i = 0; i < m_nX; i++) {
 		m_DeltaEs[i] = 0.f;
@@ -159,11 +193,13 @@ unsigned char NNetTrain0::findDeltaEs() {
 			int W_jk_indx = k_indx;/*since just training one node j=0 */
 			DeltaEs_q[W_jk_indx]= m_steps[W_jk_indx] * evalForQth_jk(m_y[q], m_X[q], q, k_indx);
 			m_DeltaEs[W_jk_indx] += DeltaEs_q[W_jk_indx];
-			m_E += 0.5f * evalEForQth_j(m_y[q], m_X[q]);
+
 		}
+		Es_q = 0.5f * evalEForQth_j(m_y[q], m_X[q]);
+		m_E += Es_q;
 #ifdef NNETTRAIN_DEBUG
-		std::cout << "\n\n";
-		DumpNet(q, DeltaEs_q);
+		if(q==m_selq)
+			writeDumpLineQ(q, Es_q, DeltaEs_q);
 #endif
 	}
 	delete[] DeltaEs_q;
@@ -183,6 +219,7 @@ bool NNetTrain0::updateWs() {
 			if (m_DeltaEs[W_jk_indx] > 0.f) {
 			/*going in wrong direction error is getting bigger*/
 				m_steps[W_jk_indx] = -m_steps[W_jk_indx];/*reverse the direction of the steps*/
+				m_step_rev[W_jk_indx]++;
 			}
 			else {
 				/*going in the correct direction, so update the w*/
@@ -212,6 +249,41 @@ float NNetTrain0::sumWs(float X[]) {
 	return sum;
 }
 #ifdef NNETTRAIN_DEBUG
+void NNetTrain0::writeDump() {
+	m_parse->writeCSV(m_dump, m_dump_len);
+}
+void NNetTrain0::writeDumpLineQ(int q, float Es_q, float DeltaEs_q[]) {
+	int dump_i = 0;
+	m_dump[q].v[dump_i] = (float)m_step_cnt;
+	dump_i++;
+	m_dump[q].v[dump_i] = (float)q;
+	dump_i++;
+	m_dump[q].v[dump_i] = Es_q;
+	dump_i++;
+	for (int i = 0; i < m_nX; i++) {
+		m_dump[q].v[dump_i] = DeltaEs_q[i];
+		dump_i++;
+	}
+	for (int i = 0; i < m_nX; i++) {
+		m_dump[q].v[dump_i] = m_steps[i];
+		dump_i++;
+	}
+	for (int i = 0; i < m_nX; i++) {
+		m_dump[q].v[dump_i] = (float)m_step_rev[i];
+		dump_i++;
+	}
+	for (int i = 0; i < m_nX; i++) {
+		m_dump[q].v[dump_i] = m_w[i];
+		dump_i++;
+	}
+	for (int i = 0; i < m_nX; i++) {
+		m_dump[q].v[dump_i] = m_X[q].m_x[i];
+		dump_i++;
+	}
+	m_dump[q].v[dump_i] = m_y[q];
+	dump_i++;
+	m_dump[q].n = dump_i;
+}
 void NNetTrain0::DumpNet(int q, float DeltaEs_q[]) {
 	std::cout << q << ",";
 	std::cout << m_y[q] << ",";
@@ -341,7 +413,7 @@ unsigned char EyeNetTrain::setDataForTopNode() {
 	long dataSize = (long)m_stampEye->numEyeStamps();
 	s_hexPlate& lowestNetLevel = m_net->lev[m_lowestLevel];
 	int numNodes = lowestNetLevel.m_nHex;
-	s_NNetL1X* Xvec = NULL;
+	s_NNetL1X* Xvec = new s_NNetL1X[dataSize];
 	NNet::initNNetL1Xs(dataSize, numNodes, Xvec);
 	float* y = new float[dataSize];
 
@@ -356,6 +428,7 @@ unsigned char EyeNetTrain::setDataForTopNode() {
 			NNet::oNNetL0(*m_net, *lunaDatStamps[i_stamp].eyes[i_sub]);
 			for (int i_node = 0; i_node < numNodes; i_node++)
 				Xvec[i_dat].m_x[i_node] = lowestNetLevel.m_fhex[i_node].o;
+			i_dat++;
 		}
 	}
 	if (Err(m_NNetTrain0->setNet(dataSize, Xvec, y)))
@@ -364,6 +437,8 @@ unsigned char EyeNetTrain::setDataForTopNode() {
 		delete[] y;
 	y = NULL;
 	NNet::releaseNNetL1Xs(dataSize, Xvec);
+	if (Xvec != NULL)
+		delete[] Xvec;
 	return ECODE_OK;
 }
 unsigned char EyeNetTrain::getResultsIntoTopNode() {

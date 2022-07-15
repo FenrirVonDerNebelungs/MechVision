@@ -6,7 +6,11 @@
 #include "StampEye.h"
 #endif
 
-#define NNETTRAINMAXDATAN 1000
+#ifndef PARSETXT_H
+#include "ParseTxt.h"
+#endif
+
+#define NNETTRAINMAXDUMP 800000
 #define NNETTRAIN_DEBUG
 
 struct s_NNetL1X {
@@ -36,8 +40,8 @@ public:
 	
 	unsigned char init(
 		float stepSize = 0.01,/* eta */
-		float DeltaE_closeEnough = 0.001,
-		long max_loop_cnt = 1000000,
+		float DeltaE_closeEnough = 0.01,
+		long max_loop_cnt = 1000,
 		float init_all_ws=0.f
 	);
 	void release();
@@ -49,13 +53,18 @@ public:
 	inline int    getnX() { return m_nX; }
 	inline float* getDeltaEs() { return m_DeltaEs; }
 	inline float getE() { return m_E; }
-
+#ifdef NNETTRAIN_DEBUG
+	void writeDump();
+#endif
 protected:
 	/*owned*/
+	float      m_DeltaE_closeEnough_unscaled;
 	float      m_DeltaE_closeEnough;/*value of dE/dw that is low enough that the scan is considered to have converged*/
 	long       m_max_loop_cnt;
 	float      m_w_init;
 	float      m_stepSize;
+
+	long       m_step_cnt;
 
 	s_NNetL1X* m_X;/* this array has length of data q max*/
 	int        m_nX;/* m_x.m_n length of input vector of x's */
@@ -67,6 +76,7 @@ protected:
 	float* m_DeltaEs;/*change in error \delta_ji; j=0 since only one node is being trained at L0 therefore this has the length m_nX*/
 	float*  m_steps;/*has same length as w's, since some steps are pos and some are neg*/
 	float  m_E; /*current error */
+	long* m_step_rev;/*number of times the step has reversed, has same length as steps, w's */
 
 	unsigned char initMem(long dataSize, int nX);
 	void          releaseMem();
@@ -83,6 +93,11 @@ protected:
 	/******* helpers for evalForQth_jk*/
 	float sumWs(float X[]);
 #ifdef NNETTRAIN_DEBUG
+	int       m_selq;
+	ParseTxt* m_parse;
+	s_datLine m_dump[NNETTRAINMAXDUMP];
+	long      m_dump_len;
+	void writeDumpLineQ(int q, float Es_q, float DeltaEs_q[]);
 	void DumpNet(int q, float DeltaEs_q[]);
 	void DumpNetVerbose(int q);
 #endif
@@ -102,7 +117,9 @@ public:
 	);
 	void release();
 	inline unsigned char run(s_hexEye* net) { return runL0(net); }/*net has the same structure as the stampe eye's s_hexEye's for the luna output*/
-
+#ifdef NNETTRAIN_DEBUG
+	void writeDump() { m_NNetTrain0->writeDump(); }
+#endif
 protected:
 	int        m_lowestLevel;
 	/*owned*/
