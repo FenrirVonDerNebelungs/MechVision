@@ -39,10 +39,11 @@ public:
 	~NNetTrain0();
 	
 	unsigned char init(
-		float stepSize = 0.01,/* eta */
+		float stepSize = 10.,/* eta */
 		float DeltaE_closeEnough = 0.01,
 		long max_loop_cnt = 1000,
-		float init_all_ws=0.f
+		float init_all_ws=0.f,
+		int   max_red=100
 	);
 	void release();
 	unsigned char setNet(long dataSize, s_NNetL1X X[], float y[]);
@@ -54,7 +55,9 @@ public:
 	inline float* getDeltaEs() { return m_DeltaEs; }
 	inline float getE() { return m_E; }
 #ifdef NNETTRAIN_DEBUG
-	void writeDump();
+	inline void setDump(bool do_dump) { m_do_dump = do_dump; }
+	inline s_datLine* getDump() { return m_dump; }
+	inline long getDumpLen() { return m_dump_len; }
 #endif
 protected:
 	/*owned*/
@@ -63,8 +66,10 @@ protected:
 	long       m_max_loop_cnt;
 	float      m_w_init;
 	float      m_stepSize;
+	int        m_max_red;/*maximum number of times the step can reduce for a given w*/
 
 	long       m_step_cnt;
+	bool       m_converged;
 
 	s_NNetL1X* m_X;/* this array has length of data q max*/
 	int        m_nX;/* m_x.m_n length of input vector of x's */
@@ -77,6 +82,7 @@ protected:
 	float*  m_steps;/*has same length as w's, since some steps are pos and some are neg*/
 	float  m_E; /*current error */
 	long* m_step_rev;/*number of times the step has reversed, has same length as steps, w's */
+	long* m_step_red;/*number of times the step has been reduced*/
 
 	unsigned char initMem(long dataSize, int nX);
 	void          releaseMem();
@@ -93,8 +99,8 @@ protected:
 	/******* helpers for evalForQth_jk*/
 	float sumWs(float X[]);
 #ifdef NNETTRAIN_DEBUG
+	bool      m_do_dump;
 	int       m_selq;
-	ParseTxt* m_parse;
 	s_datLine m_dump[NNETTRAINMAXDUMP];
 	long      m_dump_len;
 	void writeDumpLineQ(int q, float Es_q, float DeltaEs_q[]);
@@ -111,14 +117,16 @@ public:
 
 	unsigned char init(
 		StampEye* stampEyep,/*stampEye object containing the input data which is the stamps evaluated on the lunas for each of the test patterns*/
-		float stepSize=0.01,
-		float DeltaE_closeEnough=0.001,
+		float stepSize=1.0,
+		float DeltaE_closeEnough=0.00001,
 		long  max_loop_cnt = 10000
 	);
 	void release();
 	inline unsigned char run(s_hexEye* net) { return runL0(net); }/*net has the same structure as the stampe eye's s_hexEye's for the luna output*/
 #ifdef NNETTRAIN_DEBUG
-	void writeDump() { m_NNetTrain0->writeDump(); }
+	int m_dumpSubNode;/*-1 and dumps high node*/
+	ParseTxt* m_parse;
+	void writeDump();
 #endif
 protected:
 	int        m_lowestLevel;
