@@ -428,6 +428,7 @@ unsigned char EyeNetTrain::setDataForTopNode() {
 			NNet::oNNetL0(*m_net, *lunaDatStamps[i_stamp].eyes[i_sub]);
 			for (int i_node = 0; i_node < numNodes; i_node++)
 				Xvec[i_dat].m_x[i_node] = lowestNetLevel.m_fhex[i_node].o;
+			Xvec[i_dat].m_n = numNodes;
 			i_dat++;
 		}
 	}
@@ -449,8 +450,9 @@ unsigned char EyeNetTrain::getResultsIntoTopNode() {
 	s_hexPlate& topLevel = m_net->lev[0];
 	if (topLevel.m_nHex < 1)
 		return ECODE_FAIL;
-	if (topLevel.m_fhex[0].N != nX)
-		return ECODE_FAIL;
+	//if (topLevel.m_fhex[0].N != nX) currently spawn in HexEye does not increment the N
+	//	return ECODE_FAIL;
+	topLevel.m_fhex[0].N = nX;
 	for (int i = 0; i < nX; i++) {
 		topLevel.m_fhex[0].w[i] = Ws[i];
 	}
