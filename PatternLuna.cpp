@@ -95,7 +95,7 @@ namespace PatternLunaThreaded {
 				sumN += sidelinkPtr->o * lev0.w[i];
 		}
 		sumN += plateNode.o * lev0.w[6];
-		lev0.o = Math::StepFunc(sumN-0.5f);
+		lev0.o = Math::StepFuncSym(sumN);//Math::StepFunc(sumN-0.5f);
 	}
 	void evalLowerNode(s_fNode& lev0, s_fNode& colNode) {
 		float sumN = 0.f;
@@ -104,6 +104,6 @@ namespace PatternLunaThreaded {
 			if (lowLinkPtr != NULL)
 				sumN += lowLinkPtr->o * lev0.w[i];
 		}
-		lev0.o = Math::StepFunc(sumN);// -0.5f);
+		lev0.o = Math::StepFuncSym(sumN);//Math::StepFunc(sumN);// -0.5f);
 	}
 }

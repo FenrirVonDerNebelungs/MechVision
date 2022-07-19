@@ -98,7 +98,7 @@ void DrawHexImg::Release()
 }
 unsigned char DrawHexImg::Run()
 {
-	return renderIncNNet();//renderIncStamp();//renderHexOuput();//renderHexImg();//genHexImgDebug();
+	return renderIncStamp();//renderIncNNet();//renderIncStamp();//renderHexOuput();//renderHexImg();//genHexImgDebug();
 }
 unsigned char DrawHexImg::renderHexImg()
 {
@@ -340,7 +340,7 @@ unsigned char DrawHexImg::drawHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& o
 }
 unsigned char DrawHexImg::drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask, s_2pt& offset) {
 	for (long i = 0; i < plate.m_nHex; i++) {
-		float cutoff_o = 0.501f;
+		float cutoff_o = 0.f;
 		int lunais[PATTERNLUNA_NUM];
 		float lunaos[PATTERNLUNA_NUM];
 		int lunaN = 0;
@@ -361,7 +361,7 @@ unsigned char DrawHexImg::drawStampLunaHexPlate(s_hexPlate& plate, Img* hexMask,
 		long Ij = (long)floorf(plate.m_fhex[i].y + offset.x1);
 		/*draw the results from the weakest to the strongest*/
 		for (int cnt = 0; cnt < lunaN; cnt++) {
-			s_rgb col = genLunaCol(lunais[cnt], lunaos[cnt]);
+			s_rgb col = genNNetCol(lunais[cnt], lunaos[cnt]);
 			if (lunais[cnt] < 6)
 				m_hexedImg->PrintMaskedImg(Ii, Ij, *(m_lunaMiniMask[lunais[cnt]]), col);
 			//else

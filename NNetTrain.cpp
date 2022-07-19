@@ -162,14 +162,14 @@ void NNetTrain0::reset() {
 }
 
 unsigned char NNetTrain0::trainNet() {
-	bool go_on = false;
+	bool converged = true;
 	reset();
 	m_step_cnt = 0;
 	do {
 		findDeltaEs();
-		go_on= updateWs();
+		converged= updateWs();
 		m_step_cnt++;
-	} while (!go_on && m_step_cnt < m_max_loop_cnt);
+	} while (!converged && m_step_cnt < m_max_loop_cnt);
 	return m_converged ? ECODE_OK : ECODE_ABORT;
 }
 unsigned char NNetTrain0::findDeltaEs() {
@@ -183,6 +183,11 @@ unsigned char NNetTrain0::findDeltaEs() {
 		for (int k_indx = 0; k_indx < m_nX; k_indx++) {
 			int W_jk_indx = k_indx;/*since just training one node j=0 */
 			DeltaEs_q[W_jk_indx]= m_steps[W_jk_indx] * evalForQth_jk(m_y[q], m_X[q], q, k_indx);
+			/*DEBUG*/
+			float ttdelt = DeltaEs_q[W_jk_indx];
+			if (ttdelt > 0.f)
+				int ttttt=0;
+			/*******/
 			m_DeltaEs[W_jk_indx] += DeltaEs_q[W_jk_indx];
 
 		}
@@ -216,7 +221,7 @@ bool NNetTrain0::updateWs() {
 					m_step_rev[W_jk_indx] = 0;
 					m_step_red[W_jk_indx]++;
 					if (m_step_red[W_jk_indx] >= m_max_red)
-						return false;
+						return true;
 				}
 			}
 			else {
@@ -321,7 +326,7 @@ void NNetTrain0::DumpNetVerbose(int q) {
 EyeNetTrain::EyeNetTrain():m_lowestLevel(0), m_NNetTrain0(NULL), m_net(NULL), m_stampEye(NULL)
 {
 #ifdef NNETTRAIN_DEBUG
-	m_dumpSubNode = -1;
+	m_dumpSubNode = 0;
 	m_parse = NULL;
 #endif
 }
