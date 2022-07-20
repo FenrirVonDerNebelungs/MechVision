@@ -2,7 +2,7 @@
 #include "PatternL1.h"
 StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadius(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_finalOpeningAngs(0), 
 m_maskdim(0.), m_maxRadForFinalOpeningAng(0.f), 
-m_minThickness(0.f), m_falloffScale(0.f),m_gaussSigma(0.f),
+m_minThickness(0.f), m_falloffScale(0.f),m_gaussSigma(0.f),m_stampAng_falloff(0.f),
 m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), 
 m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f),
 m_thickness(0.f),m_cosFalloff(false),m_linearFalloff(false),m_gaussFalloff(false),m_sharpFalloff(false)
@@ -49,7 +49,8 @@ unsigned char StampEye::init(
 	float r,
 	float thickness_in_2Runits,
 	float falloff_scale_factor_2Runits,
-	float gaussSigma_in_thicknessUnits
+	float gaussSigma_in_thicknessUnits,
+	float stampAng_falloff
 ) {
 	m_lowestStampLev = lowestStampLev;
 	m_patternLuna = patLuna;
@@ -60,6 +61,7 @@ unsigned char StampEye::init(
 	m_smudgeAngNum = smudgeAngNum;
 	m_finalOpeningAngs = finalOpeningAngs;
 	m_maskdim = maskdim;
+	m_stampAng_falloff = stampAng_falloff;
 	m_eyeGen = new HexEye;
 	m_lunaEyeGen = new HexEye;
 
@@ -194,10 +196,11 @@ bool StampEye::setupForStampi(int i) {
 	if (i < 0 || i >= m_num_stamps)
 		return false;
 	for (int j = 0; j < m_num_stamps; j++) {
-		m_lunaStamps[j].o = 0.f;
+		m_lunaStamps[j].o = -1.f;
 	}
-	m_lunaStamps[i].o = 1.f;
-	return true;
+	if (i < 2)
+		return setupForFullMoonStamp(i);
+	return setupForLunaStamp(i);
 }
 
 void StampEye::clearEyeStamps() {
@@ -620,4 +623,38 @@ bool StampEye::isInRoundedCorner(const s_2pt& pt, float& intensity) {
 
 bool StampEye::stampEyeIncOk(int stamp_cnt) {
 	return stamp_cnt < STAMPEYENUM;
+}
+
+bool StampEye::setupForFullMoonStamp(int i) {
+	if (i == 0) {
+		/*this is the black stamp*/
+		m_lunaStamps[i].o = 1.f;
+	}
+	else if (i == 1) {
+		/*this is the full white stamp*/
+		for (int j = 1; j < m_num_stamps; j++)
+			m_lunaStamps[j].o = 0.f;
+		m_lunaStamps[i].o = 1.f;
+	}
+	return true;
+}
+bool StampEye::setupForLunaStamp(int i) {
+	if (m_lunaStamps[i].n < 1)
+		return false;
+	m_lunaStamps[0].o = 0.f;/*white stamp is neutral*/
+	for (int j = 2; j < m_num_stamps; j++) {
+		if (m_lunaStamps[j].n < 1)
+			return false;
+		float angDiff = m_lunaStamps[i].center_ang[0];
+		angDiff -= m_lunaStamps[j].center_ang[0];
+		angDiff = fabsf(angDiff);
+		float scaleFac = -1.f;
+		if (angDiff < m_stampAng_falloff) {
+			angDiff /= m_stampAng_falloff;
+			angDiff *= PI;
+			scaleFac = cosf(angDiff);
+		}
+		m_lunaStamps[j].o = scaleFac;
+	}
+	return true;
 }

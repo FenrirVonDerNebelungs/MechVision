@@ -92,8 +92,8 @@ int debugTrain() {
 	preTrain->init(stampEy);
 	int numNets = NNetsPreTrained->getNEyes();
 #ifdef NNETTRAIN_DEBUG
-	stampEy->setupForStampi(0);
-	preTrain->run(NNetsPreTrained->getEyePtr(0));
+	stampEy->setupForStampi(2);
+	preTrain->run(NNetsPreTrained->getEyePtr(2));
 	preTrain->writeDump();
 #elif
 	for (int i = 0; i < numNets; i++) {

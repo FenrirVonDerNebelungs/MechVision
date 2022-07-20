@@ -66,14 +66,15 @@ public:
 		float numAngDiv = 12.f,//36.f,//12.f,
 		float numCircleRadii = 5.f,
 		int smudgeNum = 1,/*number of smudges, along the r direction */
-		int smudgeAngNum=1,/*number of angle variants inside of each of the 12 main angles counted towards a single nnet trained node*/
-		int finalOpeningAngs=3, /*number of opening angles between opening ang and final backwards ang counting backwards ang*/
-		float maxRadForFinalOpeningAngs_mul=1.1f,
-		float maskdim=6.,/*mask dim as a multiple of the smallest r dim*/
-		float r=3.f,
-		float thickness_in_2Runits=2.f,
-		float falloff_scale_factor_2Runits=1.f,
-		float gaussSigma_in_thicknessUnits=1.f
+		int smudgeAngNum = 1,/*number of angle variants inside of each of the 12 main angles counted towards a single nnet trained node*/
+		int finalOpeningAngs = 3, /*number of opening angles between opening ang and final backwards ang counting backwards ang*/
+		float maxRadForFinalOpeningAngs_mul = 1.1f,
+		float maskdim = 6.,/*mask dim as a multiple of the smallest r dim*/
+		float r = 3.f,
+		float thickness_in_2Runits = 2.f,
+		float falloff_scale_factor_2Runits = 1.f,
+		float gaussSigma_in_thicknessUnits = 1.f,
+		float stampAng_falloff = PI / 3.f
 	);
 	void release();
 
@@ -108,6 +109,7 @@ protected:
 	float  m_minThickness;
 	float  m_falloffScale;
 	float m_gaussSigma;
+	float m_stampAng_falloff;/*falloff for cos from stamp target =1 to stamp train target =0*/
 	/*not owned*/
 	PatternLuna* m_patternLuna;
 	/*owned*/
@@ -181,6 +183,9 @@ protected:
 	bool isInRoundedCorner(const s_2pt& pt, float& intensity);/*rotation right handed from x0 axis by angle rotAng in rad*/
 
 	bool stampEyeIncOk(int stamp_cnt);
+
+	bool setupForFullMoonStamp(int i);
+	bool setupForLunaStamp(int i);
 };
 
 #endif

@@ -183,18 +183,12 @@ unsigned char NNetTrain0::findDeltaEs() {
 		for (int k_indx = 0; k_indx < m_nX; k_indx++) {
 			int W_jk_indx = k_indx;/*since just training one node j=0 */
 			DeltaEs_q[W_jk_indx]= m_steps[W_jk_indx] * evalForQth_jk(m_y[q], m_X[q], q, k_indx);
-			/*DEBUG*/
-			float ttdelt = DeltaEs_q[W_jk_indx];
-			if (ttdelt > 0.f)
-				int ttttt=0;
-			/*******/
 			m_DeltaEs[W_jk_indx] += DeltaEs_q[W_jk_indx];
-
 		}
 		Es_q = 0.5f * evalEForQth_j(m_y[q], m_X[q]);
 		m_E += Es_q;
 #ifdef NNETTRAIN_DEBUG
-		if(q==m_selq && m_do_dump)
+		if(q==(m_nData-1) && m_do_dump)
 			writeDumpLineQ(q, Es_q, DeltaEs_q);
 #endif
 	}
@@ -259,6 +253,8 @@ void NNetTrain0::writeDumpLineQ(int q, float Es_q, float DeltaEs_q[]) {
 		return;
 	int dump_i = 0;
 	m_dump[m_dump_len].v[dump_i] = (float)m_step_cnt;
+	dump_i++;
+	m_dump[m_dump_len].v[dump_i] = m_E;
 	dump_i++;
 	m_dump[m_dump_len].v[dump_i] = (float)q;
 	dump_i++;
