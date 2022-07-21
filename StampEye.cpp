@@ -1,10 +1,26 @@
 #include "StampEye.h"
 #include "PatternL1.h"
+
+namespace n_eyeStamp {
+	bool copyVars(const s_eyeStamp& orig, s_eyeStamp& cop) {
+		if (orig.n >= STAMPEYEMAXNUM)
+			return false;
+		for (int i = 0; i < orig.n; i++) {
+			cop.raw_eye_i[i] = orig.raw_eye_i[i];
+			cop.ang[i] = orig.ang[i];
+			cop.center_ang[i] = orig.center_ang[i];
+			cop.opening_ang[i] = orig.opening_ang[i];
+			cop.radius[i] = orig.radius[i];
+		}
+		return true;
+	}
+}
+
 StampEye::StampEye() : m_numAngDiv(0.f), m_numCircleRadii(0.f), m_minCircleRadius(0.f), m_smudgeNum(0), m_smudgeAngNum(0), m_finalOpeningAngs(0), 
 m_maskdim(0.), m_maxRadForFinalOpeningAng(0.f), 
 m_minThickness(0.f), m_falloffScale(0.f),m_gaussSigma(0.f),m_stampAng_falloff(0.f),
 m_patternLuna(NULL), m_eyeGen(NULL), m_lunaEyeGen(NULL), 
-m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f),
+m_num_stamps(0), m_eyes_stamped(0), m_lowestStampLev(0), m_circle_radius(0.f), m_max_circle_radius(0.f),
 m_thickness(0.f),m_cosFalloff(false),m_linearFalloff(false),m_gaussFalloff(false),m_sharpFalloff(false)
 {
 	clearEyeStamps();
@@ -67,6 +83,7 @@ unsigned char StampEye::init(
 
 	float targr = (hexBase == NULL) ? r : 2.f*hexBase->getRhex();/*for hexEye radius overlap even at lowest level so 2 needed*/
 	m_minCircleRadius = targr;/* because the hexes in the eye even at the lowest level overlap*/
+	m_max_circle_radius = 0.f;
 
 	m_maxRadForFinalOpeningAng = maxRadForFinalOpeningAngs_mul*targr;
 
@@ -277,6 +294,7 @@ unsigned char StampEye::calcLunaStampEyes() {
 			m_lunaStamps[s_i].n++;
 			lunEyeRawCnt++;
 		}
+		n_eyeStamp::copyVars(m_stamps[s_i], m_lunaStamps[s_i]);
 	}
 	return ECODE_OK;
 }
@@ -330,6 +348,8 @@ unsigned char StampEye::stampRoundedCorners() {
 				break;
 			cur_circleRadius *= stampeye_radincmul;
 		}
+		if (cur_circleRadius > m_max_circle_radius)
+			m_max_circle_radius = cur_circleRadius;
 		if (!stampEyeIncOk(stamp_cnt))
 			break;
 		cur_ang += DAng;
@@ -654,7 +674,16 @@ bool StampEye::setupForLunaStamp(int i) {
 			angDiff *= PI;
 			scaleFac = cosf(angDiff);
 		}
-		m_lunaStamps[j].o = scaleFac;
+		float radius_falloff = m_max_circle_radius / 2.f;
+		float radDiff = m_lunaStamps[i].radius[0];
+		radDiff = fabsf(m_lunaStamps[j].radius[0] - radDiff);
+		float rad_scaleFac = -1.f;
+		if (radDiff < radius_falloff) {
+			radDiff /= radius_falloff;
+			radDiff *= PI;
+			rad_scaleFac = cosf(radDiff);
+		}
+		m_lunaStamps[j].o = (rad_scaleFac < scaleFac) ? rad_scaleFac : scaleFac;
 	}
 	return true;
 }

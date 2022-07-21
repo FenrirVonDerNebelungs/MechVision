@@ -37,6 +37,10 @@ struct s_eyeStamp {
 #endif
 };
 
+namespace n_eyeStamp {
+	bool copyVars(const s_eyeStamp& orig, s_eyeStamp& cop);
+}
+
 /*this function generates dummy patterns that the NNet nodes at level 2 (0,1,2) will be trained on */
 /*after generation the lowest level (index 2) of the stamp contains the square blured image of the curve
   or other pattern
@@ -129,6 +133,7 @@ protected:
 	/*working scratch*/
 	s_2pt m_circle_center;
 	float m_circle_radius;
+	float m_max_circle_radius;
 	s_2pt m_line_intersect;
 	s_2pt m_circle_half_pt;/*point in the x direction that is the x coord of the line intercepts*/
 	s_2pt m_Uline_perp1;/*points perp to line 1 into region beetween lines*/
