@@ -31,9 +31,22 @@ unsigned char RoachNet_trainTF::init(int frame_width, int frame_height) {
 	string outfName(ROACHNET_TRAINTF_OUTFNAME);
 	m_parse = new ParseTxt;
 	m_parse->init(infName, outfName);
+#ifdef ROACHNET_TRAIN_DEBUG
+	string debugfName("debugTF.csv");
+	string dummyfName("dummy.csv");
+	m_debugParse = new ParseTxt;
+	m_debugParse->init(dummyfName, debugfName);
+#endif
 	return ECODE_OK;
 }
 void RoachNet_trainTF::release() {
+#ifdef ROACHNET_TRAIN_DEBUG
+	if (m_debugParse != NULL) {
+		m_debugParse->release();
+		delete m_debugParse;
+	}
+	m_debugParse = NULL;
+#endif
 	if (m_parse != NULL) {
 		m_parse->release();
 		delete m_parse;
@@ -180,7 +193,11 @@ unsigned char RoachNet_trainTF::preTrain() {
 		m_stampEye->setupForStampi(i);
 		if (!m_preTrain->run(m_NNetsPreTrained->getEyePtr(i)))
 			return ECODE_FAIL;
+#ifdef ROACHNET_TRAIN_DEBUG
+		writeDebugNNetTrainLines(i);
+#endif
 	}
+
 	return ECODE_OK;
 }
 unsigned char RoachNet_trainTF::initHexEyes(HexEye* netEyes) {
@@ -237,3 +254,16 @@ unsigned char RoachNet_trainTF::setTrainedNet(int i_net, HexEye* netEyes) {
 	}
 	return ECODE_OK;
 }
+
+#ifdef ROACHNET_TRAIN_DEBUG
+void RoachNet_trainTF::writeDebugLines() {
+	int numNets = m_NNetsPreTrained->getNEyes();
+	long maxDatLines = STAMPEYENUM * STAMPEYEMAXNUM;
+	s_datLine* datLines = new s_datLine[maxDatLines];
+	for (int i = 0; i < numNets; i++) {
+
+	}
+	if (datLines != NULL)
+		delete[] datLines;
+}
+#endif

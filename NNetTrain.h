@@ -57,7 +57,9 @@ public:
 #ifdef NNETTRAIN_DEBUG
 	inline void setDump(bool do_dump) { m_do_dump = do_dump; }
 	inline s_datLine* getDump() { return m_dump; }
+	inline void resetDump() { m_dump_len = 0; }
 	inline long getDumpLen() { return m_dump_len; }
+	void writeDumpFinalLine(int node_i);
 #endif
 protected:
 	/*owned*/

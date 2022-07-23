@@ -11,6 +11,8 @@
 #include "ParseTxt.h"
 #endif
 
+#define ROACHNET_TRAIN_DEBUG
+
 #define ROACHNET_TRAINTF_INFNAME "TFtrained.csv"
 #define ROACHNET_TRAINTF_OUTFNAME "TFstamps.csv"
 #define ROACHNET_TRAINTF_NUMTRAILVALS 3
@@ -67,5 +69,9 @@ protected:
 
 	unsigned char getDatLines();
 	unsigned char setTrainedNet(int i_net, HexEye* netEyes);
+#ifdef ROACHNET_TRAIN_DEBUG
+	ParseTxt* m_debugParse;
+	void writeDebugNNetTrainLines(int net_i);
+#endif
 };
 #endif
