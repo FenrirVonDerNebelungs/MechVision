@@ -23,8 +23,8 @@ public:
 	inline void resetDump() { m_dump_len = 0; }
 	void writeDumpLineQ(int nX, long step_cnt, float E, int q, float Es_q, float DeltaEs_q[], float steps[], int step_red[], float w[], float x[], float y);
 	inline void setDumpNodeIndx(int i) { m_node_index = i; }
-	void writeDumpFinalLine(int nX, int node_i, bool converged, long step_cnt, float E, float w[], int step_rev[], int step_red[]);
-	void writeDump();
+	void writeDumpFinalLine(int nX, int node_i, bool converged, long step_cnt, float E, float w[], long step_rev[], long step_red[]);
+	void writeDump(int marker_i);
 protected:
 	/*owned*/
 	ParseTxt* m_parse;

@@ -55,13 +55,13 @@ m_step_cnt(0), m_converged(false),
 m_X(NULL), m_nX(0), m_y(NULL), m_nData(0), m_w(NULL), m_nNodes(0),
 m_DeltaEs(NULL), m_steps(NULL), m_E(0.f), m_step_rev(NULL), m_step_red(NULL)
 {
-#if defined NNETTRAIN_DEBUG || NNETTRAIN_DUMP
+#if defined NNETTRAIN_DEBUG || defined NNETTRAIN_DUMP
 	m_dump = new NNetDump;
-	NNetDump->init();
+	m_dump->init();
 #endif
 }
 NNetTrain0::~NNetTrain0() {
-#if defined NNETTRAIN_DEBUG || NNETTRAIN_DUMP
+#if defined NNETTRAIN_DEBUG || defined NNETTRAIN_DUMP
 	if (m_dump != NULL) {
 		m_dump->release();
 		delete m_dump;
@@ -277,6 +277,11 @@ unsigned char EyeNetTrain::init(
 void EyeNetTrain::release() {
 	m_NNetTrain0->release();
 }
+#if defined NNETTRAIN_DEBUG || defined NNETTRAIN_DUMP
+void EyeNetTrain::writeDump(int marker_i) {
+	m_NNetTrain0->writeDump(marker_i);
+}
+#endif
 unsigned char EyeNetTrain::setDataForNode(int node_i) {
 	if (m_net == NULL)
 		return ECODE_FAIL;
@@ -394,9 +399,6 @@ unsigned char EyeNetTrain::runL0(s_hexEye* net) {
 		return ECODE_FAIL;
 	m_net = net;
 	int numNodes = m_net->lev[m_lowestLevel].m_nHex;
-#ifdef NNETTRAIN_DUMP
-	m_NNetTrain0->resetDump();
-#endif
 	for (int i = 0; i < numNodes; i++) {
 #ifdef NNETTRAIN_DEBUG
 		m_NNetTrain0->setDumpNodeIndx(i);
@@ -421,7 +423,7 @@ unsigned char EyeNetTrain::runL0(s_hexEye* net) {
 	if (Err(getResultsIntoTopNode()))
 		return ECODE_FAIL;
 #ifdef NNETTRAIN_DUMP
-	m_NNetTrain0->writeDumpFinalLine(i);
+	m_NNetTrain0->writeDumpFinalLine(-1);
 #endif
 	return ECODE_OK;
 }

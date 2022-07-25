@@ -11,6 +11,7 @@
 #endif
 
 //#define NNETTRAIN_DEBUG
+#define NNETTRAIN_DUMP
 
 struct s_NNetL1X {
 	float* m_x; /*has length the number of input x's */
@@ -59,8 +60,8 @@ public:
 #ifdef NNETTRAIN_DUMP
 	inline void writeDumpFinalLine(int node_i) { m_dump->writeDumpFinalLine(m_nX, node_i, m_converged, m_step_cnt, m_E, m_w, m_step_rev, m_step_red); }
 #endif
-#if defined NNETTRAIN_DEBUG || NNETTRAIN_DUMP
-	inline void writeDump() { m_dump->writeDump(); }
+#if defined NNETTRAIN_DEBUG || defined NNETTRAIN_DUMP
+	inline void writeDump(int marker_i) { m_dump->writeDump(marker_i); }
 #endif
 protected:
 	/*owned*/
@@ -101,7 +102,7 @@ protected:
 	float evalEForQth_j(float y, s_NNetL1X& X);/* find the sum squared error for 'all', in this case 1, node(s) for a given q*/
 	/******* helpers for evalForQth_jk*/
 	float sumWs(float X[]);
-#ifdef NNETTRAIN_DEBUG
+#if defined NNETTRAIN_DEBUG || defined NNETTRAIN_DUMP
 	NNetDump* m_dump;
 #endif
 };
@@ -120,8 +121,8 @@ public:
 	);
 	void release();
 	inline unsigned char run(s_hexEye* net) { return runL0(net); }/*net has the same structure as the stampe eye's s_hexEye's for the luna output*/
-#ifdef NNETTRAIN_DEBUG
-	void writeDump();
+#if defined NNETTRAIN_DEBUG || defined NNETTRAIN_DUMP
+	void writeDump(int marker_i);
 #endif
 protected:
 	int        m_lowestLevel;

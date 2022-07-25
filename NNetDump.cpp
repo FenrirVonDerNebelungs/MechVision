@@ -1,4 +1,16 @@
 #include "NNetDump.h"
+NNetDump::NNetDump() : 
+	m_parse(NULL), m_do_dump(false), m_do_per_step_dump(false), 
+	m_selq(0), m_do_final_dump(false), m_sel_node_index(0), m_node_index(0), 
+	m_dump_len(0)
+{
+	for (int i = 0; i < NNETDUMPMAX; i++) {
+		n_datLine::clear(m_dump[i]);
+	}
+}
+NNetDump::~NNetDump() {
+	;
+}
 unsigned char NNetDump::init(
 	bool do_dump,
 	bool do_per_step_dump,
@@ -16,6 +28,7 @@ unsigned char NNetDump::init(
 	std::string outF = "dDump/trainDump.csv";
 	m_parse->init(inF, outF);
 	m_dump_len = 0;
+	return ECODE_OK;
 }
 void NNetDump::release() {
 	m_dump_len = 0; 
@@ -65,7 +78,7 @@ void NNetDump::writeDumpLineQ(int nX, long step_cnt, float E, int q, float Es_q,
 	m_dump[m_dump_len].n = dump_i;
 	m_dump_len++;
 }
-void NNetDump::writeDumpFinalLine(int nX, int node_i, bool converged, long step_cnt, float E, float w[], int step_rev[], int step_red[]) {
+void NNetDump::writeDumpFinalLine(int nX, int node_i, bool converged, long step_cnt, float E, float w[], long step_rev[], long step_red[]) {
 	if (m_dump_len >= NNETDUMPMAX)
 		return;
 	int dump_i = 0;
@@ -82,16 +95,17 @@ void NNetDump::writeDumpFinalLine(int nX, int node_i, bool converged, long step_
 		dump_i++;
 	}
 	for (int i = 0; i < nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = step_rev[i];
+		m_dump[m_dump_len].v[dump_i] = (float)step_rev[i];
 		dump_i++;
 	}
 	for (int i = 0; i < nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = step_red[i];
+		m_dump[m_dump_len].v[dump_i] = (float)step_red[i];
 		dump_i++;
 	}
 	m_dump[m_dump_len].n = dump_i;
 	m_dump_len++;
 }
-void NNetDump::writeDump() {
-
+void NNetDump::writeDump(int marker_i) {
+	m_parse->writeCSVwithSpacer(marker_i, m_dump, m_dump_len);
+	m_dump_len = 0;
 }

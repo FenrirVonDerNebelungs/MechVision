@@ -1,5 +1,17 @@
 #include "RoachNet_trainTF.h"
 
+RoachNet_trainTF::RoachNet_trainTF() :m_imgLow(NULL), m_hexLow(NULL), m_patLuna(NULL), m_stampEye(NULL), m_parse(NULL),
+m_numDatLines(0), m_NNetsPreTrained(NULL), m_preTrain(NULL),
+m_frame_width(0), m_frame_height(0),
+m_lowestNetR(0.f), m_lowestNetLevel(0), m_numLowestHex(0), m_numHangingPerHex(0), m_numNNetLowestXs(0), m_numNNetLineVals(0)
+{
+	for (int i = 0; i < STAMPEYENUM; i++) {
+		n_datLine::clear(m_datLines[i]);
+	}
+}
+RoachNet_trainTF::~RoachNet_trainTF() {
+	;
+}
 
 unsigned char RoachNet_trainTF::init(int frame_width, int frame_height) {
 	m_numDatLines = 0;
@@ -31,22 +43,9 @@ unsigned char RoachNet_trainTF::init(int frame_width, int frame_height) {
 	string outfName(ROACHNET_TRAINTF_OUTFNAME);
 	m_parse = new ParseTxt;
 	m_parse->init(infName, outfName);
-#ifdef ROACHNET_TRAIN_DEBUG
-	string debugfName("debugTF.csv");
-	string dummyfName("dummy.csv");
-	m_debugParse = new ParseTxt;
-	m_debugParse->init(dummyfName, debugfName);
-#endif
 	return ECODE_OK;
 }
 void RoachNet_trainTF::release() {
-#ifdef ROACHNET_TRAIN_DEBUG
-	if (m_debugParse != NULL) {
-		m_debugParse->release();
-		delete m_debugParse;
-	}
-	m_debugParse = NULL;
-#endif
 	if (m_parse != NULL) {
 		m_parse->release();
 		delete m_parse;
@@ -193,7 +192,7 @@ unsigned char RoachNet_trainTF::preTrain() {
 		m_stampEye->setupForStampi(i);
 		if (!m_preTrain->run(m_NNetsPreTrained->getEyePtr(i)))
 			return ECODE_FAIL;
-#ifdef ROACHNET_TRAIN_DEBUG
+#ifdef NNETTRAIN_DUMP
 		writeDebugNNetTrainLines(i);
 #endif
 	}
@@ -255,15 +254,8 @@ unsigned char RoachNet_trainTF::setTrainedNet(int i_net, HexEye* netEyes) {
 	return ECODE_OK;
 }
 
-#ifdef ROACHNET_TRAIN_DEBUG
-void RoachNet_trainTF::writeDebugLines() {
-	int numNets = m_NNetsPreTrained->getNEyes();
-	long maxDatLines = STAMPEYENUM * STAMPEYEMAXNUM;
-	s_datLine* datLines = new s_datLine[maxDatLines];
-	for (int i = 0; i < numNets; i++) {
-
-	}
-	if (datLines != NULL)
-		delete[] datLines;
+#ifdef NNETTRAIN_DUMP
+void RoachNet_trainTF::writeDebugNNetTrainLines(int net_i) {
+	m_preTrain->writeDump(net_i);
 }
 #endif

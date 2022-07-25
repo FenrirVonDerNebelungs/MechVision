@@ -8,10 +8,9 @@
 #ifndef DRAWHEXIMG_H
 #include "DrawHexImg.h"
 #endif
-#ifndef NNETTRAIN_H
-#include "NNetTrain.h"
+#ifndef ROACHNET_TRAINTF_H
+#include "RoachNet_trainTF.h"
 #endif
-
 const unsigned int frame_msg_len = 16384;/*2^14*/
 const unsigned int loop_n = 2000;
 
@@ -19,13 +18,26 @@ int testRoachFeed();
 int debugStamp();
 int debugStamp_rawImg();
 int debugTrain();
+int debugTrainTF();
 
 int main() {
 #ifdef STAMPEYE_DODEBUGIMG
 	return debugStamp_rawImg();//testRoachFeed();
 #else
-	return debugTrain();//debugStamp();
+	return debugTrainTF();//debugTrain();//debugStamp();
 #endif
+}
+int debugTrainTF() {
+	RoachNet_trainTF* trainTF = new RoachNet_trainTF();
+	trainTF->init();
+
+	trainTF->gen();
+
+	if (trainTF != NULL) {
+		trainTF->release();
+		delete trainTF;
+	}
+	return 0;
 }
 #ifdef STAMPEYE_DODEBUGIMG
 int debugStamp_rawImg() {
