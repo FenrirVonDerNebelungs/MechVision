@@ -27,6 +27,7 @@ public:
 	void release() { ; }
 
 	int readCSV(s_datLine dat[], int maxSize=5000);
+	unsigned char writeCSVwithSpacer(const s_datLine dat[], int dat_size);
 	unsigned char writeCSV(const s_datLine dat[], int dat_size);
 protected:
 	string m_inFile;

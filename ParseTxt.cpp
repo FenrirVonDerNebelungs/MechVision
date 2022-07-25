@@ -31,6 +31,18 @@ int ParseTxt::readCSV(s_datLine dat[], int maxSize) {
 	ffile.close();
 	return lines_read;
 }
+unsigned char ParseTxt::writeCSVwithSpacer(const s_datLine dat[], int dat_size) {
+	ofstream ffile;
+	ffile.open(m_outFile);
+	ffile << " ---------------------------------- \n";
+	for (int i = 0; i < dat_size; i++) {
+		string line = dumpFloatLine(dat[i].v, dat[i].n);
+		ffile << line << '\n';
+	}
+	ffile << " ___________________________________ \n";
+	ffile.close();
+	return ECODE_OK;
+}
 unsigned char ParseTxt::writeCSV(const s_datLine dat[], int dat_size) {
 	ofstream ffile;
 	ffile.open(m_outFile);

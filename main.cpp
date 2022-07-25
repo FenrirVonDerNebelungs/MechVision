@@ -95,31 +95,6 @@ int debugTrain() {
 	stampEy->setupForStampi(2);
 	preTrain->run(NNetsPreTrained->getEyePtr(2));
 	preTrain->writeDump();
-#elif
-	for (int i = 0; i < numNets; i++) {
-		stampEy->setupForStampi(i);
-		if (!preTrain->run(NNetsPreTrained->getEyePtr(i)))
-			return ECODE_FAIL;
-	}
-	DrawHexImg hexImg;
-	hexImg.Init(&HexLow, stampEy, NNetsPreTrained);
-
-	bool loop = true;
-
-	do {
-		if (hexImg.Run() != ECODE_OK)
-			break;
-		unsigned char* dispImgDat = hexImg.getHexedImg()->getImg();
-		Size frameSize(frame_width, frame_height);
-		Mat rendFrame(frameSize, CV_8UC3, (void*)dispImgDat);
-		do {
-			imshow("test stamp", rendFrame);
-			char c = (char)waitKey(25);
-			if (c == 27)
-				break;
-		} while (true);
-	} while (loop);
-	hexImg.Release();
 #endif
 	preTrain->release();
 	delete preTrain;

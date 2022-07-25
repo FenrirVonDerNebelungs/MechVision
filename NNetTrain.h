@@ -6,12 +6,11 @@
 #include "StampEye.h"
 #endif
 
-#ifndef PARSETXT_H
-#include "ParseTxt.h"
+#ifndef NNETDUMP_H
+#include "NNetDump.h"
 #endif
 
-#define NNETTRAINMAXDUMP 800000
-#define NNETTRAIN_DEBUG
+//#define NNETTRAIN_DEBUG
 
 struct s_NNetL1X {
 	float* m_x; /*has length the number of input x's */
@@ -55,11 +54,13 @@ public:
 	inline float* getDeltaEs() { return m_DeltaEs; }
 	inline float getE() { return m_E; }
 #ifdef NNETTRAIN_DEBUG
-	inline void setDump(bool do_dump) { m_do_dump = do_dump; }
-	inline s_datLine* getDump() { return m_dump; }
-	inline void resetDump() { m_dump_len = 0; }
-	inline long getDumpLen() { return m_dump_len; }
-	void writeDumpFinalLine(int node_i);
+	inline void setDumpNodeIndx(int i) { m_dump->setDumpNodeIndx(i); }
+#endif
+#ifdef NNETTRAIN_DUMP
+	inline void writeDumpFinalLine(int node_i) { m_dump->writeDumpFinalLine(m_nX, node_i, m_converged, m_step_cnt, m_E, m_w, m_step_rev, m_step_red); }
+#endif
+#if defined NNETTRAIN_DEBUG || NNETTRAIN_DUMP
+	inline void writeDump() { m_dump->writeDump(); }
 #endif
 protected:
 	/*owned*/
@@ -101,13 +102,7 @@ protected:
 	/******* helpers for evalForQth_jk*/
 	float sumWs(float X[]);
 #ifdef NNETTRAIN_DEBUG
-	bool      m_do_dump;
-	int       m_selq;
-	s_datLine m_dump[NNETTRAINMAXDUMP];
-	long      m_dump_len;
-	void writeDumpLineQ(int q, float Es_q, float DeltaEs_q[]);
-	void DumpNet(int q, float DeltaEs_q[]);
-	void DumpNetVerbose(int q);
+	NNetDump* m_dump;
 #endif
 };
 
@@ -126,8 +121,6 @@ public:
 	void release();
 	inline unsigned char run(s_hexEye* net) { return runL0(net); }/*net has the same structure as the stampe eye's s_hexEye's for the luna output*/
 #ifdef NNETTRAIN_DEBUG
-	int m_dumpSubNode;/*-1 and dumps high node*/
-	ParseTxt* m_parse;
 	void writeDump();
 #endif
 protected:

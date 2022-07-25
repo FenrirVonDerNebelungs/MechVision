@@ -55,17 +55,18 @@ m_step_cnt(0), m_converged(false),
 m_X(NULL), m_nX(0), m_y(NULL), m_nData(0), m_w(NULL), m_nNodes(0),
 m_DeltaEs(NULL), m_steps(NULL), m_E(0.f), m_step_rev(NULL), m_step_red(NULL)
 {
-	;
-#ifdef NNETTRAIN_DEBUG
-	m_do_dump = false;
-	m_selq = -2;
-	for (int i = 0; i < NNETTRAINMAXDUMP; i++)
-		n_datLine::clear(m_dump[i]);
-	m_dump_len = 0;
+#if defined NNETTRAIN_DEBUG || NNETTRAIN_DUMP
+	m_dump = new NNetDump;
+	NNetDump->init();
 #endif
 }
 NNetTrain0::~NNetTrain0() {
-	;
+#if defined NNETTRAIN_DEBUG || NNETTRAIN_DUMP
+	if (m_dump != NULL) {
+		m_dump->release();
+		delete m_dump;
+	}
+#endif
 }
 unsigned char NNetTrain0::init(
 	float stepSize,
@@ -188,8 +189,7 @@ unsigned char NNetTrain0::findDeltaEs() {
 		Es_q = 0.5f * evalEForQth_j(m_y[q], m_X[q]);
 		m_E += Es_q;
 #ifdef NNETTRAIN_DEBUG
-		if(q==m_selq && m_do_dump)
-			writeDumpLineQ(q, Es_q, DeltaEs_q);
+		m_dump->writeDumpLineQ(m_nX, m_step_cnt, m_E, q, Es_q, DeltaEs_q, m_steps, m_step_red, m_w, m_X[q].m_x, m_y[q]);
 #endif
 	}
 	delete[] DeltaEs_q;
@@ -247,111 +247,10 @@ float NNetTrain0::sumWs(float X[]) {
 	}
 	return sum;
 }
-#ifdef NNETTRAIN_DEBUG
-void NNetTrain0::writeDumpLineQ(int q, float Es_q, float DeltaEs_q[]) {
-	if (m_dump_len >= NNETTRAINMAXDUMP)
-		return;
-	int dump_i = 0;
-	m_dump[m_dump_len].v[dump_i] = (float)m_step_cnt;
-	dump_i++;
-	m_dump[m_dump_len].v[dump_i] = m_E;
-	dump_i++;
-	m_dump[m_dump_len].v[dump_i] = (float)q;
-	dump_i++;
-	m_dump[m_dump_len].v[dump_i] = Es_q;
-	dump_i++;
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = DeltaEs_q[i];
-		dump_i++;
-	}
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = m_steps[i];
-		dump_i++;
-	}
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = (float)m_step_red[i];
-		dump_i++;
-	}
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = m_w[i];
-		dump_i++;
-	}
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = m_X[q].m_x[i];
-		dump_i++;
-	}
-	m_dump[m_dump_len].v[dump_i] = m_y[q];
-	dump_i++;
-	m_dump[m_dump_len].n = dump_i;
-	m_dump_len++;
-}
-void NNetTrain0::writeDumpFinalLine(int node_i) {
-	if (m_dump_len >= NNETTRAINMAXDUMP)
-		return;
-	int dump_i = 0;
-	m_dump[m_dump_len].v[dump_i] = (float)node_i;
-	dump_i++;
-	m_dump[m_dump_len].v[dump_i] = (float)m_converged;
-	dump_i++;
-	m_dump[m_dump_len].v[dump_i] = (float)m_step_cnt;
-	dump_i++;
-	m_dump[m_dump_len].v[dump_i] = m_E;
-	dump_i++;
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i]=m_w[i];
-		dump_i++;
-	}
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = m_step_rev[i];
-		dump_i++;
-	}
-	for (int i = 0; i < m_nX; i++) {
-		m_dump[m_dump_len].v[dump_i] = m_step_red[i];
-		dump_i++;
-	}
-	m_dump[m_dump_len].n = dump_i;
-	m_dump_len++;
-}
-void NNetTrain0::DumpNet(int q, float DeltaEs_q[]) {
-	std::cout << q << ",";
-	std::cout << m_y[q] << ",";
-	for (int i = 0; i < m_nX; i++) {
-		std::cout << m_X[q].m_x[i]<<",";
-	}
-	for (int i = 0; i < m_nX; i++) {
-		std::cout << DeltaEs_q[i] << ",";
-	}
-	std::cout << "\n";
-}
-void NNetTrain0::DumpNetVerbose(int q) {
-	std::cout << q<<" | ";
-	std::cout << "y: " << m_y[q]<<" | ";
-	std::cout << "Xs: ";
-	for (int i = 0; i < m_nX; i++) {
-		std::cout << m_X[q].m_x[i] << ", ";
-	}
-	std::cout << " | Steps: ";
-	for (int i = 0; i < m_nX; i++) {
-		std::cout << m_steps[i] << ", ";
-	}
-	std::cout << " | dE: ";
-	for (int i = 0; i < m_nX; i++) {
-		std::cout << m_DeltaEs[i] << ", ";
-	}
-	std::cout << " | w: ";
-	for (int i = 0; i < m_nX; i++) {
-		std::cout << m_w[i] << ", ";
-	}
-	std::cout << "\n";
-}
-#endif
 
 EyeNetTrain::EyeNetTrain():m_lowestLevel(0), m_NNetTrain0(NULL), m_net(NULL), m_stampEye(NULL)
 {
-#ifdef NNETTRAIN_DEBUG
-	m_dumpSubNode = -2;
-	m_parse = NULL;
-#endif
+	;
 }
 EyeNetTrain::~EyeNetTrain() {
 	;
@@ -373,22 +272,9 @@ unsigned char EyeNetTrain::init(
 	m_NNetTrain0 = new NNetTrain0;
 	if (Err(m_NNetTrain0->init(stepSize, DeltaE_closeEnough, max_loop_cnt)))
 		return ECODE_FAIL;
-#ifdef NNETTRAIN_DEBUG
-	m_parse = new ParseTxt;
-	std::string inF = "in.csv";
-	std::string outF = "dDump/trainDump.csv";
-	m_parse->init(inF, outF);
-#endif
 	return ECODE_OK;
 }
 void EyeNetTrain::release() {
-#ifdef NNETTRAIN_DEBUG
-	if (m_parse != NULL) {
-		m_parse->release();
-		delete m_parse;
-	}
-	m_parse = NULL;
-#endif
 	m_NNetTrain0->release();
 }
 unsigned char EyeNetTrain::setDataForNode(int node_i) {
@@ -508,12 +394,12 @@ unsigned char EyeNetTrain::runL0(s_hexEye* net) {
 		return ECODE_FAIL;
 	m_net = net;
 	int numNodes = m_net->lev[m_lowestLevel].m_nHex;
+#ifdef NNETTRAIN_DUMP
+	m_NNetTrain0->resetDump();
+#endif
 	for (int i = 0; i < numNodes; i++) {
 #ifdef NNETTRAIN_DEBUG
-		if (i == m_dumpSubNode)
-			m_NNetTrain0->setDump(true);
-		else
-			m_NNetTrain0->setDump(false);
+		m_NNetTrain0->setDumpNodeIndx(i);
 #endif
 		if (Err(setDataForNode(i)))
 			return ECODE_ABORT;
@@ -521,15 +407,12 @@ unsigned char EyeNetTrain::runL0(s_hexEye* net) {
 			return ECODE_FAIL;
 		if (Err(getResultsIntoNode(i)))
 			return ECODE_FAIL;
-#ifdef NNETTRAIN_DEBUG
+#ifdef NNETTRAIN_DUMP
 		m_NNetTrain0->writeDumpFinalLine(i);
 #endif
 	}
 #ifdef NNETTRAIN_DEBUG
-	if (m_dumpSubNode == -1)
-		m_NNetTrain0->setDump(true);
-	else
-		m_NNetTrain0->setDump(false);
+	m_NNetTrain0->setDumpNodeIndx(-1);
 #endif
 	if (Err(setDataForTopNode()))
 		return ECODE_FAIL; 
@@ -537,16 +420,8 @@ unsigned char EyeNetTrain::runL0(s_hexEye* net) {
 		return ECODE_FAIL;
 	if (Err(getResultsIntoTopNode()))
 		return ECODE_FAIL;
-#ifdef NNETTRAIN_DEBUG
-	m_NNetTrain0->writeDumpFinalLine(-1);
+#ifdef NNETTRAIN_DUMP
+	m_NNetTrain0->writeDumpFinalLine(i);
 #endif
 	return ECODE_OK;
 }
-#ifdef NNETTRAIN_DEBUG
-void EyeNetTrain::writeDump() {
-	s_datLine* dump = m_NNetTrain0->getDump();
-	long dump_len = m_NNetTrain0->getDumpLen();
-	if(dump_len>0)
-		m_parse->writeCSV(dump, dump_len);
-}
-#endif
