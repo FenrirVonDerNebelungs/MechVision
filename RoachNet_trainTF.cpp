@@ -86,9 +86,12 @@ void RoachNet_trainTF::release() {
 	m_frame_height = 0;
 }
 unsigned char RoachNet_trainTF::gen() {
-	if (Err(genDatLines()))
+	if (Err(preTrain()))
 		return ECODE_FAIL;
-	return m_parse->writeCSV(m_datLines, m_numDatLines);
+	//if (Err(genDatLines()))
+	//	return ECODE_FAIL;
+	//return m_parse->writeCSV(m_datLines, m_numDatLines);
+	return ECODE_OK;
 }
 unsigned char RoachNet_trainTF::setTrainedNets(HexEye* netEyes) {
 	if (Err(getDatLines()))
@@ -190,7 +193,7 @@ unsigned char RoachNet_trainTF::preTrain() {
 	int numNets = m_NNetsPreTrained->getNEyes();
 	for(int i=0; i<numNets; i++){
 		m_stampEye->setupForStampi(i);
-		if (!m_preTrain->run(m_NNetsPreTrained->getEyePtr(i)))
+		if (Err(m_preTrain->run(m_NNetsPreTrained->getEyePtr(i))))
 			return ECODE_FAIL;
 #ifdef NNETTRAIN_DUMP
 		writeDebugNNetTrainLines(i);

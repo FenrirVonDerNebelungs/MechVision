@@ -405,7 +405,7 @@ unsigned char EyeNetTrain::runL0(s_hexEye* net) {
 #endif
 		if (Err(setDataForNode(i)))
 			return ECODE_ABORT;
-		if(Err(m_NNetTrain0->run()))
+		if(IsErrFail(m_NNetTrain0->run()))
 			return ECODE_FAIL;
 		if (Err(getResultsIntoNode(i)))
 			return ECODE_FAIL;

@@ -33,7 +33,7 @@ int ParseTxt::readCSV(s_datLine dat[], int maxSize) {
 }
 unsigned char ParseTxt::writeCSVwithSpacer(int marker_i, const s_datLine dat[], int dat_size) {
 	ofstream ffile;
-	ffile.open(m_outFile);
+	ffile.open(m_outFile, std::ios_base::out | std::ios_base::app);
 	ffile << " ---------------------------------- \n";
 	ffile << marker_i << "\n----\n";
 	for (int i = 0; i < dat_size; i++) {
