@@ -24,14 +24,17 @@ public:
 	unsigned char init(
 		const string& inFile, 
 		const string& outFile);
-	void release() { ; }
+	void release();
 
 	int readCSV(s_datLine dat[], int maxSize=5000);
+	unsigned char writeCSVHeader(std::string& headerStr);
 	unsigned char writeCSVwithSpacer(int marker_i, const s_datLine dat[], int dat_size);
 	unsigned char writeCSV(const s_datLine dat[], int dat_size);
 protected:
 	string m_inFile;
 	string m_outFile;
+	std::string m_header;
+
 
 	string dumpFloatLine(const float* ar, int len);
 

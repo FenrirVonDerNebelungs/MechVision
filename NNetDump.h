@@ -13,15 +13,17 @@ public:
 	~NNetDump();
 	unsigned char init(
 		bool do_dump = true,
-		bool do_per_step_dump = false,
-		int  q = 0,
+		bool do_per_step_dump = true,
+		int  q = 2,
 		bool do_final_dump = true,
-		int sel_node_index=0
+		int sel_node_index=-1
 	);
 	void release();
 
 	inline void resetDump() { m_dump_len = 0; }
-	void writeDumpLineQ(int nX, long step_cnt, float E, int q, float Es_q, float DeltaEs_q[], float steps[], int step_red[], float w[], float x[], float y);
+	void writeDumpLabelsQ(int nX);
+	void writeDumpLineQ(int nX, long step_cnt, int q, float Es_q, float DeltaEs_q[], float steps[], long step_red[], float w[], float x[], float y);
+	void appendEtoDumpLineQ(float E);
 	inline void setDumpNodeIndx(int i) { m_node_index = i; }
 	void writeDumpFinalLine(int nX, int node_i, bool converged, long step_cnt, float E, float w[], long step_rev[], long step_red[]);
 	void writeDump(int marker_i);

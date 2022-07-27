@@ -14,7 +14,12 @@ ParseTxt::~ParseTxt() { ; }
 unsigned char ParseTxt::init(const string& inFile, const string& outFile) {
 	m_inFile = inFile;
 	m_outFile = outFile;
+	m_header.clear();
 	return ECODE_OK;
+}
+
+void ParseTxt::release() {
+	;
 }
 
 int ParseTxt::readCSV(s_datLine dat[], int maxSize) {
@@ -31,11 +36,17 @@ int ParseTxt::readCSV(s_datLine dat[], int maxSize) {
 	ffile.close();
 	return lines_read;
 }
+unsigned char ParseTxt::writeCSVHeader(std::string& headerStr) {
+	m_header.swap(headerStr);
+	return ECODE_OK;
+}
 unsigned char ParseTxt::writeCSVwithSpacer(int marker_i, const s_datLine dat[], int dat_size) {
 	ofstream ffile;
 	ffile.open(m_outFile, std::ios_base::out | std::ios_base::app);
 	ffile << " ---------------------------------- \n";
 	ffile << marker_i << "\n----\n";
+	if (m_header.size() > 1)
+		ffile << m_header;
 	for (int i = 0; i < dat_size; i++) {
 		string line = dumpFloatLine(dat[i].v, dat[i].n);
 		ffile << line << '\n';

@@ -99,6 +99,16 @@ unsigned char NNetTrain0::setNet(long datasize, s_NNetL1X X[], float y[]) {
 	}
 	return ECODE_OK;
 }
+#ifdef NNETTRAIN_DEBUG
+void NNetTrain0::writeDump(int marker_i) {
+	m_dump->writeDumpLabelsQ(m_nX);
+	m_dump->writeDump(marker_i);
+}
+#elif defined NNETTRAIN_DUMP
+void NNetTrain0::writeDump(int marker_i) {
+	m_dump->writeDump(marker_i);
+}
+#endif
 unsigned char NNetTrain0::initMem(long datasize, int nX) {
 	if (datasize == m_nData && nX == m_nX)
 		return ECODE_ABORT;/*nothing needs to be done the data is still the same size*/
@@ -189,9 +199,12 @@ unsigned char NNetTrain0::findDeltaEs() {
 		Es_q = 0.5f * evalEForQth_j(m_y[q], m_X[q]);
 		m_E += Es_q;
 #ifdef NNETTRAIN_DEBUG
-		m_dump->writeDumpLineQ(m_nX, m_step_cnt, m_E, q, Es_q, DeltaEs_q, m_steps, m_step_red, m_w, m_X[q].m_x, m_y[q]);
+		m_dump->writeDumpLineQ(m_nX, m_step_cnt, q, Es_q, DeltaEs_q, m_steps, m_step_red, m_w, m_X[q].m_x, m_y[q]);
 #endif
 	}
+#ifdef NNETTRAIN_DEBUG
+	m_dump->appendEtoDumpLineQ(m_E);
+#endif
 	delete[] DeltaEs_q;
 	return ECODE_OK;
 }

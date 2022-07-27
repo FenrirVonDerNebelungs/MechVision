@@ -10,8 +10,8 @@
 #include "NNetDump.h"
 #endif
 
-//#define NNETTRAIN_DEBUG
-#define NNETTRAIN_DUMP
+#define NNETTRAIN_DEBUG
+//#define NNETTRAIN_DUMP
 
 struct s_NNetL1X {
 	float* m_x; /*has length the number of input x's */
@@ -61,7 +61,7 @@ public:
 	inline void writeDumpFinalLine(int node_i) { m_dump->writeDumpFinalLine(m_nX, node_i, m_converged, m_step_cnt, m_E, m_w, m_step_rev, m_step_red); }
 #endif
 #if defined NNETTRAIN_DEBUG || defined NNETTRAIN_DUMP
-	inline void writeDump(int marker_i) { m_dump->writeDump(marker_i); }
+	void writeDump(int marker_i);
 #endif
 protected:
 	/*owned*/

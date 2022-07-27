@@ -24,7 +24,7 @@ int main() {
 #ifdef STAMPEYE_DODEBUGIMG
 	return debugStamp_rawImg();//testRoachFeed();
 #else
-	return debugTrainTF();//debugTrain();//debugStamp();
+	return debugTrain();//debugTrainTF();//debugTrain();//debugStamp();
 #endif
 }
 int debugTrainTF() {
@@ -104,9 +104,9 @@ int debugTrain() {
 	preTrain->init(stampEy);
 	int numNets = NNetsPreTrained->getNEyes();
 #ifdef NNETTRAIN_DEBUG
-	stampEy->setupForStampi(2);
-	preTrain->run(NNetsPreTrained->getEyePtr(2));
-	preTrain->writeDump();
+	stampEy->setupForStampi(1);
+	preTrain->run(NNetsPreTrained->getEyePtr(1));
+	preTrain->writeDump(1);
 #endif
 	preTrain->release();
 	delete preTrain;
