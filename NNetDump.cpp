@@ -46,7 +46,9 @@ void NNetDump::writeDumpLabelsQ() {
 	for (int i = 0; i < m_nX; i++)
 		labs += "step,";
 	for (int i = 0; i < m_nX; i++)
-		labs += "red Xs,";
+		labs += "red,";
+	for (int i = 0; i < m_nX; i++)
+		labs += "rev,";
 	for (int i = 0; i < m_nX; i++)
 		labs += "w,";
 	for (int i = 0; i < m_nX; i++)
@@ -56,7 +58,7 @@ void NNetDump::writeDumpLabelsQ() {
 	labs += "\n";
 	m_parse->writeCSVHeader(labs);
 }
-void NNetDump::writeDumpLineQ(int nX, long step_cnt, int q, float Es_q, float DeltaEs_q[], float steps[], long step_red[], float w[], float x[], float y) {
+void NNetDump::writeDumpLineQ(int nX, long step_cnt, int q, float Es_q, float DeltaEs_q[], float steps[], long step_red[], long step_rev[], float w[], float x[], float y) {
 	if (!m_do_dump || !m_do_per_step_dump || q != m_selq || m_node_index != m_sel_node_index)
 		return;
 	if (m_dump_len >= NNETDUMPMAX)
@@ -82,6 +84,10 @@ void NNetDump::writeDumpLineQ(int nX, long step_cnt, int q, float Es_q, float De
 		dump_i++;
 	}
 	for (int i = 0; i < nX; i++) {
+		m_dump[m_dump_len].v[dump_i] = (float)step_rev[i];
+		dump_i++;
+	}
+	for (int i = 0; i < nX; i++) {
 		m_dump[m_dump_len].v[dump_i] = w[i];
 		dump_i++;
 	}
@@ -104,9 +110,23 @@ void NNetDump::appendEtoDumpLineQ(float E) {
 	cur_dump_i++;
 	m_dump[m_dump_len-1].n = cur_dump_i;
 }
+void NNetDump::writeDumpLabelsFinal() {
+	std::string labs("");
+	labs += "node i,converged,step cnt,E,";
+	for (int i = 0; i < m_nX; i++)
+		labs += "w,";
+	for (int i = 0; i < m_nX; i++)
+		labs += "step_rev,";
+	for (int i = 0; i < m_nX; i++)
+		labs += "step_red,";
+	labs += "\n";
+	m_parse->writeCSVHeader(labs);
+}
 void NNetDump::writeDumpFinalLine(int nX, int node_i, bool converged, long step_cnt, float E, float w[], long step_rev[], long step_red[]) {
 	if (m_dump_len >= NNETDUMPMAX)
 		return;
+	if (nX > m_nX)
+		m_nX = nX;
 	int dump_i = 0;
 	m_dump[m_dump_len].v[dump_i] = (float)node_i;
 	dump_i++;

@@ -106,6 +106,7 @@ void NNetTrain0::writeDump(int marker_i) {
 }
 #elif defined NNETTRAIN_DUMP
 void NNetTrain0::writeDump(int marker_i) {
+	m_dump->writeDumpLabelsFinal();
 	m_dump->writeDump(marker_i);
 }
 #endif
@@ -199,7 +200,7 @@ unsigned char NNetTrain0::findDeltaEs() {
 		Es_q = 0.5f * evalEForQth_j(m_y[q], m_X[q]);
 		m_E += Es_q;
 #ifdef NNETTRAIN_DEBUG
-		m_dump->writeDumpLineQ(m_nX, m_step_cnt, q, Es_q, DeltaEs_q, m_steps, m_step_red, m_w, m_X[q].m_x, m_y[q]);
+		m_dump->writeDumpLineQ(m_nX, m_step_cnt, q, Es_q, DeltaEs_q, m_steps, m_step_red, m_step_rev, m_w, m_X[q].m_x, m_y[q]);
 #endif
 	}
 #ifdef NNETTRAIN_DEBUG

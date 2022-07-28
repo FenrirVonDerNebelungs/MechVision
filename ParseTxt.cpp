@@ -37,6 +37,7 @@ int ParseTxt::readCSV(s_datLine dat[], int maxSize) {
 	return lines_read;
 }
 unsigned char ParseTxt::writeCSVHeader(std::string& headerStr) {
+	m_header.clear();
 	m_header=headerStr;
 	return ECODE_OK;
 }
