@@ -1,7 +1,7 @@
 #include "NNetDump.h"
 NNetDump::NNetDump() : 
 	m_parse(NULL), m_do_dump(false), m_do_per_step_dump(false), 
-	m_selq(0), m_do_final_dump(false), m_sel_node_index(0), m_node_index(0), 
+	m_selq(0), m_do_final_dump(false), m_sel_node_index(0), m_node_index(0), m_nX(0),
 	m_dump_len(0)
 {
 	for (int i = 0; i < NNETDUMPMAX; i++) {
@@ -38,19 +38,22 @@ void NNetDump::release() {
 	}
 	m_parse = NULL;
 }
-void NNetDump::writeDumpLabelsQ(int nX) {
+void NNetDump::writeDumpLabelsQ() {
 	std::string labs("");
 	labs += "step cnt, stamp q, E_q,";
-	for (int i = 0; i < nX; i++)
+	for (int i = 0; i < m_nX; i++)
 		labs += "DE_q,";
-	for (int i = 0; i < nX; i++)
+	for (int i = 0; i < m_nX; i++)
 		labs += "step,";
-	for (int i = 0; i < nX; i++)
+	for (int i = 0; i < m_nX; i++)
+		labs += "red Xs,";
+	for (int i = 0; i < m_nX; i++)
 		labs += "w,";
-	for (int i = 0; i < nX; i++)
+	for (int i = 0; i < m_nX; i++)
 		labs += "x,";
 	labs += "y,";
 	labs += "E,";
+	labs += "\n";
 	m_parse->writeCSVHeader(labs);
 }
 void NNetDump::writeDumpLineQ(int nX, long step_cnt, int q, float Es_q, float DeltaEs_q[], float steps[], long step_red[], float w[], float x[], float y) {
@@ -58,6 +61,7 @@ void NNetDump::writeDumpLineQ(int nX, long step_cnt, int q, float Es_q, float De
 		return;
 	if (m_dump_len >= NNETDUMPMAX)
 		return;
+	m_nX = nX;
 	int dump_i = 0;
 	m_dump[m_dump_len].v[dump_i] = (float)step_cnt;
 	dump_i++;

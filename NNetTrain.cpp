@@ -101,7 +101,7 @@ unsigned char NNetTrain0::setNet(long datasize, s_NNetL1X X[], float y[]) {
 }
 #ifdef NNETTRAIN_DEBUG
 void NNetTrain0::writeDump(int marker_i) {
-	m_dump->writeDumpLabelsQ(m_nX);
+	m_dump->writeDumpLabelsQ();
 	m_dump->writeDump(marker_i);
 }
 #elif defined NNETTRAIN_DUMP

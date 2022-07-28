@@ -16,12 +16,12 @@ public:
 		bool do_per_step_dump = true,
 		int  q = 2,
 		bool do_final_dump = true,
-		int sel_node_index=-1
+		int sel_node_index=2
 	);
 	void release();
 
 	inline void resetDump() { m_dump_len = 0; }
-	void writeDumpLabelsQ(int nX);
+	void writeDumpLabelsQ();
 	void writeDumpLineQ(int nX, long step_cnt, int q, float Es_q, float DeltaEs_q[], float steps[], long step_red[], float w[], float x[], float y);
 	void appendEtoDumpLineQ(float E);
 	inline void setDumpNodeIndx(int i) { m_node_index = i; }
@@ -38,6 +38,7 @@ protected:
 	int m_sel_node_index;
 
 	int m_node_index;
+	int m_nX;
 
 	s_datLine m_dump[NNETDUMPMAX];
 	long m_dump_len;
