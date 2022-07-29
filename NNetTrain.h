@@ -10,7 +10,7 @@
 #include "NNetDump.h"
 #endif
 
-#define NNETTRAIN_DEBUG
+//#define NNETTRAIN_DEBUG
 //#define NNETTRAIN_DUMP
 
 struct s_NNetL1X {

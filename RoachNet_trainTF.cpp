@@ -88,9 +88,9 @@ void RoachNet_trainTF::release() {
 unsigned char RoachNet_trainTF::gen() {
 	if (Err(preTrain()))
 		return ECODE_FAIL;
-	//if (Err(genDatLines()))
-	//	return ECODE_FAIL;
-	//return m_parse->writeCSV(m_datLines, m_numDatLines);
+	if (Err(genDatLines()))
+		return ECODE_FAIL;
+	return m_parse->writeCSV(m_datLines, m_numDatLines);
 	return ECODE_OK;
 }
 unsigned char RoachNet_trainTF::setTrainedNets(HexEye* netEyes) {
@@ -121,6 +121,7 @@ unsigned char RoachNet_trainTF::setNetDim() {
 	m_numHangingPerHex = lowest_net_plate.m_fhex[0].N;
 	/*calculate the total number that the nodes contribute to the array*/
 	m_numNNetLowestXs = m_numHangingPerHex * m_numLowestHex;
+	/*numNNetLineVals 1(stamp index) + 7(w) + 1(b) + 56(w) +7(b), the extra 1 and the 7 correspond to the b values (overall offsets) */
 	m_numNNetLineVals = 1 + m_numLowestHex+1+m_numNNetLowestXs+m_numLowestHex;
 	m_stampEye->releaseNNets(netEye);
 	if (netEye != NULL)
@@ -130,6 +131,11 @@ unsigned char RoachNet_trainTF::setNetDim() {
 unsigned char RoachNet_trainTF::genDatLines() {
 	setNetDim();
 	int numStamps = m_stampEye->numStamps();
+#ifdef ROACHNET_TRAINTF_DEBUG
+	numStamps = ROACHNET_TRAINTF_DEBUG_NUM;
+#endif
+	/*dump_ar_len = 1+ 56 + 7 + 56 + trailVals = 123
+	array line dumped for each stamp and substamp */
 	int dump_ar_len = 1 + m_numNNetLowestXs + m_numLowestHex + m_numNNetLowestXs + ROACHNET_TRAINTF_NUMTRAILVALS;
 	float* dump_ar = new float[dump_ar_len];
 	m_numDatLines = 0;
@@ -141,6 +147,8 @@ unsigned char RoachNet_trainTF::genDatLines() {
 			dump_ar_index++;
 			s_hexEye* lunaEye = eyeStamp.eyes[i_sub];
 			s_hexPlate& lunaPlate = lunaEye->lev[m_lowestNetLevel];
+			/*for each of 7 lower nodes dump the 8 luna values from the hanging nodes
+			56 values dumped containing the luna values for each of the seven bottom substamp nodes*/
 			for (int i_hex = 0; i_hex < lunaPlate.m_nHex; i_hex++) {
 				s_fNode& hex_node = lunaPlate.m_fhex[i_hex];
 				for (int i_hanging = 0; i_hanging < hex_node.N; i_hanging++) {
@@ -153,24 +161,21 @@ unsigned char RoachNet_trainTF::genDatLines() {
 			  numStamps() from m_stampEye should be the same as getNEyes() from m_NNetsPreTrained */
 			s_hexEye& preTrainedNet = m_NNetsPreTrained->getEye(i);
 			s_hexPlate& lowestPreTrainedPlate = preTrainedNet.lev[m_lowestNetLevel];
+			/*for the pretrained node corresponding to this stamp 
+			dump the 7 hi w pre-trained values*/
 			for (int i_hex = 0; i_hex < lunaPlate.m_nHex; i_hex++) {
 				dump_ar[dump_ar_index] = preTrainedNet.lev[0].m_fhex[0].w[i_hex];
 				dump_ar_index++;
 			}
-			float* hanging_ar = new float[m_numNNetLowestXs];/*numNNetLowestXs must equal lowestPreTrainedPlate.m_fhex[].N * lunaPlate.m_nHex */
-			for (int hang_i = 0; hang_i < m_numNNetLowestXs; hang_i++)
-				hanging_ar[hang_i] = 0.f;
+			/*for the lower pre-trained nodes correpsonding to this stamp
+			dump the 7*8 pre trained w's 8 pretrained w values for each of the 7 pre-trained lower nodes*/
 			for (int i_hex = 0; i_hex < lunaPlate.m_nHex; i_hex++) {
 				s_fNode& lowNetHexNode = lowestPreTrainedPlate.m_fhex[i_hex];
-				int hang_start_i = i_hex * lowNetHexNode.N;/*all of these nodes should have the same N*/
-				for (int hang_i = 0; hang_i < lowNetHexNode.N; hang_i++)
-					hanging_ar[hang_start_i + hang_i] = lowNetHexNode.w[hang_i];
-				for (int hang_i = 0; hang_i < m_numNNetLowestXs; hang_i++) {
-					dump_ar[dump_ar_index] = hanging_ar[hang_i];
+				for (int hang_i = 0; hang_i < lowNetHexNode.N; hang_i++) {
+					dump_ar[dump_ar_index] = lowNetHexNode.w[hang_i];
 					dump_ar_index++;
 				}
 			}
-			delete[] hanging_ar;
 			/*add the trailing values*/
 			dump_ar[dump_ar_index] = eyeStamp.ang[i_sub];
 			dump_ar_index++;
@@ -191,6 +196,9 @@ unsigned char RoachNet_trainTF::genDatLines() {
 }
 unsigned char RoachNet_trainTF::preTrain() {
 	int numNets = m_NNetsPreTrained->getNEyes();
+#ifdef ROACHNET_TRAINTF_DEBUG
+	numNets = ROACHNET_TRAINTF_DEBUG_NUM;
+#endif
 	for(int i=0; i<numNets; i++){
 		m_stampEye->setupForStampi(i);
 		if (Err(m_preTrain->run(m_NNetsPreTrained->getEyePtr(i))))

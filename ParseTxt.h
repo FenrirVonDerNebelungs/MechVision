@@ -5,7 +5,7 @@
 #include "Base.h"
 #endif
 
-#define PARSETXT_MAXAR 80
+#define PARSETXT_MAXAR 150
 using namespace std;
 
 struct s_datLine {

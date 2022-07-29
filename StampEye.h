@@ -93,6 +93,7 @@ public:
 	s_eyeStamp& getLunaEyeStamp(int i) { return m_lunaStamps[i]; }
 	inline s_eyeStamp* getLunaEyeStamps() { return m_lunaStamps; }
 	inline int numStamps() { return m_num_stamps; }
+	inline void setNumStamps(int n) { m_num_stamps = n; }/*mostly used for debug*/
 	inline int numEyeStamps() { return m_eyes_stamped; }/*returns raw index counting total number of eyes stamped in the hexEyeGen obj*/
 	inline s_hexEye& getEyeRawIndex(int i) { return m_eyeGen->getEye(i); }
 	inline s_hexEye* getLunaEye(int i_stamp, int i_sub_stamp) { return getLunaEyeStamp(i_stamp).eyes[i_sub_stamp]; }

@@ -24,7 +24,7 @@ int main() {
 #ifdef STAMPEYE_DODEBUGIMG
 	return debugStamp_rawImg();//testRoachFeed();
 #else
-	return debugTrain();// debugTrainTF();//debugTrain();//debugStamp();
+	return debugTrainTF();//debugTrain();//debugStamp();
 #endif
 }
 int debugTrainTF() {
