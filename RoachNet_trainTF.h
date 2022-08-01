@@ -11,8 +11,8 @@
 #include "ParseTxt.h"
 #endif
 
-#define ROACHNET_TRAINTF_DEBUG
-#define ROACHNET_TRAINTF_DEBUG_NUM 3
+//#define ROACHNET_TRAINTF_DEBUG
+//#define ROACHNET_TRAINTF_DEBUG_NUM 3
 
 #define ROACHNET_TRAINTF_INFNAME "dDump/TFtrained.csv"
 #define ROACHNET_TRAINTF_OUTFNAME "dDump/TFstamps.csv"

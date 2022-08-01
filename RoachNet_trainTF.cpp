@@ -183,8 +183,9 @@ unsigned char RoachNet_trainTF::genDatLines() {
 			dump_ar_index++;
 			dump_ar[dump_ar_index] = eyeStamp.radius[i_sub];
 			dump_ar_index++;
-			for (int ar_i = 0; ar_i < dump_ar_index; ar_i++)
-				m_datLines[m_numDatLines].v[ar_i] = dump_ar[i];
+			for (int ar_i = 0; ar_i < dump_ar_index; ar_i++) {
+				m_datLines[m_numDatLines].v[ar_i] = dump_ar[ar_i];
+			}
 			m_datLines[m_numDatLines].n = dump_ar_index;
 			m_numDatLines++;
 		}
