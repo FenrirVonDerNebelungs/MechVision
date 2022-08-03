@@ -17,14 +17,55 @@ def runTF(w_preTrainHi, w_preTrainLo, x_train, y_train):
     w_Hi=model.layers[2].get_weights()
     return w_Hi,w_Lo
 
-def getWeightsIn():
-    w_Hi=np.zeros(7,1)#number of internal nodes, number of output nodes
-    w_Lo=np.zeros(56,7)#number of Xs, number of interal Nodes
-    return w_Hi, w_Lo
 
-def getXYIn():
+def setY(sel_stamp_i, stamp_i, ang, rad):
+    retval=-1
+    if sel_stamp_i==stamp_i:
+        retval=1
+    return retval
+
+def readInDat(sel_stamp_i):
+    weightsSet=False
+    w_Hi=np.empty(7)#number of internal nodes, number of output nodes will have shape (7,1)
+    w_Lo=np.zeros(56,7)#number of Xs, number of interal Nodes will have shape(56,7)
     #the 1 is actually the data dim after the array it is filled it will be above 400
-    Xs=np.zeros(1,56)
-    Ys=np.zeros(1)
-    return Xs,Ys
-
+    Xs=np.empty(0,56) #this will be filled in the 1st dim (now zero) up to the total number of data substamps sig and bac dim(dataDim,56)
+    Ys=np.empty(0)#filled has dim dataDim
+    fline=np.empty(0)
+    fin=open("TFstamps.csv")
+    line=fin.readline()
+    while line:
+        fieldindx=0
+        commaloc=line.find(",")
+        while commaloc>=0:
+            fieldstr=line[:commaloc]
+            fline1=np.append(fline,float(fieldstr))
+            fline=fline1
+            fieldindx+=1
+            commaloc+=1
+            line=line[commaloc:]
+            commaloc=line.find(",")
+        #get hanging values for lunas
+        X_line=fline[1:57]
+        Xs0=np.append(Xs,[X_line],axis=0)
+        Xs=Xs0
+        tail_line = fline[120:123]
+        stamp_y=setY(sel_stamp_i,fline[0],tail_line[1],tail_line[2])
+        Ys0=np.append(Ys,stamp_y)
+        Ys=Ys0
+        if fline[0]==sel_stamp_i and not weightsSet:
+            w_Hi_line=fline[57:64]
+            w_Lo_line=fline[64:120]
+            w_Hi=w_Hi_line
+            for i_node in range(7):
+                w_index=i_node*8
+                line_start=w_index
+                line_end=w_index+8
+                w_node_seg=w_Lo_line[line_start:line_end]
+                for i_hanging in range(8):
+                    i_w=i_hanging+w_index
+                    w_Lo[i_w,i_node]=w_node_seg[i_hanging]
+            weightsSet=True
+        line=fin.readline()
+    fin.close()
+    return w_Hi,w_Lo,Xs,Ys
